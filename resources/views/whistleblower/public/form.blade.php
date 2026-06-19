@@ -461,7 +461,7 @@
                         <div class="file-drop-text">
                             <strong>Klik untuk pilih file</strong> atau seret ke sini
                         </div>
-                        <div class="hint" style="margin-top:6px;">JPG, PNG, PDF, DOC/DOCX &bull; Maks 5 MB</div>
+                        <div class="hint" style="margin-top:6px;">JPG, PNG, PDF, DOC/DOCX &bull; Maks 8 MB</div>
                     </div>
                     <div class="file-preview" id="file-preview">
                         <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>

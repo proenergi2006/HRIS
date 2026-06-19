@@ -27,7 +27,7 @@ class PublicWhistleblowerController extends Controller
             'reporter_name' => 'nullable|string|max:100',
             'reporter_email'=> 'nullable|email|max:100',
             'reporter_phone'=> 'nullable|string|max:30',
-            'attachment'    => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'attachment'    => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:8192',
         ]);
 
         $isAnonymous = $request->boolean('is_anonymous');
