@@ -5,7 +5,7 @@
 @include('components.notification')
 
 <div class="mb-3 d-flex justify-content-between align-items-center">
-  <div class="h3 mb-0">📋 Riwayat Penggunaan</div>
+  <div class="h3 mb-0">Riwayat Penggunaan</div>
 </div>
 
 {{-- Filter --}}
@@ -40,7 +40,7 @@
 </div>
 
 <div class="card">
-  <div class="card-body p-0">
+  <div class="card-body">
     <table id="dt-usages" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>

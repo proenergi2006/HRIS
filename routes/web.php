@@ -17,6 +17,9 @@ use App\Http\Controllers\Appraisal\ReportController;
 use App\Http\Controllers\GA\PublicVehicleController;
 use App\Http\Controllers\GA\GaVehicleController;
 use App\Http\Controllers\GA\GaUsageController;
+use App\Http\Controllers\GA\PublicRoomController;
+use App\Http\Controllers\GA\GaRoomController;
+use App\Http\Controllers\GA\GaCleaningLogController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +31,11 @@ Route::get('/', function () {
 Route::get('/ga/kendaraan/{vehicle}',          [PublicVehicleController::class, 'scan'])->name('ga.scan');
 Route::post('/ga/kendaraan/{vehicle}/checkin', [PublicVehicleController::class, 'checkin'])->name('ga.checkin')->middleware('throttle:30,60');
 Route::post('/ga/kendaraan/{vehicle}/checkout',[PublicVehicleController::class, 'checkout'])->name('ga.checkout')->middleware('throttle:30,60');
+
+// ── GA Ruang Meeting — public (QR scan, no auth) ──────────────────────
+Route::get('/ga/ruangan/{room}',         [PublicRoomController::class, 'scan'])->name('ga.room.scan');
+Route::post('/ga/ruangan/{room}/submit', [PublicRoomController::class, 'submit'])->name('ga.room.submit')->middleware('throttle:30,60');
+Route::get('/ga/ruangan/{room}/sukses',  [PublicRoomController::class, 'success'])->name('ga.room.success');
 
 // ── Whistleblower — public (no auth) ──────────────────────────────────
 Route::get('/whistleblower',                  [PublicWhistleblowerController::class, 'show'])->name('whistleblower.form');
@@ -65,11 +73,24 @@ Route::middleware('auth')->group(function () {
 
 // ── GA Admin — admin_ga & admin ───────────────────────────────────────
 Route::middleware(['auth', 'role:admin_ga|admin'])->prefix('admin/ga')->name('ga.admin.')->group(function () {
+    // Kendaraan
     Route::resource('vehicles', GaVehicleController::class)->except(['show']);
     Route::get('vehicles/{vehicle}/qrcode', [GaVehicleController::class, 'qrcode'])->name('vehicles.qrcode');
     Route::get('usages',                    [GaUsageController::class, 'index'])->name('usages.index');
     Route::get('usages/{usage}',            [GaUsageController::class, 'show'])->name('usages.show');
     Route::get('usages/{usage}/photo/{side}',[GaUsageController::class, 'photo'])->name('usages.photo');
+
+    // Ruang Meeting
+    Route::resource('rooms', GaRoomController::class)->except(['show']);
+    Route::get('rooms/{room}/qrcode', [GaRoomController::class, 'qrcode'])->name('rooms.qrcode');
+    Route::post('rooms/{room}/items',                     [GaRoomController::class, 'storeItem'])->name('rooms.items.store');
+    Route::put('rooms/{room}/items/{item}',               [GaRoomController::class, 'updateItem'])->name('rooms.items.update');
+    Route::delete('rooms/{room}/items/{item}',            [GaRoomController::class, 'destroyItem'])->name('rooms.items.destroy');
+
+    // Riwayat Kebersihan
+    Route::get('cleaning-logs',                           [GaCleaningLogController::class, 'index'])->name('cleaning-logs.index');
+    Route::get('cleaning-logs/{log}',                     [GaCleaningLogController::class, 'show'])->name('cleaning-logs.show');
+    Route::get('cleaning-logs/{log}/photo/{photo}',       [GaCleaningLogController::class, 'photo'])->name('cleaning-logs.photo');
 });
 
 // ── Whistleblower admin — auth only ───────────────────────────────────

@@ -5,14 +5,14 @@
 @include('components.notification')
 
 <div class="mb-3 d-flex justify-content-between align-items-center">
-  <div class="h3 mb-0">🚗 Kendaraan</div>
+  <div class="h3 mb-0">Kendaraan</div>
   <a href="{{ route('ga.admin.vehicles.create') }}" class="btn btn-primary">
     <i class="gd-plus mr-1"></i> Tambah Kendaraan
   </a>
 </div>
 
 <div class="card">
-  <div class="card-body p-0">
+  <div class="card-body">
     <table id="dt-vehicles" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
