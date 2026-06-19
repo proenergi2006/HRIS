@@ -24,9 +24,6 @@ body{font-family:'Inter',sans-serif;background:#f0f4f8;min-height:100vh;display:
 .container{max-width:520px;margin:0 auto;padding:24px 16px 48px;width:100%}
 .card{background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,.08);overflow:hidden;margin-top:24px}
 .card-header{padding:18px 20px;border-bottom:1px solid #f1f5f9;font-weight:700;font-size:15px;color:#0f2a4a;display:flex;align-items:center;gap:8px}
-.card-header .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-.card-header .icon.green{background:#dcfce7}
-.card-header .icon.amber{background:#fef3c7}
 .card-body{padding:20px}
 .checkin-info{background:#fef3c7;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#92400e}
 .checkin-info strong{display:block;font-size:14px;color:#78350f;margin-bottom:4px}
@@ -44,6 +41,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
 .photo-box .label{font-size:12px;font-weight:600;color:#374151;text-align:center;line-height:1.3}
 .photo-box .sub{font-size:11px;color:#9ca3af;margin-top:2px;text-align:center}
 .photo-box.has-file .label{color:#2563eb}
+.photo-upload-icon{font-size:22px;margin-bottom:6px;color:#9ca3af}
 .photo-preview{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:0;transition:opacity .3s}
 .photo-preview.visible{opacity:1}
 .btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -65,7 +63,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
 <body>
 
 <div class="hero">
-  <div class="hero-badge">🚗 Penggunaan Kendaraan · PT Pro Energi</div>
+  <div class="hero-badge">Penggunaan Kendaraan · PT Pro Energi</div>
   <h1>{{ $vehicle->name }}</h1>
   <div class="plate">{{ strtoupper($vehicle->plate) }}</div>
   <div class="meta">
@@ -96,7 +94,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
   {{-- ══ CHECKOUT FORM ══ --}}
   <div class="card">
     <div class="card-header">
-      <div class="icon amber">📤</div> Check Out Kendaraan
+      Check Out Kendaraan
     </div>
     <div class="card-body">
       <div class="checkin-info">
@@ -128,7 +126,9 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                    onchange="previewPhoto(this,'prev-dashboard','box-dashboard')">
             <div class="inner">
               <img id="prev-dashboard" class="photo-preview">
-              <div class="emoji">📊</div>
+              <div class="photo-upload-icon">
+                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
               <div class="label">Foto Dashboard + Odometer</div>
               <div class="sub">Wajib menampilkan angka KM</div>
             </div>
@@ -139,7 +139,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                      onchange="previewPhoto(this,'prev-front','box-front')">
               <div class="inner">
                 <img id="prev-front" class="photo-preview">
-                <div class="emoji">⬆️</div>
+                <div class="photo-upload-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
                 <div class="label">Sisi Depan</div>
                 <div class="sub">Foto dari depan kendaraan</div>
               </div>
@@ -149,7 +149,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                      onchange="previewPhoto(this,'prev-back','box-back')">
               <div class="inner">
                 <img id="prev-back" class="photo-preview">
-                <div class="emoji">⬇️</div>
+                <div class="photo-upload-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
                 <div class="label">Sisi Belakang</div>
                 <div class="sub">Foto dari belakang kendaraan</div>
               </div>
@@ -159,7 +159,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                      onchange="previewPhoto(this,'prev-left','box-left')">
               <div class="inner">
                 <img id="prev-left" class="photo-preview">
-                <div class="emoji">◀️</div>
+                <div class="photo-upload-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
                 <div class="label">Sisi Kiri</div>
                 <div class="sub">Foto dari sisi kiri</div>
               </div>
@@ -169,7 +169,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                      onchange="previewPhoto(this,'prev-right','box-right')">
               <div class="inner">
                 <img id="prev-right" class="photo-preview">
-                <div class="emoji">▶️</div>
+                <div class="photo-upload-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
                 <div class="label">Sisi Kanan</div>
                 <div class="sub">Foto dari sisi kanan</div>
               </div>
@@ -195,7 +195,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
   {{-- ══ CHECKIN FORM ══ --}}
   <div class="card">
     <div class="card-header">
-      <div class="icon green">📥</div> Check In Kendaraan
+      Check In Kendaraan
     </div>
     <div class="card-body">
       <form method="POST" action="{{ route('ga.checkin', $vehicle) }}" id="form-checkin">

@@ -27,13 +27,13 @@
   <li class="sidebar-heading h6">General Affairs</li>
   <li class="side-nav-menu-item {{ Request::is('admin/ga/vehicles*') ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.vehicles.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-layers"></i></span>
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-briefcase"></i></span>
       <span class="side-nav-fadeout-on-closed media-body">Kendaraan</span>
     </a>
   </li>
   <li class="side-nav-menu-item {{ Request::is('admin/ga/usages*') ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.usages.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-check-circle"></i></span>
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-list"></i></span>
       <span class="side-nav-fadeout-on-closed media-body">Penggunaan
         @php $activeVehicles = \App\Models\GA\VehicleUsage::where('status','checked_in')->count(); @endphp
         @if($activeVehicles)
