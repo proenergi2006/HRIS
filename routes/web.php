@@ -23,7 +23,7 @@ Route::get('/', function () {
 
 // ── Whistleblower — public (no auth) ──────────────────────────────────
 Route::get('/whistleblower',                  [PublicWhistleblowerController::class, 'show'])->name('whistleblower.form');
-Route::post('/whistleblower',                 [PublicWhistleblowerController::class, 'store'])->name('whistleblower.store')->middleware('throttle:3,60');
+Route::post('/whistleblower',                 [PublicWhistleblowerController::class, 'store'])->name('whistleblower.store')->middleware('throttle:20,60');
 Route::get('/whistleblower/success/{ticket}', [PublicWhistleblowerController::class, 'success'])->name('whistleblower.success');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
