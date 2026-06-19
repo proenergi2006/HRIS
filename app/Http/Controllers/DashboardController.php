@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Appraisal\Appraisal;
 use App\Models\Appraisal\AppraisalPeriod;
+use App\Models\GA\Vehicle;
+use App\Models\GA\VehicleUsage;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +21,10 @@ class DashboardController extends Controller implements HasMiddleware
     {
         $user = auth()->user();
 
+        if ($user->hasRole('admin_ga')) {
+            return $this->gaDashboard();
+        }
+
         if ($user->hasRole('admin')) {
             return $this->adminDashboard();
         }
@@ -32,6 +38,21 @@ class DashboardController extends Controller implements HasMiddleware
         }
 
         return $this->evaluatorDashboard($user);
+    }
+
+    private function gaDashboard()
+    {
+        $totalVehicles   = Vehicle::where('is_active', true)->count();
+        $inUseVehicles   = VehicleUsage::where('status', 'checked_in')->count();
+        $availVehicles   = $totalVehicles - $inUseVehicles;
+        $todayUsages     = VehicleUsage::whereDate('check_in_at', today())->count();
+        $activeUsages    = VehicleUsage::with('vehicle')->where('status', 'checked_in')->latest('check_in_at')->get();
+        $recentUsages    = VehicleUsage::with('vehicle')->where('status', 'checked_out')
+                            ->latest('check_out_at')->limit(10)->get();
+
+        return view('ga.admin.dashboard', compact(
+            'totalVehicles', 'inUseVehicles', 'availVehicles', 'todayUsages', 'activeUsages', 'recentUsages'
+        ));
     }
 
     private function adminDashboard()

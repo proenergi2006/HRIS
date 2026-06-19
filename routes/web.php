@@ -14,12 +14,20 @@ use App\Http\Controllers\Appraisal\AppraisalController;
 use App\Http\Controllers\Appraisal\ApprovalController;
 use App\Http\Controllers\Appraisal\FlowConfigController;
 use App\Http\Controllers\Appraisal\ReportController;
+use App\Http\Controllers\GA\PublicVehicleController;
+use App\Http\Controllers\GA\GaVehicleController;
+use App\Http\Controllers\GA\GaUsageController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// ── GA Kendaraan — public (QR scan, no auth) ──────────────────────────
+Route::get('/ga/kendaraan/{vehicle}',          [PublicVehicleController::class, 'scan'])->name('ga.scan');
+Route::post('/ga/kendaraan/{vehicle}/checkin', [PublicVehicleController::class, 'checkin'])->name('ga.checkin')->middleware('throttle:30,60');
+Route::post('/ga/kendaraan/{vehicle}/checkout',[PublicVehicleController::class, 'checkout'])->name('ga.checkout')->middleware('throttle:30,60');
 
 // ── Whistleblower — public (no auth) ──────────────────────────────────
 Route::get('/whistleblower',                  [PublicWhistleblowerController::class, 'show'])->name('whistleblower.form');
@@ -53,6 +61,15 @@ Route::middleware('auth')->group(function () {
         Route::get('report',        [ReportController::class, 'index'])->name('report.index');
         Route::get('report/export', [ReportController::class, 'export'])->name('report.export');
     });
+});
+
+// ── GA Admin — admin_ga & admin ───────────────────────────────────────
+Route::middleware(['auth', 'role:admin_ga|admin'])->prefix('admin/ga')->name('ga.admin.')->group(function () {
+    Route::resource('vehicles', GaVehicleController::class)->except(['show']);
+    Route::get('vehicles/{vehicle}/qrcode', [GaVehicleController::class, 'qrcode'])->name('vehicles.qrcode');
+    Route::get('usages',                    [GaUsageController::class, 'index'])->name('usages.index');
+    Route::get('usages/{usage}',            [GaUsageController::class, 'show'])->name('usages.show');
+    Route::get('usages/{usage}/photo/{side}',[GaUsageController::class, 'photo'])->name('usages.photo');
 });
 
 // ── Whistleblower admin — auth only ───────────────────────────────────

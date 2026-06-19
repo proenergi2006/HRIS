@@ -22,6 +22,30 @@
     </a>
   </li>
 
+  {{-- ── GA Module — hanya admin_ga (dan admin) ── --}}
+  @if($sidebarUser?->hasAnyRole(['admin_ga','admin']))
+  <li class="sidebar-heading h6">General Affairs</li>
+  <li class="side-nav-menu-item {{ Request::is('admin/ga/vehicles*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.vehicles.index') }}">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-layers"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Kendaraan</span>
+    </a>
+  </li>
+  <li class="side-nav-menu-item {{ Request::is('admin/ga/usages*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.usages.index') }}">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-check-circle"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Penggunaan
+        @php $activeVehicles = \App\Models\GA\VehicleUsage::where('status','checked_in')->count(); @endphp
+        @if($activeVehicles)
+          <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $activeVehicles }}</span>
+        @endif
+      </span>
+    </a>
+  </li>
+  @endif
+
+  {{-- ── Appraisal Module — semua kecuali admin_ga ── --}}
+  @if(! $sidebarUser?->hasRole('admin_ga'))
   <li class="sidebar-heading h6">{{ __('nav.appraisal') }}</li>
 
   @if(auth()->user()?->hasRole('admin'))
@@ -93,6 +117,8 @@
     </a>
   </li>
   @endif
+
+  @endif {{-- end !admin_ga --}}
 
   @if(auth()->user()?->hasRole('admin'))
   <li class="sidebar-heading h6">{{ __('nav.system') }}</li>
