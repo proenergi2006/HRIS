@@ -51,7 +51,14 @@ class WhistleblowerController extends Controller
 
     public function download(WhistleblowerReport $report)
     {
-        abort_unless($report->attachment_path && Storage::disk('local')->exists($report->attachment_path), 404);
+        if (! $report->attachment_path) {
+            return back()->with('error', 'Laporan ini tidak memiliki lampiran.');
+        }
+
+        if (! Storage::disk('local')->exists($report->attachment_path)) {
+            return back()->with('error', 'File lampiran tidak ditemukan di server. Hubungi administrator.');
+        }
+
         return Storage::disk('local')->download(
             $report->attachment_path,
             $report->attachment_original_name ?? 'lampiran'
