@@ -13,6 +13,7 @@
 
 <div class="card">
   <div class="card-body">
+    <div class="table-responsive">
     <table id="dt-rooms" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
@@ -60,6 +61,7 @@
       @endforeach
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 @endsection

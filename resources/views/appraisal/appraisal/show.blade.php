@@ -188,6 +188,7 @@
                     <div class="card card-frame h-100">
                         <div class="card-body">
                             <h6 class="font-weight-bold mb-3">Data Absensi</h6>
+                            <div class="table-responsive">
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Rata-rata Keterlambatan</td>
@@ -198,6 +199,7 @@
                                     <td class="font-weight-bold">{{ $appraisal->avg_leave_per_month }} hari/bulan</td>
                                 </tr>
                             </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,6 +207,7 @@
                     <div class="card card-frame h-100">
                         <div class="card-body">
                             <h6 class="font-weight-bold mb-3">Usulan</h6>
+                            <div class="table-responsive">
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Surat Teguran</td>
@@ -215,6 +218,7 @@
                                     <td class="font-weight-bold">{{ $appraisal->sp_level_label }}</td>
                                 </tr>
                             </table>
+                            </div>
                         </div>
                     </div>
                 </div>

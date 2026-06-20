@@ -57,6 +57,80 @@
     </div>
 </div>
 
+{{-- ── Reimbursement Summary ── --}}
+<div class="row mb-3">
+    <div class="col-6 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-warning rounded-circle mr-3">
+                <i class="gd-wallet icon-text d-inline-block text-warning"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1">{{ $reimb['pending'] }}</h4>
+                <h6 class="mb-0 text-muted">Reimb. Menunggu</h6>
+            </div>
+            @if($reimb['pending'] > 0)
+            <a href="{{ route('reimbursement.admin.index', ['status' => 'submitted']) }}" class="stretched-link"></a>
+            @endif
+        </div>
+    </div>
+    <div class="col-6 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-success rounded-circle mr-3">
+                <i class="gd-check icon-text d-inline-block text-success"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1">{{ $reimb['approved'] }}</h4>
+                <h6 class="mb-0 text-muted">Reimb. Disetujui {{ now()->year }}</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-primary rounded-circle mr-3">
+                <i class="gd-receipt icon-text d-inline-block text-primary"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1" style="font-size:1.1rem">Rp {{ number_format($reimb['total_claim'], 0, ',', '.') }}</h4>
+                <h6 class="mb-0 text-muted">Total Klaim Disetujui {{ now()->year }}</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if($reimb['recent']->isNotEmpty())
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold">Aktivitas Reimbursement Terbaru</span>
+        <a href="{{ route('reimbursement.admin.index') }}" class="btn btn-xs btn-outline-secondary">Lihat Semua</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+        <table class="table table-sm mb-0" style="font-size:.85rem">
+            <tbody>
+            @foreach($reimb['recent'] as $r)
+            <tr>
+                <td class="pl-3 font-weight-bold">{{ $r->request_number }}</td>
+                <td>{{ $r->user->name }}</td>
+                <td class="text-right">Rp {{ number_format($r->total_claim, 0, ',', '.') }}</td>
+                <td class="text-center">
+                    <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$r->status] }}">
+                        {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$r->status] }}
+                    </span>
+                </td>
+                <td class="pr-3">
+                    <a href="{{ route('reimbursement.admin.show', $r) }}" class="btn btn-xs btn-outline-info">
+                        <i class="gd-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            @endforeach
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- ── Row 1: Periode + Grade chart + Aksi Cepat ── --}}
 <div class="row">
     {{-- Periode Aktif --}}

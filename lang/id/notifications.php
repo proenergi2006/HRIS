@@ -17,7 +17,21 @@ return [
     'pending_final'      => 'Menunggu Persetujuan Final',
     'pending_final_body' => 'Penilaian :name (:period) menunggu keputusan akhir.',
 
-    // Admin
-    'appraisal_final'      => 'Penilaian Selesai',
-    'appraisal_final_body' => 'Penilaian :name (:period) telah disetujui final.',
+    // Admin — penilaian dalam proses
+    'appraisal_pending_admin'      => 'Penilaian Menunggu Proses',
+    'appraisal_pending_admin_body' => 'Penilaian :name (:period) masih dalam proses approval.',
+
+    // Admin — reimbursement
+    'reimb_pending'      => 'Reimbursement Menunggu Approval',
+    'reimb_pending_body' => ':name mengajukan :number, menunggu persetujuan Anda.',
+
+    // Admin — whistleblower
+    'whistleblower_new'      => 'Laporan Whistleblower Baru',
+    'whistleblower_new_body' => 'Laporan :ticket masuk dan belum ditindaklanjuti.',
+
+    // Karyawan — status reimbursement mereka
+    'reimb_approved'      => 'Reimbursement Disetujui',
+    'reimb_approved_body' => 'Pengajuan :number Anda telah disetujui.',
+    'reimb_rejected'      => 'Reimbursement Ditolak',
+    'reimb_rejected_body' => 'Pengajuan :number Anda ditolak. Silakan cek alasan penolakan.',
 ];

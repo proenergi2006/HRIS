@@ -1,14 +1,42 @@
 @php
     $sidebarUser = auth()->user();
     $pendingCount = 0;
-    if ($sidebarUser?->hasRole('user_ii')) {
+    $pendingBadgeClass = 'badge-warning';
+    if ($sidebarUser?->hasRole('admin')) {
+        $pendingCount = \App\Models\Appraisal\Appraisal::whereIn('status', ['submitted', 'approved_user2'])->count();
+        $pendingBadgeClass = 'badge-danger';
+    } elseif ($sidebarUser?->hasRole('user_ii')) {
         $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'submitted')->count();
+        $pendingBadgeClass = 'badge-danger';
     } elseif ($sidebarUser?->hasAnyRole(['cfo','ceo'])) {
         $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'approved_user2')->count();
+        $pendingBadgeClass = 'badge-danger';
     } elseif ($sidebarUser?->hasRole('evaluator')) {
         $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'rejected')
             ->where('evaluator_id', $sidebarUser->id)->count();
+        $pendingBadgeClass = 'badge-warning';
     }
+
+    // Reimbursement counts (dihitung di sini supaya bisa dipakai di GA section juga)
+    $pendingReim    = ($sidebarUser && !$sidebarUser->hasRole('admin_ga'))
+                    ? \App\Models\Reimbursement\ReimbursementRequest::where('user_id', $sidebarUser->id)->where('status','submitted')->count()
+                    : 0;
+    $pendingAllReim = $sidebarUser?->hasRole('admin')
+                    ? \App\Models\Reimbursement\ReimbursementRequest::where('status','submitted')->count()
+                    : 0;
+
+    // Whistleblower (hanya admin)
+    $newWb = $sidebarUser?->hasRole('admin')
+           ? \App\Models\WhistleblowerReport::where('status','new')->count()
+           : 0;
+
+    // GA — kendaraan aktif
+    $activeVehicles = $sidebarUser?->hasAnyRole(['admin_ga','admin'])
+                    ? \App\Models\GA\VehicleUsage::where('status','checked_in')->count()
+                    : 0;
+
+    // Helper: badge merah kecil di icon (selalu terlihat walaupun sidebar compact)
+    // Dipanggil manual per section di bawah
 @endphp
 <!-- Sidebar Nav -->
 <aside id="sidebar" class="js-custom-scroll side-nav">
@@ -22,54 +50,80 @@
     </a>
   </li>
 
-  {{-- ── GA Module — hanya admin_ga (dan admin) ── --}}
+  {{-- ── GA Module — admin_ga & admin ── --}}
   @if($sidebarUser?->hasAnyRole(['admin_ga','admin']))
-  <li class="sidebar-heading h6">General Affairs</li>
-  <li class="side-nav-menu-item {{ Request::is('admin/ga/vehicles*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.vehicles.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-car"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Kendaraan</span>
-    </a>
-  </li>
-  <li class="side-nav-menu-item {{ Request::is('admin/ga/usages*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.usages.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-list"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Penggunaan
-        @php $activeVehicles = \App\Models\GA\VehicleUsage::where('status','checked_in')->count(); @endphp
-        @if($activeVehicles)
+  @php $gaActive = Request::is('admin/ga/*'); @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $gaActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subGA">
+      {{-- Icon + mini badge (selalu terlihat) --}}
+      <span class="side-nav-menu-icon d-flex mr-3 position-relative">
+        <i class="gd-layout"></i>
+        @if($activeVehicles > 0)
+          <span class="sidebar-icon-badge badge-warning">{{ $activeVehicles > 9 ? '9+' : $activeVehicles }}</span>
+        @endif
+      </span>
+      {{-- Label + badge (hilang saat sidebar compact) --}}
+      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.general_affairs') }}
+        @if($activeVehicles > 0)
           <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $activeVehicles }}</span>
         @endif
       </span>
-    </a>
-  </li>
-  <li class="side-nav-menu-item {{ Request::is('admin/ga/rooms*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.rooms.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-layout"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Ruang Meeting</span>
-    </a>
-  </li>
-  <li class="side-nav-menu-item {{ Request::is('admin/ga/cleaning-logs*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('ga.admin.cleaning-logs.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-check-box"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Riwayat Kebersihan</span>
-    </a>
-  </li>
-  @endif
-
-  {{-- ── Appraisal Module — semua kecuali admin_ga ── --}}
-  @if(! $sidebarUser?->hasRole('admin_ga'))
-  <li class="sidebar-heading h6">{{ __('nav.appraisal') }}</li>
-
-  @if(auth()->user()?->hasRole('admin'))
-  {{-- Master Data — hanya admin HRD --}}
-  <li class="side-nav-menu-item side-nav-has-menu {{ Request::is('appraisal/employees*','appraisal/levels*','appraisal/templates*','appraisal/flow-configs*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subMaster">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-settings"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.master_data') }}</span>
       <span class="side-nav-control-icon d-flex"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
       <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
     </a>
-    <ul id="subMaster" class="side-nav-menu side-nav-menu-second-level mb-0">
+    <ul id="subGA" class="side-nav-menu side-nav-menu-second-level mb-0">
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/vehicles*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.vehicles.index') }}">
+          <i class="gd-car mr-2"></i>{{ __('nav.vehicles') }}
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/usages*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.usages.index') }}">
+          <i class="gd-list mr-2"></i>{{ __('nav.vehicle_usage') }}
+          @if($activeVehicles > 0)
+            <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $activeVehicles }}</span>
+          @endif
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/rooms*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.rooms.index') }}">
+          <i class="gd-layout mr-2"></i>{{ __('nav.meeting_rooms') }}
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/cleaning-logs*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.cleaning-logs.index') }}">
+          <i class="gd-check-box mr-2"></i>{{ __('nav.cleaning_history') }}
+        </a>
+      </li>
+    </ul>
+  </li>
+  @endif
+
+  {{-- ── Appraisal + Reimbursement — semua kecuali admin_ga ── --}}
+  @if(! $sidebarUser?->hasRole('admin_ga'))
+
+  {{-- Penilaian Kinerja --}}
+  @php $appraisalActive = Request::is('appraisal/*'); @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $appraisalActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subAppraisal">
+      {{-- Icon + mini badge --}}
+      <span class="side-nav-menu-icon d-flex mr-3 position-relative">
+        <i class="gd-check-box"></i>
+        @if($pendingCount > 0)
+          <span class="sidebar-icon-badge {{ $pendingBadgeClass === 'badge-danger' ? 'badge-danger' : 'badge-warning' }}">{{ $pendingCount > 9 ? '9+' : $pendingCount }}</span>
+        @endif
+      </span>
+      {{-- Label + badge --}}
+      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.appraisal') }}
+        @if($pendingCount > 0)
+          <span class="badge {{ $pendingBadgeClass }} badge-pill ml-1" style="font-size:.7rem">{{ $pendingCount }}</span>
+        @endif
+      </span>
+      <span class="side-nav-control-icon d-flex"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
+      <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
+    </a>
+    <ul id="subAppraisal" class="side-nav-menu side-nav-menu-second-level mb-0">
+      @if(auth()->user()?->hasRole('admin'))
       <li class="side-nav-menu-item {{ Request::is('appraisal/employees*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.employees.index') }}">{{ __('nav.employees') }}</a>
       </li>
@@ -82,94 +136,100 @@
       <li class="side-nav-menu-item {{ Request::is('appraisal/flow-configs*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.flow-configs.index') }}">{{ __('nav.approval_flow') }}</a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/periods*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.periods.index') }}">{{ __('nav.periods') }}</a>
+      </li>
+      @endif
+      <li class="side-nav-menu-item {{ Request::is('appraisal/appraisals*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.appraisals.index') }}">{{ __('nav.appraisals') }}
+          @if($pendingCount > 0)
+            <span class="badge {{ $pendingBadgeClass }} badge-pill ml-1" style="font-size:.7rem">{{ $pendingCount }}</span>
+          @endif
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/report*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.report.index') }}">{{ __('nav.reports') }}</a>
+      </li>
     </ul>
   </li>
 
-  {{-- Periode — hanya admin HRD --}}
-  <li class="side-nav-menu-item {{ Request::is('appraisal/periods*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('appraisal.periods.index') }}">
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.periods') }}</span>
-    </a>
-  </li>
-  @endif
-
-  {{-- Data Penilaian — semua user --}}
-  <li class="side-nav-menu-item {{ Request::is('appraisal/appraisals*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('appraisal.appraisals.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-check-box"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.appraisals') }}
-        @if($pendingCount > 0)
-          <span class="badge badge-warning badge-pill ml-1" style="font-size:0.7rem;">{{ $pendingCount }}</span>
+  {{-- Reimbursement --}}
+  @php
+    $reimActive = Request::is('reimbursement*') || Request::is('admin/reimbursement*');
+    $reimBadgeVal   = $pendingAllReim > 0 ? $pendingAllReim : ($pendingReim > 0 ? $pendingReim : 0);
+    $reimBadgeColor = $pendingAllReim > 0 ? 'badge-danger' : 'badge-warning';
+  @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $reimActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subReim">
+      {{-- Icon + mini badge --}}
+      <span class="side-nav-menu-icon d-flex mr-3 position-relative">
+        <i class="gd-wallet"></i>
+        @if($reimBadgeVal > 0)
+          <span class="sidebar-icon-badge {{ $pendingAllReim > 0 ? 'badge-danger' : 'badge-warning' }}">{{ $reimBadgeVal > 9 ? '9+' : $reimBadgeVal }}</span>
         @endif
       </span>
-    </a>
-  </li>
-
-  {{-- Laporan — semua user --}}
-  <li class="side-nav-menu-item {{ Request::is('appraisal/report*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('appraisal.report.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-search"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.reports') }}</span>
-    </a>
-  </li>
-
-  {{-- Medical Reimbursement — semua user --}}
-  <li class="sidebar-heading h6">Reimbursement</li>
-  <li class="side-nav-menu-item {{ Request::is('reimbursement*') && !Request::is('admin/reimbursement*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('reimbursement.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-wallet"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Medical
-        @php $pendingReim = \App\Models\Reimbursement\ReimbursementRequest::where('user_id', $sidebarUser?->id)->whereIn('status',['submitted'])->count(); @endphp
-        @if($pendingReim > 0)
-          <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $pendingReim }}</span>
+      {{-- Label + badge --}}
+      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.reimbursement') }}
+        @if($reimBadgeVal > 0)
+          <span class="badge {{ $reimBadgeColor }} badge-pill ml-1" style="font-size:.7rem">{{ $reimBadgeVal }}</span>
         @endif
       </span>
-    </a>
-  </li>
-  @if($sidebarUser?->hasRole('admin'))
-  <li class="side-nav-menu-item {{ Request::is('admin/reimbursement*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('reimbursement.admin.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-receipt"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">Semua Pengajuan
-        @php $pendingAllReim = \App\Models\Reimbursement\ReimbursementRequest::where('status','submitted')->count(); @endphp
-        @if($pendingAllReim > 0)
-          <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $pendingAllReim }}</span>
-        @endif
-      </span>
-    </a>
-  </li>
-  @endif
-
-  {{-- Whistleblower — admin only --}}
-  @if(auth()->user()?->hasRole('admin'))
-  <li class="sidebar-heading h6">{{ __('nav.hr_tools') }}</li>
-  <li class="side-nav-menu-item {{ Request::is('admin/whistleblower*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="{{ route('whistleblower.admin.index') }}">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-alert"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.whistleblower') }}
-        @php $newWb = \App\Models\WhistleblowerReport::where('status','new')->count(); @endphp
-        @if($newWb > 0)
-          <span class="badge badge-danger badge-pill ml-1" style="font-size:0.7rem;">{{ $newWb }}</span>
-        @endif
-      </span>
-    </a>
-  </li>
-  @endif
-
-  @endif {{-- end !admin_ga --}}
-
-  @if(auth()->user()?->hasRole('admin'))
-  <li class="sidebar-heading h6">{{ __('nav.system') }}</li>
-  <li class="side-nav-menu-item side-nav-has-menu {{ Request::is('users*') ? 'active' : '' }}">
-    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subUsers">
-      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-user"></i></span>
-      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.users') }}</span>
       <span class="side-nav-control-icon d-flex"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
       <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
     </a>
-    <ul id="subUsers" class="side-nav-menu side-nav-menu-second-level mb-0">
-      <li class="side-nav-menu-item {{ Request::is('users') ? 'active' : '' }}">
+    <ul id="subReim" class="side-nav-menu side-nav-menu-second-level mb-0">
+      <li class="side-nav-menu-item {{ Request::is('reimbursement*') && !Request::is('admin/reimbursement*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('reimbursement.index') }}">{{ __('nav.medical_reimbursement') }}
+          @if($pendingReim > 0)
+            <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $pendingReim }}</span>
+          @endif
+        </a>
+      </li>
+      @if($sidebarUser?->hasRole('admin'))
+      <li class="side-nav-menu-item {{ Request::is('admin/reimbursement*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('reimbursement.admin.index') }}">{{ __('nav.all_requests') }}
+          @if($pendingAllReim > 0)
+            <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $pendingAllReim }}</span>
+          @endif
+        </a>
+      </li>
+      @endif
+    </ul>
+  </li>
+
+  @endif {{-- end !admin_ga --}}
+
+  {{-- ── System — admin only (gabung Users + Whistleblower) ── --}}
+  @if($sidebarUser?->hasRole('admin'))
+  @php $systemActive = Request::is('users*') || Request::is('admin/whistleblower*'); @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $systemActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subSystem">
+      {{-- Icon + mini badge --}}
+      <span class="side-nav-menu-icon d-flex mr-3 position-relative">
+        <i class="gd-settings"></i>
+        @if($newWb > 0)
+          <span class="sidebar-icon-badge badge-danger">{{ $newWb > 9 ? '9+' : $newWb }}</span>
+        @endif
+      </span>
+      {{-- Label + badge --}}
+      <span class="side-nav-fadeout-on-closed media-body">{{ __('nav.system') }}
+        @if($newWb > 0)
+          <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $newWb }}</span>
+        @endif
+      </span>
+      <span class="side-nav-control-icon d-flex"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
+      <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
+    </a>
+    <ul id="subSystem" class="side-nav-menu side-nav-menu-second-level mb-0">
+      <li class="side-nav-menu-item {{ Request::is('users*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('user.index') }}">{{ __('nav.all_users') }}</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/whistleblower*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('whistleblower.admin.index') }}">{{ __('nav.whistleblower') }}
+          @if($newWb > 0)
+            <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $newWb }}</span>
+          @endif
+        </a>
       </li>
     </ul>
   </li>

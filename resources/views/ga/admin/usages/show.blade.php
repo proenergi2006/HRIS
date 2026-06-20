@@ -15,6 +15,7 @@
     <div class="card">
       <div class="card-body">
         <h6 class="font-weight-bold mb-3">Informasi Penggunaan</h6>
+        <div class="table-responsive">
         <table class="table table-sm mb-0">
           <tr><td class="text-muted" style="width:40%">Kendaraan</td><td class="font-weight-bold">{{ $usage->vehicle->name }}</td></tr>
           <tr><td class="text-muted">No. Polisi</td><td><span class="badge badge-dark">{{ $usage->vehicle->plate }}</span></td></tr>
@@ -35,6 +36,7 @@
             </td>
           </tr>
         </table>
+        </div>
         @if($usage->keluhan)
           <div class="mt-3 p-3" style="background:#fef3c7;border-radius:8px">
             <div class="font-weight-bold text-warning mb-1" style="font-size:13px">⚠️ Keluhan</div>

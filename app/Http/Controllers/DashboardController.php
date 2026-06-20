@@ -6,6 +6,7 @@ use App\Models\Appraisal\Appraisal;
 use App\Models\Appraisal\AppraisalPeriod;
 use App\Models\GA\Vehicle;
 use App\Models\GA\VehicleUsage;
+use App\Models\Reimbursement\ReimbursementRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,15 @@ class DashboardController extends Controller implements HasMiddleware
             ->limit(10)
             ->get();
 
-        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib'));
+        $reimb = [
+            'pending'      => ReimbursementRequest::where('status', 'submitted')->count(),
+            'approved'     => ReimbursementRequest::where('status', 'approved')->whereYear('approved_at', now()->year)->count(),
+            'total_claim'  => ReimbursementRequest::where('status', 'approved')->whereYear('approved_at', now()->year)->sum('total_claim'),
+            'recent'       => ReimbursementRequest::with('user')->whereIn('status', ['submitted', 'approved', 'rejected'])
+                                ->latest('updated_at')->limit(5)->get(),
+        ];
+
+        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb'));
     }
 
     private function step1ApproverDashboard($user)

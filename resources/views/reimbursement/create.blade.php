@@ -2,6 +2,7 @@
 @section('title', 'Buat Pengajuan Reimbursement')
 
 @section('content')
+@include('components.notification')
 <div class="mb-3">
   <a href="{{ route('reimbursement.index') }}" class="btn btn-outline-secondary btn-sm">
     <i class="gd-angle-left mr-1"></i> Kembali

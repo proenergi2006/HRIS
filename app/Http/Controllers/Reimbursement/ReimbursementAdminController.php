@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Reimbursement;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ReimbursementApprovedMail;
+use App\Mail\ReimbursementRejectedMail;
 use App\Models\Reimbursement\ReimbursementBalance;
 use App\Models\Reimbursement\ReimbursementRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class ReimbursementAdminController extends Controller
 {
@@ -57,6 +60,10 @@ class ReimbursementAdminController extends Controller
             $balance->increment('used_balance', $reimbursement->total_claim);
         }
 
+        try {
+            Mail::to($reimbursement->user->email)->send(new ReimbursementApprovedMail($reimbursement));
+        } catch (\Throwable) {}
+
         return back()->with('status', 'Pengajuan berhasil disetujui.');
     }
 
@@ -73,6 +80,10 @@ class ReimbursementAdminController extends Controller
             'approved_at'      => now(),
         ]);
 
+        try {
+            Mail::to($reimbursement->user->email)->send(new ReimbursementRejectedMail($reimbursement));
+        } catch (\Throwable) {}
+
         return back()->with('status', 'Pengajuan ditolak.');
     }
 
@@ -86,6 +97,7 @@ class ReimbursementAdminController extends Controller
     {
         $reimbursement->load(['items', 'user', 'approver']);
         $pdf = Pdf::loadView('reimbursement.pdf', compact('reimbursement'))->setPaper('a4', 'landscape');
-        return $pdf->download('reimbursement-' . $reimbursement->request_number . '.pdf');
+        $filename = 'reimbursement-' . str_replace('/', '-', $reimbursement->request_number) . '.pdf';
+        return $pdf->download($filename);
     }
 }

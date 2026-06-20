@@ -60,6 +60,7 @@
                             <span class="badge badge-secondary">Anonim</span>
                             <span class="text-muted ml-2">Pelapor memilih melapor secara anonim.</span>
                         @else
+                            <div class="table-responsive">
                             <table class="table table-sm table-borderless mb-0">
                                 <tr>
                                     <td class="text-muted pl-0" style="width:120px;">Nama</td>
@@ -74,6 +75,7 @@
                                     <td>{{ $report->reporter_phone ?? '—' }}</td>
                                 </tr>
                             </table>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -109,6 +111,7 @@
                 <div class="card mt-3">
                     <div class="card-body">
                         <div class="text-muted small text-uppercase font-weight-bold mb-2">Info Laporan</div>
+                        <div class="table-responsive">
                         <table class="table table-sm table-borderless mb-0">
                             <tr>
                                 <td class="text-muted pl-0" style="width:100px;">Masuk</td>
@@ -121,6 +124,7 @@
                             </tr>
                             @endif
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>

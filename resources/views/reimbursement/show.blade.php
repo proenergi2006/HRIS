@@ -13,10 +13,14 @@
       <a href="{{ route('reimbursement.edit', $reimbursement) }}" class="btn btn-sm btn-outline-warning mr-1">
         <i class="gd-pencil mr-1"></i> Edit
       </a>
-      <form method="POST" action="{{ route('reimbursement.submit', $reimbursement) }}" class="d-inline">
+      <form method="POST" action="{{ route('reimbursement.submit', $reimbursement) }}" class="d-inline" id="form-submit-reimb">
         @csrf
-        <button type="submit" class="btn btn-sm btn-success"
-                onclick="return confirm('Submit pengajuan ini? Tidak bisa diedit setelah disubmit.')">
+        <button type="button" class="btn btn-sm btn-success"
+                data-confirm="Pengajuan {{ $reimbursement->request_number }} (Rp {{ number_format($reimbursement->total_claim, 0, ',', '.') }}) akan dikirim untuk disetujui. Setelah disubmit tidak bisa diedit kembali."
+                data-confirm-title="Submit Pengajuan?"
+                data-confirm-type="primary"
+                data-confirm-ok="Ya, Submit"
+                data-form="form-submit-reimb">
           <i class="gd-arrow-up mr-1"></i> Submit Pengajuan
         </button>
       </form>
@@ -93,7 +97,8 @@
 {{-- Items Table --}}
 <div class="card mb-3">
   <div class="card-header font-weight-bold">Rincian Biaya</div>
-  <div class="card-body p-0" style="overflow-x:auto">
+  <div class="card-body">
+    <div class="table-responsive">
     <table class="table table-bordered table-sm mb-0" style="min-width:1200px;font-size:.82rem">
       <thead class="thead-light">
         <tr>
@@ -132,6 +137,7 @@
         </tr>
       </tfoot>
     </table>
+    </div>
   </div>
 </div>
 

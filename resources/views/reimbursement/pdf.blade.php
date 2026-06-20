@@ -5,7 +5,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; font-size: 9pt; color: #111; }
-  .page { padding: 12mm 12mm 10mm; }
+  .page { padding: 8mm 10mm 8mm 10mm; }
   .header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid #000; padding-bottom: 6px; }
   .header h1 { font-size: 13pt; font-weight: bold; }
   .header h2 { font-size: 10pt; font-weight: normal; }
@@ -15,8 +15,8 @@
   .info-label, .info-value { display: table-cell; padding: 2px 4px; font-size: 8.5pt; }
   .info-label { width: 140px; }
   .info-sep   { display: table-cell; width: 10px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-  th, td { border: 1px solid #555; padding: 3px 5px; font-size: 7.5pt; vertical-align: middle; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; table-layout: fixed; }
+  th, td { border: 1px solid #555; padding: 2px 4px; font-size: 7pt; vertical-align: middle; word-wrap: break-word; }
   th { background: #e8e8e8; font-weight: bold; text-align: center; }
   td.num { text-align: right; }
   td.ctr { text-align: center; }
@@ -75,15 +75,15 @@
   <table>
     <thead>
       <tr>
-        <th style="width:20px">No</th>
-        <th style="width:90px">Nama Pasien</th>
-        <th style="width:65px">Tgl Berobat</th>
-        <th style="width:100px">Faskes / RS</th>
-        <th style="width:80px">Diagnosa</th>
+        <th style="width:3%">No</th>
+        <th style="width:10%">Nama Pasien</th>
+        <th style="width:7%">Tgl Berobat</th>
+        <th style="width:11%">Faskes / RS</th>
+        <th style="width:9%">Diagnosa</th>
         @foreach($amtFields as $lbl)
-          <th style="min-width:52px">{{ $lbl }}</th>
+          <th style="width:5%" class="ctr">{{ $lbl }}</th>
         @endforeach
-        <th style="min-width:65px">Total</th>
+        <th style="width:8%" class="num">Total</th>
       </tr>
     </thead>
     <tbody>
@@ -120,17 +120,12 @@
   @endif
 
   <div class="sign-section">
-    <div class="sign-box">
+    <div class="sign-box" style="width:50%">
       <div class="sign-line">
         Pemohon<br><strong>{{ $reimbursement->user->name }}</strong>
       </div>
     </div>
-    <div class="sign-box">
-      <div class="sign-line">
-        Diperiksa oleh<br>&nbsp;
-      </div>
-    </div>
-    <div class="sign-box">
+    <div class="sign-box" style="width:50%">
       <div class="sign-line">
         Disetujui oleh<br>
         <strong>{{ $reimbursement->approver?->name ?? '____________________' }}</strong>

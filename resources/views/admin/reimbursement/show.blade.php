@@ -69,7 +69,8 @@
 {{-- Items --}}
 <div class="card mb-3">
   <div class="card-header font-weight-bold">Rincian Biaya</div>
-  <div class="card-body p-0" style="overflow-x:auto">
+  <div class="card-body">
+    <div class="table-responsive">
     <table class="table table-bordered table-sm mb-0" style="min-width:1200px;font-size:.82rem">
       <thead class="thead-light">
         <tr>
@@ -105,6 +106,7 @@
         </tr>
       </tfoot>
     </table>
+    </div>
   </div>
 </div>
 
@@ -129,28 +131,23 @@
   <div class="card-header font-weight-bold bg-warning text-dark">Tindakan Approval</div>
   <div class="card-body">
     <div class="row">
-      <div class="col-md-6">
-        <form method="POST" action="{{ route('reimbursement.admin.approve', $reimbursement) }}">
+      <div class="col-md-6 mb-2 mb-md-0">
+        <form method="POST" action="{{ route('reimbursement.admin.approve', $reimbursement) }}" id="form-approve-reimb">
           @csrf
-          <button type="submit" class="btn btn-success btn-block"
-                  onclick="return confirm('Setujui pengajuan ini? Saldo karyawan akan berkurang Rp {{ number_format($reimbursement->total_claim, 0, ',', '.') }}')">
-            <i class="gd-check mr-1"></i> Setujui Pengajuan
-          </button>
         </form>
+        <button type="button" class="btn btn-success btn-block"
+                data-confirm="Setujui pengajuan {{ $reimbursement->request_number }}? Saldo karyawan {{ $reimbursement->user->name }} akan berkurang Rp {{ number_format($reimbursement->total_claim, 0, ',', '.') }}."
+                data-confirm-title="Setujui Pengajuan?"
+                data-confirm-type="primary"
+                data-confirm-ok="Ya, Setujui"
+                data-form="form-approve-reimb">
+          <i class="gd-check mr-1"></i> Setujui Pengajuan
+        </button>
       </div>
       <div class="col-md-6">
-        <form method="POST" action="{{ route('reimbursement.admin.reject', $reimbursement) }}">
-          @csrf
-          <div class="input-group">
-            <input type="text" name="rejection_reason" class="form-control" placeholder="Alasan penolakan (opsional)">
-            <div class="input-group-append">
-              <button type="submit" class="btn btn-danger"
-                      onclick="return confirm('Tolak pengajuan ini?')">
-                <i class="gd-close mr-1"></i> Tolak
-              </button>
-            </div>
-          </div>
-        </form>
+        <button type="button" class="btn btn-danger btn-block" onclick="openSiproModal('reject-modal')">
+          <i class="gd-close mr-1"></i> Tolak Pengajuan
+        </button>
       </div>
     </div>
   </div>
@@ -170,3 +167,39 @@
 </div>
 @endif
 @endsection
+
+@if($reimbursement->isSubmitted())
+@push('modals')
+<div class="sipro-overlay" id="reject-modal" role="dialog" aria-modal="true" aria-labelledby="reject-modal-title">
+  <div class="sipro-backdrop" onclick="closeSiproModal('reject-modal')"></div>
+  <div class="sipro-dialog" style="max-width:460px">
+    <div class="sipro-header">
+      <h5 id="reject-modal-title" style="display:flex;align-items:center;gap:8px">
+        <span style="color:#ef4444">&#9888;</span> Tolak Pengajuan?
+      </h5>
+      <button class="sipro-close" onclick="closeSiproModal('reject-modal')" aria-label="Tutup">&times;</button>
+    </div>
+    <form method="POST" action="{{ route('reimbursement.admin.reject', $reimbursement) }}" id="form-reject-reimb">
+      @csrf
+      <div class="sipro-body">
+        <p class="text-muted mb-3">
+          Pengajuan <strong>{{ $reimbursement->request_number }}</strong> dari
+          <strong>{{ $reimbursement->user->name }}</strong> akan ditolak.
+        </p>
+        <div class="form-group mb-0">
+          <label class="font-weight-bold">Alasan Penolakan <span class="text-muted font-weight-normal">(opsional)</span></label>
+          <textarea name="rejection_reason" class="form-control" rows="3"
+                    placeholder="Tuliskan alasan penolakan untuk diberitahukan ke karyawan..." maxlength="500"></textarea>
+        </div>
+      </div>
+      <div class="sipro-footer">
+        <button type="button" class="btn btn-light btn-sm" onclick="closeSiproModal('reject-modal')">Batal</button>
+        <button type="submit" class="btn btn-danger btn-sm">
+          <i class="gd-close mr-1"></i> Ya, Tolak Pengajuan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+@endpush
+@endif

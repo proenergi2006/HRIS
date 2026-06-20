@@ -14,6 +14,26 @@
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+      /* Badge kecil di icon sidebar — selalu terlihat walaupun sidebar compact/mini */
+      .sidebar-icon-badge {
+        position: absolute;
+        top: -5px;
+        right: -7px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 8px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        line-height: 16px;
+        text-align: center;
+        color: #fff;
+        pointer-events: none;
+      }
+      .sidebar-icon-badge.badge-danger  { background: #dc3545; }
+      .sidebar-icon-badge.badge-warning { background: #f59e0b; color: #1a1a1a; }
+    </style>
     @yield('styles')
 </head>
 

@@ -33,6 +33,7 @@
 <div class="card">
   <div class="card-header font-weight-bold">Saldo Medical Tahun {{ $year }}</div>
   <div class="card-body p-0">
+    <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead class="thead-light">
         <tr>
@@ -65,6 +66,7 @@
       @endforeach
       </tbody>
     </table>
+    </div>
   </div>
   <div class="card-footer">
     <button type="submit" class="btn btn-primary">

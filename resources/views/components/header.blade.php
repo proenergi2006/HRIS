@@ -1,13 +1,77 @@
 @php
 use App\Models\Appraisal\Appraisal;
+use App\Models\Reimbursement\ReimbursementRequest;
+use App\Models\WhistleblowerReport;
 
 $currentLocale = app()->getLocale();
 $authUser = auth()->user();
 
-// Notifikasi per role
-$notifItems = collect();
+$notifItems   = collect();
+$viewAllUrl   = route('dashboard');
+
 if ($authUser) {
-    if ($authUser->hasRole('user_ii')) {
+
+    // ── ADMIN ─────────────────────────────────────────────────────────────────
+    if ($authUser->hasRole('admin')) {
+
+        // 1. Reimbursement pending (paling urgent — admin harus approve)
+        $reimbPending = ReimbursementRequest::where('status', 'submitted')
+            ->with('user')
+            ->latest('updated_at')
+            ->take(3)
+            ->get()
+            ->map(fn($r) => [
+                'icon'  => 'gd-wallet',
+                'color' => 'text-danger',
+                'title' => __('notifications.reimb_pending'),
+                'body'  => __('notifications.reimb_pending_body', [
+                    'name'   => $r->user->name,
+                    'number' => $r->request_number,
+                ]),
+                'url'  => route('reimbursement.admin.show', $r),
+                'time' => $r->updated_at->diffForHumans(),
+            ]);
+
+        // 2. Whistleblower baru (admin harus tindaklanjuti)
+        $wbNew = WhistleblowerReport::where('status', 'new')
+            ->latest('updated_at')
+            ->take(2)
+            ->get()
+            ->map(fn($w) => [
+                'icon'  => 'gd-alert',
+                'color' => 'text-danger',
+                'title' => __('notifications.whistleblower_new'),
+                'body'  => __('notifications.whistleblower_new_body', [
+                    'ticket' => $w->ticket_number,
+                ]),
+                'url'  => route('whistleblower.admin.show', $w),
+                'time' => $w->updated_at->diffForHumans(),
+            ]);
+
+        // 3. Penilaian masih dalam proses (monitoring admin)
+        $appraisalPending = Appraisal::whereIn('status', ['submitted', 'approved_user2'])
+            ->with(['employee', 'period'])
+            ->latest('updated_at')
+            ->take(3)
+            ->get()
+            ->map(fn($a) => [
+                'icon'  => 'gd-clock',
+                'color' => 'text-warning',
+                'title' => __('notifications.appraisal_pending_admin'),
+                'body'  => __('notifications.appraisal_pending_admin_body', [
+                    'name'   => $a->employee->name,
+                    'period' => $a->period->name,
+                ]),
+                'url'  => route('appraisal.appraisals.show', $a),
+                'time' => $a->updated_at->diffForHumans(),
+            ]);
+
+        $notifItems = $reimbPending->merge($wbNew)->merge($appraisalPending)->take(6);
+        $viewAllUrl = route('reimbursement.admin.index', ['status' => 'submitted']);
+
+    // ── USER II ────────────────────────────────────────────────────────────────
+    } elseif ($authUser->hasRole('user_ii')) {
+
         $notifItems = Appraisal::where('status', Appraisal::STATUS_SUBMITTED)
             ->with(['employee', 'period'])
             ->latest('updated_at')
@@ -21,10 +85,14 @@ if ($authUser) {
                     'name'   => $a->employee->name,
                     'period' => $a->period->name,
                 ]),
-                'url'   => route('appraisal.appraisals.show', $a),
-                'time'  => $a->updated_at->diffForHumans(),
+                'url'  => route('appraisal.appraisals.show', $a),
+                'time' => $a->updated_at->diffForHumans(),
             ]);
+        $viewAllUrl = route('appraisal.appraisals.index');
+
+    // ── CFO / CEO ──────────────────────────────────────────────────────────────
     } elseif ($authUser->hasAnyRole(['cfo', 'ceo'])) {
+
         $notifItems = Appraisal::where('status', Appraisal::STATUS_APPROVED_U2)
             ->with(['employee', 'period'])
             ->latest('updated_at')
@@ -38,10 +106,14 @@ if ($authUser) {
                     'name'   => $a->employee->name,
                     'period' => $a->period->name,
                 ]),
-                'url'   => route('appraisal.appraisals.show', $a),
-                'time'  => $a->updated_at->diffForHumans(),
+                'url'  => route('appraisal.appraisals.show', $a),
+                'time' => $a->updated_at->diffForHumans(),
             ]);
+        $viewAllUrl = route('appraisal.appraisals.index');
+
+    // ── EVALUATOR ──────────────────────────────────────────────────────────────
     } elseif ($authUser->hasRole('evaluator')) {
+
         $notifItems = Appraisal::where('status', Appraisal::STATUS_REJECTED)
             ->where('evaluator_id', $authUser->id)
             ->with(['employee', 'period'])
@@ -56,26 +128,34 @@ if ($authUser) {
                     'name'   => $a->employee->name,
                     'period' => $a->period->name,
                 ]),
-                'url'   => route('appraisal.appraisals.show', $a),
-                'time'  => $a->updated_at->diffForHumans(),
+                'url'  => route('appraisal.appraisals.show', $a),
+                'time' => $a->updated_at->diffForHumans(),
             ]);
-    } elseif ($authUser->hasRole('admin')) {
-        $notifItems = Appraisal::where('status', Appraisal::STATUS_APPROVED_CFO)
-            ->with(['employee', 'period'])
+        $viewAllUrl = route('appraisal.appraisals.index');
+
+    // ── KARYAWAN / USER BIASA ──────────────────────────────────────────────────
+    } else {
+
+        // Status reimbursement yang baru diproses (30 hari terakhir)
+        $notifItems = ReimbursementRequest::where('user_id', $authUser->id)
+            ->whereIn('status', ['approved', 'rejected'])
+            ->where('updated_at', '>=', now()->subDays(30))
             ->latest('updated_at')
             ->take(6)
             ->get()
-            ->map(fn($a) => [
-                'icon'  => 'gd-check',
-                'color' => 'text-success',
-                'title' => __('notifications.appraisal_final'),
-                'body'  => __('notifications.appraisal_final_body', [
-                    'name'   => $a->employee->name,
-                    'period' => $a->period->name,
-                ]),
-                'url'   => route('appraisal.appraisals.show', $a),
-                'time'  => $a->updated_at->diffForHumans(),
+            ->map(fn($r) => [
+                'icon'  => $r->status === 'approved' ? 'gd-check-circle' : 'gd-times-circle',
+                'color' => $r->status === 'approved' ? 'text-success' : 'text-danger',
+                'title' => $r->status === 'approved'
+                    ? __('notifications.reimb_approved')
+                    : __('notifications.reimb_rejected'),
+                'body'  => $r->status === 'approved'
+                    ? __('notifications.reimb_approved_body', ['number' => $r->request_number])
+                    : __('notifications.reimb_rejected_body', ['number' => $r->request_number]),
+                'url'  => route('reimbursement.show', $r),
+                'time' => $r->updated_at->diffForHumans(),
             ]);
+        $viewAllUrl = route('reimbursement.index');
     }
 }
 $notifCount = $notifItems->count();
@@ -217,7 +297,7 @@ $notifCount = $notifItems->count();
                 </div>
 
                 <div class="card-footer py-2 text-center" style="font-size:0.8rem;">
-                  <a href="{{ route('appraisal.appraisals.index') }}" class="text-primary font-weight-bold">
+                  <a href="{{ $viewAllUrl }}" class="text-primary font-weight-bold">
                     {{ __('notifications.view_all') }} &rarr;
                   </a>
                 </div>
