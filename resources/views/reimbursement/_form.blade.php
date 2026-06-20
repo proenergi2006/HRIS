@@ -134,21 +134,21 @@
 </template>
 
 {{-- Pre-fill existing items for edit --}}
-@if($editing && $reimb->items->isNotEmpty())
-<script>
-window.__existingItems = @json($reimb->items->map(function($item) use ($amtLabels) {
-    $data = [
-        'patient_name'   => $item->patient_name,
-        'treatment_date' => $item->treatment_date->format('Y-m-d'),
-        'institution'    => $item->institution,
-        'diagnose'       => $item->diagnose,
-    ];
-    foreach (array_keys($amtLabels) as $field) {
-        $data[$field] = $item->$field;
+@php
+    $existingItemsJson = 'null';
+    if ($editing && $reimb->items->isNotEmpty()) {
+        $existingItemsJson = $reimb->items->map(function($item) use ($amtLabels) {
+            $data = [
+                'patient_name'   => $item->patient_name,
+                'treatment_date' => $item->treatment_date->format('Y-m-d'),
+                'institution'    => $item->institution,
+                'diagnose'       => $item->diagnose,
+            ];
+            foreach (array_keys($amtLabels) as $field) {
+                $data[$field] = $item->$field;
+            }
+            return $data;
+        })->toJson();
     }
-    return $data;
-}));
-</script>
-@else
-<script>window.__existingItems = null;</script>
-@endif
+@endphp
+<script>window.__existingItems = {!! $existingItemsJson !!};</script>
