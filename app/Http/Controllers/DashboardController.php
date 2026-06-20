@@ -90,6 +90,8 @@ class DashboardController extends Controller implements HasMiddleware
             ->get();
 
         $recentAppraisals = Appraisal::with(['employee', 'period'])
+            ->whereHas('employee')
+            ->whereHas('period')
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();
@@ -98,7 +100,8 @@ class DashboardController extends Controller implements HasMiddleware
             'pending'      => ReimbursementRequest::where('status', 'submitted')->count(),
             'approved'     => ReimbursementRequest::where('status', 'approved')->whereYear('approved_at', now()->year)->count(),
             'total_claim'  => ReimbursementRequest::where('status', 'approved')->whereYear('approved_at', now()->year)->sum('total_claim'),
-            'recent'       => ReimbursementRequest::with('user')->whereIn('status', ['submitted', 'approved', 'rejected'])
+            'recent'       => ReimbursementRequest::with('user')->whereHas('user')
+                                ->whereIn('status', ['submitted', 'approved', 'rejected'])
                                 ->latest('updated_at')->limit(5)->get(),
         ];
 
@@ -108,6 +111,8 @@ class DashboardController extends Controller implements HasMiddleware
     private function step1ApproverDashboard($user)
     {
         $baseQuery = Appraisal::with(['employee', 'period'])
+            ->whereHas('employee')
+            ->whereHas('period')
             ->where('status', 'submitted');
 
         if ($user->department) {
@@ -137,6 +142,8 @@ class DashboardController extends Controller implements HasMiddleware
     private function finalApproverDashboard($user)
     {
         $baseQuery = Appraisal::with(['employee', 'period'])
+            ->whereHas('employee')
+            ->whereHas('period')
             ->where('status', 'approved_user2');
 
         if ($user->department) {
@@ -166,6 +173,8 @@ class DashboardController extends Controller implements HasMiddleware
     private function evaluatorDashboard($user)
     {
         $myAppraisals = Appraisal::with(['employee', 'period'])
+            ->whereHas('employee')
+            ->whereHas('period')
             ->where('evaluator_id', $user->id)
             ->orderByDesc('updated_at')
             ->get();

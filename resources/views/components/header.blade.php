@@ -9,6 +9,7 @@ $authUser = auth()->user();
 $notifItems   = collect();
 $viewAllUrl   = route('dashboard');
 
+try {
 if ($authUser) {
 
     // ── ADMIN ─────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ if ($authUser) {
 
         // 1. Reimbursement pending (paling urgent — admin harus approve)
         $reimbPending = ReimbursementRequest::where('status', 'submitted')
+            ->whereHas('user')
             ->with('user')
             ->latest('updated_at')
             ->take(3)
@@ -25,7 +27,7 @@ if ($authUser) {
                 'color' => 'text-danger',
                 'title' => __('notifications.reimb_pending'),
                 'body'  => __('notifications.reimb_pending_body', [
-                    'name'   => $r->user->name,
+                    'name'   => $r->user?->name ?? '-',
                     'number' => $r->request_number,
                 ]),
                 'url'  => route('reimbursement.admin.show', $r),
@@ -50,6 +52,8 @@ if ($authUser) {
 
         // 3. Penilaian masih dalam proses (monitoring admin)
         $appraisalPending = Appraisal::whereIn('status', ['submitted', 'approved_user2'])
+            ->whereHas('employee')
+            ->whereHas('period')
             ->with(['employee', 'period'])
             ->latest('updated_at')
             ->take(3)
@@ -59,8 +63,8 @@ if ($authUser) {
                 'color' => 'text-warning',
                 'title' => __('notifications.appraisal_pending_admin'),
                 'body'  => __('notifications.appraisal_pending_admin_body', [
-                    'name'   => $a->employee->name,
-                    'period' => $a->period->name,
+                    'name'   => $a->employee?->name ?? '-',
+                    'period' => $a->period?->name ?? '-',
                 ]),
                 'url'  => route('appraisal.appraisals.show', $a),
                 'time' => $a->updated_at->diffForHumans(),
@@ -73,6 +77,8 @@ if ($authUser) {
     } elseif ($authUser->hasRole('user_ii')) {
 
         $notifItems = Appraisal::where('status', Appraisal::STATUS_SUBMITTED)
+            ->whereHas('employee')
+            ->whereHas('period')
             ->with(['employee', 'period'])
             ->latest('updated_at')
             ->take(6)
@@ -82,8 +88,8 @@ if ($authUser) {
                 'color' => 'text-warning',
                 'title' => __('notifications.pending_approval'),
                 'body'  => __('notifications.pending_approval_body', [
-                    'name'   => $a->employee->name,
-                    'period' => $a->period->name,
+                    'name'   => $a->employee?->name ?? '-',
+                    'period' => $a->period?->name ?? '-',
                 ]),
                 'url'  => route('appraisal.appraisals.show', $a),
                 'time' => $a->updated_at->diffForHumans(),
@@ -94,6 +100,8 @@ if ($authUser) {
     } elseif ($authUser->hasAnyRole(['cfo', 'ceo'])) {
 
         $notifItems = Appraisal::where('status', Appraisal::STATUS_APPROVED_U2)
+            ->whereHas('employee')
+            ->whereHas('period')
             ->with(['employee', 'period'])
             ->latest('updated_at')
             ->take(6)
@@ -103,8 +111,8 @@ if ($authUser) {
                 'color' => 'text-info',
                 'title' => __('notifications.pending_final'),
                 'body'  => __('notifications.pending_final_body', [
-                    'name'   => $a->employee->name,
-                    'period' => $a->period->name,
+                    'name'   => $a->employee?->name ?? '-',
+                    'period' => $a->period?->name ?? '-',
                 ]),
                 'url'  => route('appraisal.appraisals.show', $a),
                 'time' => $a->updated_at->diffForHumans(),
@@ -116,6 +124,8 @@ if ($authUser) {
 
         $notifItems = Appraisal::where('status', Appraisal::STATUS_REJECTED)
             ->where('evaluator_id', $authUser->id)
+            ->whereHas('employee')
+            ->whereHas('period')
             ->with(['employee', 'period'])
             ->latest('updated_at')
             ->take(6)
@@ -125,8 +135,8 @@ if ($authUser) {
                 'color' => 'text-danger',
                 'title' => __('notifications.appraisal_rejected'),
                 'body'  => __('notifications.appraisal_rejected_body', [
-                    'name'   => $a->employee->name,
-                    'period' => $a->period->name,
+                    'name'   => $a->employee?->name ?? '-',
+                    'period' => $a->period?->name ?? '-',
                 ]),
                 'url'  => route('appraisal.appraisals.show', $a),
                 'time' => $a->updated_at->diffForHumans(),
@@ -157,6 +167,12 @@ if ($authUser) {
             ]);
         $viewAllUrl = route('reimbursement.index');
     }
+} // end if ($authUser)
+} catch (\Throwable $e) {
+    // Jika loading notifikasi gagal (data truncated, relasi rusak, dll),
+    // halaman tetap tampil normal tanpa notifikasi.
+    $notifItems = collect();
+    $viewAllUrl = route('dashboard');
 }
 $notifCount = $notifItems->count();
 @endphp

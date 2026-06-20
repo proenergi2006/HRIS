@@ -110,7 +110,7 @@
             @foreach($reimb['recent'] as $r)
             <tr>
                 <td class="pl-3 font-weight-bold">{{ $r->request_number }}</td>
-                <td>{{ $r->user->name }}</td>
+                <td>{{ $r->user?->name ?? '-' }}</td>
                 <td class="text-right">Rp {{ number_format($r->total_claim, 0, ',', '.') }}</td>
                 <td class="text-center">
                     <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$r->status] }}">
@@ -258,10 +258,10 @@
                     @endphp
                     <tr>
                         <td>
-                            <div class="font-weight-bold" style="font-size:0.85rem;">{{ $a->employee->name }}</div>
-                            <small class="text-muted">{{ $a->employee->position }}</small>
+                            <div class="font-weight-bold" style="font-size:0.85rem;">{{ $a->employee?->name ?? '-' }}</div>
+                            <small class="text-muted">{{ $a->employee?->position ?? '-' }}</small>
                         </td>
-                        <td><small>{{ $a->period->name }}</small></td>
+                        <td><small>{{ $a->period?->name ?? '-' }}</small></td>
                         <td class="text-center">{{ $a->total_score ?: '-' }}</td>
                         <td class="text-center">
                             @if($a->grade)

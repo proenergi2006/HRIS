@@ -79,10 +79,10 @@
                         @foreach($drafts as $a)
                             <tr>
                                 <td>
-                                    <div class="font-weight-bold">{{ $a->employee->name }}</div>
-                                    <small class="text-muted">{{ $a->employee->position }}</small>
+                                    <div class="font-weight-bold">{{ $a->employee?->name ?? '-' }}</div>
+                                    <small class="text-muted">{{ $a->employee?->position ?? '-' }}</small>
                                 </td>
-                                <td><small>{{ $a->period->name }}</small></td>
+                                <td><small>{{ $a->period?->name ?? '-' }}</small></td>
                                 <td>
                                     <span class="badge badge-{{ $a->status === 'rejected' ? 'danger' : 'secondary' }}">
                                         {{ $a->status_label }}
@@ -146,10 +146,10 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <div class="font-weight-bold">{{ $a->employee->name }}</div>
-                                        <small class="text-muted">{{ $a->employee->position }}</small>
+                                        <div class="font-weight-bold">{{ $a->employee?->name ?? '-' }}</div>
+                                        <small class="text-muted">{{ $a->employee?->position ?? '-' }}</small>
                                     </td>
-                                    <td><small>{{ $a->period->name }}</small></td>
+                                    <td><small>{{ $a->period?->name ?? '-' }}</small></td>
                                     <td class="text-center">{{ $a->total_score ?: '-' }}</td>
                                     <td class="text-center">
                                         @if($a->grade)<span class="badge badge-info">{{ $a->grade }}</span>@else -@endif

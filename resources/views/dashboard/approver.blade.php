@@ -70,11 +70,11 @@
                         @endphp
                         <tr>
                             <td>
-                                <div class="font-weight-bold">{{ $a->employee->name }}</div>
-                                <small class="text-muted">{{ $a->employee->position }}</small>
+                                <div class="font-weight-bold">{{ $a->employee?->name ?? '-' }}</div>
+                                <small class="text-muted">{{ $a->employee?->position ?? '-' }}</small>
                             </td>
-                            <td>{{ $a->employee->department ?? '-' }}</td>
-                            <td><small>{{ $a->period->name }}</small></td>
+                            <td>{{ $a->employee?->department ?? '-' }}</td>
+                            <td><small>{{ $a->period?->name ?? '-' }}</small></td>
                             <td class="text-center">{{ $a->total_score ?: '-' }}</td>
                             <td class="text-center">
                                 @if($a->grade)
