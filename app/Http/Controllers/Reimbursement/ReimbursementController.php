@@ -10,6 +10,7 @@ use App\Models\Reimbursement\ReimbursementItem;
 use App\Models\Reimbursement\ReimbursementRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
@@ -176,8 +177,7 @@ class ReimbursementController extends Controller
         abort_unless($reimbursement->user_id === auth()->id() || auth()->user()->hasRole('admin'), 403);
         $reimbursement->load(['items', 'user', 'approver']);
 
-        $pdf = app('dompdf.wrapper');
-        $pdf->loadView('reimbursement.pdf', compact('reimbursement'))->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('reimbursement.pdf', compact('reimbursement'))->setPaper('a4', 'landscape');
         return $pdf->download('reimbursement-' . $reimbursement->request_number . '.pdf');
     }
 

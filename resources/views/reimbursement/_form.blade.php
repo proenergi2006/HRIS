@@ -119,10 +119,10 @@
 {{-- Row template (hidden) --}}
 <template id="row-tpl">
   <tr data-idx="__IDX__">
-    <td><input type="text" name="items[__IDX__][patient_name]" class="form-control form-control-sm" required></td>
-    <td><input type="date" name="items[__IDX__][treatment_date]" class="form-control form-control-sm" required></td>
-    <td><input type="text" name="items[__IDX__][institution]" class="form-control form-control-sm" required></td>
-    <td><input type="text" name="items[__IDX__][diagnose]" class="form-control form-control-sm"></td>
+    <td><input type="text" name="items[__IDX__][patient_name]" data-col="patient_name" class="form-control form-control-sm" required></td>
+    <td><input type="date" name="items[__IDX__][treatment_date]" data-col="treatment_date" class="form-control form-control-sm" required></td>
+    <td><input type="text" name="items[__IDX__][institution]" data-col="institution" class="form-control form-control-sm" required></td>
+    <td><input type="text" name="items[__IDX__][diagnose]" data-col="diagnose" class="form-control form-control-sm"></td>
     @foreach($amtLabels as $key => $lbl)
       <td><input type="number" name="items[__IDX__][{{ $key }}]" class="form-control form-control-sm amt-input text-right" min="0" value="0" data-field="{{ $key }}"></td>
     @endforeach

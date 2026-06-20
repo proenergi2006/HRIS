@@ -40,10 +40,10 @@
     var row = tbody.querySelector('tr[data-idx="' + idx + '"]');
 
     if (data) {
-      row.querySelector('[name$="[patient_name]"]').value   = data.patient_name || '';
-      row.querySelector('[name$="[treatment_date]"]').value = data.treatment_date || '';
-      row.querySelector('[name$="[institution]"]').value    = data.institution || '';
-      row.querySelector('[name$="[diagnose]"]').value       = data.diagnose || '';
+      row.querySelector('[data-col="patient_name"]').value   = data.patient_name || '';
+      row.querySelector('[data-col="treatment_date"]').value = data.treatment_date || '';
+      row.querySelector('[data-col="institution"]').value    = data.institution || '';
+      row.querySelector('[data-col="diagnose"]').value       = data.diagnose || '';
       amtFields.forEach(function(f) {
         var inp = row.querySelector('[data-field="' + f + '"]');
         if (inp) inp.value = data[f] || 0;

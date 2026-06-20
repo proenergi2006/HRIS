@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Reimbursement;
 use App\Http\Controllers\Controller;
 use App\Models\Reimbursement\ReimbursementBalance;
 use App\Models\Reimbursement\ReimbursementRequest;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ReimbursementAdminController extends Controller
@@ -84,8 +85,7 @@ class ReimbursementAdminController extends Controller
     public function pdf(ReimbursementRequest $reimbursement)
     {
         $reimbursement->load(['items', 'user', 'approver']);
-        $pdf = app('dompdf.wrapper');
-        $pdf->loadView('reimbursement.pdf', compact('reimbursement'))->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('reimbursement.pdf', compact('reimbursement'))->setPaper('a4', 'landscape');
         return $pdf->download('reimbursement-' . $reimbursement->request_number . '.pdf');
     }
 }
