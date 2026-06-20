@@ -61,7 +61,7 @@ class ReimbursementController extends Controller
         $user     = auth()->user();
         $balance  = ReimbursementBalance::forUser($user->id);
         $requests = ReimbursementRequest::where('user_id', $user->id)
-            ->latest('request_date')->get();
+            ->latest('request_date')->paginate(15)->withQueryString();
 
         return view('reimbursement.index', compact('balance', 'requests'));
     }

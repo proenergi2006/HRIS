@@ -23,6 +23,7 @@ use App\Http\Controllers\GA\GaCleaningLogController;
 use App\Http\Controllers\Reimbursement\ReimbursementController;
 use App\Http\Controllers\Reimbursement\ReimbursementAdminController;
 use App\Http\Controllers\Reimbursement\ReimbursementBalanceController;
+use App\Http\Controllers\ActivityLogController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -128,6 +129,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/whistleblower')->name('
     Route::get('/{report}',                             [WhistleblowerController::class, 'show'])->name('show');
     Route::patch('/{report}/status',                    [WhistleblowerController::class, 'updateStatus'])->name('update-status');
     Route::get('/{report}/download',                    [WhistleblowerController::class, 'download'])->name('download');
+});
+
+// ── Activity Log — admin only ──────────────────────────────────────────
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
 });
 
 // ── Admin HRD only ─────────────────────────────────────────────────────

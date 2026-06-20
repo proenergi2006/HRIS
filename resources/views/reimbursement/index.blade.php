@@ -43,7 +43,7 @@
 <div class="card">
   <div class="card-body">
     <div class="table-responsive">
-    <table id="dt-reimb" class="table table-hover mb-0" style="width:100%">
+    <table class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
           <th>No. Pengajuan</th>
@@ -55,7 +55,7 @@
         </tr>
       </thead>
       <tbody>
-      @foreach($requests as $r)
+      @forelse($requests as $r)
         <tr>
           <td class="font-weight-bold">{{ $r->request_number }}</td>
           <td>{{ $r->request_date->format('d/m/Y') }}</td>
@@ -77,16 +77,21 @@
             @endif
           </td>
         </tr>
-      @endforeach
+      @empty
+        <tr><td colspan="6" class="text-center text-muted py-4">Belum ada pengajuan.</td></tr>
+      @endforelse
       </tbody>
     </table>
     </div>
+
+    @if($requests->hasPages())
+    <div class="mt-3 d-flex justify-content-between align-items-center">
+      <small class="text-muted">
+        Menampilkan {{ $requests->firstItem() }}–{{ $requests->lastItem() }} dari {{ $requests->total() }} pengajuan
+      </small>
+      {{ $requests->links() }}
+    </div>
+    @endif
   </div>
 </div>
-@endsection
-
-@section('scripts')
-<script>
-$('#dt-reimb').DataTable({ language: window.siproDtLang, order: [[1,'desc']], columnDefs: [{orderable:false,targets:-1}] });
-</script>
 @endsection

@@ -27,7 +27,14 @@ class ReimbursementAdminController extends Controller
             $query->whereYear('request_date', $request->year);
         }
 
-        $requests = $query->get();
+        if ($search = $request->search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('request_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $requests = $query->paginate(20)->withQueryString();
         $users    = \App\Models\User::orderBy('name')->get();
 
         return view('admin.reimbursement.index', compact('requests', 'users'));

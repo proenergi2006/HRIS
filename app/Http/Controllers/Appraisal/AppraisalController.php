@@ -53,9 +53,13 @@ class AppraisalController extends Controller implements HasMiddleware
             });
         }
 
-        $appraisals = $query->orderByDesc('id')->get();
+        if ($search = $request->get('search')) {
+            $query->whereHas('employee', fn($q) => $q->where('name', 'like', "%{$search}%"));
+        }
 
-        return view('appraisal.appraisal.index', compact('appraisals', 'periods', 'selectedPeriod'));
+        $appraisals = $query->orderByDesc('id')->paginate(25)->withQueryString();
+
+        return view('appraisal.appraisal.index', compact('appraisals', 'periods', 'selectedPeriod', 'search'));
     }
 
     public function create()

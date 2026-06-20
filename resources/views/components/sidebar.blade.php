@@ -201,7 +201,7 @@
 
   {{-- ── System — admin only (gabung Users + Whistleblower) ── --}}
   @if($sidebarUser?->hasRole('admin'))
-  @php $systemActive = Request::is('users*') || Request::is('admin/whistleblower*'); @endphp
+  @php $systemActive = Request::is('users*') || Request::is('admin/whistleblower*') || Request::is('admin/activity-log*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $systemActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subSystem">
       {{-- Icon + mini badge --}}
@@ -229,6 +229,11 @@
           @if($newWb > 0)
             <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $newWb }}</span>
           @endif
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/activity-log*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('admin.activity-log.index') }}">
+          <i class="gd-list mr-2"></i>Activity Log
         </a>
       </li>
     </ul>
