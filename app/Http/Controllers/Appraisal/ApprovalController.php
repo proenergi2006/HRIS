@@ -3,11 +3,16 @@
 namespace App\Http\Controllers\Appraisal;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppraisalFinalizedMail;
+use App\Mail\AppraisalNeedsApprovalMail;
+use App\Mail\AppraisalRejectedMail;
 use App\Models\Appraisal\Appraisal;
+use App\Models\User;
 use App\Services\Appraisal\ApprovalStateMachine;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Mail;
 
 class ApprovalController extends Controller implements HasMiddleware
 {
@@ -28,6 +33,11 @@ class ApprovalController extends Controller implements HasMiddleware
         }
 
         $sm->submit($appraisal, auth()->user());
+        $appraisal->refresh()->load('employee', 'period');
+
+        // Notify approver(s) yang perlu bertindak berikutnya
+        $nextStep = $appraisal->status === Appraisal::STATUS_SUBMITTED ? 1 : 2;
+        $this->notifyNextApprovers($sm, $appraisal, $nextStep);
 
         return redirect()->route('appraisal.appraisals.show', $appraisal)
             ->with('status', 'Penilaian berhasil disubmit dan menunggu persetujuan.');
@@ -55,11 +65,20 @@ class ApprovalController extends Controller implements HasMiddleware
         }
 
         $sm->approve($appraisal, $user, $request->input('notes'));
+        $appraisal->refresh()->load('employee', 'period', 'evaluator');
 
-        $isFinal = $appraisal->fresh()->isFinal();
-        $msg = $isFinal
-            ? 'Penilaian telah disetujui final dan dikunci.'
-            : 'Penilaian disetujui dan diteruskan ke tahap berikutnya.';
+        if ($isFinalStep) {
+            // Penilaian final — notify evaluator
+            if ($appraisal->evaluator && $appraisal->evaluator->email) {
+                Mail::to($appraisal->evaluator->email)
+                    ->send(new AppraisalFinalizedMail($appraisal));
+            }
+            $msg = 'Penilaian telah disetujui final dan dikunci.';
+        } else {
+            // Step 1 approve → notify step 2 approvers
+            $this->notifyNextApprovers($sm, $appraisal, 2);
+            $msg = 'Penilaian disetujui dan diteruskan ke tahap berikutnya.';
+        }
 
         return redirect()->route('appraisal.appraisals.show', $appraisal)->with('status', $msg);
     }
@@ -74,9 +93,38 @@ class ApprovalController extends Controller implements HasMiddleware
 
         $request->validate(['notes' => 'required|string|max:1000']);
 
-        $sm->reject($appraisal, auth()->user(), $request->input('notes'));
+        $notes = $request->input('notes');
+        $sm->reject($appraisal, auth()->user(), $notes);
+        $appraisal->refresh()->load('employee', 'period', 'evaluator');
+
+        // Notify evaluator bahwa penilaian dikembalikan
+        if ($appraisal->evaluator && $appraisal->evaluator->email) {
+            Mail::to($appraisal->evaluator->email)
+                ->send(new AppraisalRejectedMail($appraisal, $notes));
+        }
 
         return redirect()->route('appraisal.appraisals.show', $appraisal)
             ->with('status', 'Penilaian telah dikembalikan ke evaluator untuk diperbaiki.');
+    }
+
+    private function notifyNextApprovers(ApprovalStateMachine $sm, Appraisal $appraisal, int $step): void
+    {
+        $cfg = $sm->stepConfig($appraisal, $step);
+        if (! $cfg) {
+            return;
+        }
+
+        $approvers = User::role($cfg->role)->get();
+        foreach ($approvers as $approver) {
+            if (! $approver->email) {
+                continue;
+            }
+            // Filter by department jika approver punya department
+            if ($approver->department && $approver->department !== ($appraisal->employee?->department ?? '')) {
+                continue;
+            }
+            Mail::to($approver->email)
+                ->send(new AppraisalNeedsApprovalMail($appraisal, $cfg->label ?? $cfg->role));
+        }
     }
 }

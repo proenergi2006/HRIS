@@ -1,42 +1,64 @@
 @php
+    use Illuminate\Support\Facades\Cache;
+
     $sidebarUser = auth()->user();
-    $pendingCount = 0;
+    $uid = $sidebarUser?->id;
+
+    $pendingCount      = 0;
     $pendingBadgeClass = 'badge-warning';
+
     if ($sidebarUser?->hasRole('admin')) {
-        $pendingCount = \App\Models\Appraisal\Appraisal::whereIn('status', ['submitted', 'approved_user2'])->count();
+        $pendingCount = Cache::remember('sb_appraisal_admin', 60, fn() =>
+            \App\Models\Appraisal\Appraisal::whereIn('status', ['submitted', 'approved_user2'])->count()
+        );
         $pendingBadgeClass = 'badge-danger';
+
     } elseif ($sidebarUser?->hasRole('user_ii')) {
-        $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'submitted')->count();
+        $pendingCount = Cache::remember('sb_appraisal_user_ii', 60, fn() =>
+            \App\Models\Appraisal\Appraisal::where('status', 'submitted')->count()
+        );
         $pendingBadgeClass = 'badge-danger';
+
     } elseif ($sidebarUser?->hasAnyRole(['cfo','ceo'])) {
-        $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'approved_user2')->count();
+        $pendingCount = Cache::remember('sb_appraisal_cfo', 60, fn() =>
+            \App\Models\Appraisal\Appraisal::where('status', 'approved_user2')->count()
+        );
         $pendingBadgeClass = 'badge-danger';
+
     } elseif ($sidebarUser?->hasRole('evaluator')) {
-        $pendingCount = \App\Models\Appraisal\Appraisal::where('status', 'rejected')
-            ->where('evaluator_id', $sidebarUser->id)->count();
+        $pendingCount = Cache::remember("sb_appraisal_evaluator_{$uid}", 60, fn() =>
+            \App\Models\Appraisal\Appraisal::where('status', 'rejected')
+                ->where('evaluator_id', $uid)->count()
+        );
         $pendingBadgeClass = 'badge-warning';
     }
 
-    // Reimbursement counts (dihitung di sini supaya bisa dipakai di GA section juga)
-    $pendingReim    = ($sidebarUser && !$sidebarUser->hasRole('admin_ga'))
-                    ? \App\Models\Reimbursement\ReimbursementRequest::where('user_id', $sidebarUser->id)->where('status','submitted')->count()
-                    : 0;
+    // Reimbursement counts
+    $pendingReim = ($sidebarUser && !$sidebarUser->hasRole('admin_ga'))
+        ? Cache::remember("sb_reim_user_{$uid}", 60, fn() =>
+            \App\Models\Reimbursement\ReimbursementRequest::where('user_id', $uid)->where('status','submitted')->count()
+          )
+        : 0;
+
     $pendingAllReim = $sidebarUser?->hasRole('admin')
-                    ? \App\Models\Reimbursement\ReimbursementRequest::where('status','submitted')->count()
-                    : 0;
+        ? Cache::remember('sb_reim_admin', 60, fn() =>
+            \App\Models\Reimbursement\ReimbursementRequest::where('status','submitted')->count()
+          )
+        : 0;
 
     // Whistleblower (hanya admin)
     $newWb = $sidebarUser?->hasRole('admin')
-           ? \App\Models\WhistleblowerReport::where('status','new')->count()
-           : 0;
+        ? Cache::remember('sb_wb_new', 60, fn() =>
+            \App\Models\WhistleblowerReport::where('status','new')->count()
+          )
+        : 0;
 
     // GA — kendaraan aktif
     $activeVehicles = $sidebarUser?->hasAnyRole(['admin_ga','admin'])
-                    ? \App\Models\GA\VehicleUsage::where('status','checked_in')->count()
-                    : 0;
-
-    // Helper: badge merah kecil di icon (selalu terlihat walaupun sidebar compact)
-    // Dipanggil manual per section di bawah
+        ? Cache::remember('sb_ga_vehicles', 60, fn() =>
+            \App\Models\GA\VehicleUsage::where('status','checked_in')->count()
+          )
+        : 0;
 @endphp
 <!-- Sidebar Nav -->
 <aside id="sidebar" class="js-custom-scroll side-nav">
