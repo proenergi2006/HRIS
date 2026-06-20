@@ -20,6 +20,9 @@ use App\Http\Controllers\GA\GaUsageController;
 use App\Http\Controllers\GA\PublicRoomController;
 use App\Http\Controllers\GA\GaRoomController;
 use App\Http\Controllers\GA\GaCleaningLogController;
+use App\Http\Controllers\Reimbursement\ReimbursementController;
+use App\Http\Controllers\Reimbursement\ReimbursementAdminController;
+use App\Http\Controllers\Reimbursement\ReimbursementBalanceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -91,6 +94,31 @@ Route::middleware(['auth', 'role:admin_ga|admin'])->prefix('admin/ga')->name('ga
     Route::get('cleaning-logs',                           [GaCleaningLogController::class, 'index'])->name('cleaning-logs.index');
     Route::get('cleaning-logs/{log}',                     [GaCleaningLogController::class, 'show'])->name('cleaning-logs.show');
     Route::get('cleaning-logs/{log}/photo/{photo}',       [GaCleaningLogController::class, 'photo'])->name('cleaning-logs.photo');
+});
+
+// ── Medical Reimbursement — semua user yang login ─────────────────────
+Route::middleware('auth')->prefix('reimbursement')->name('reimbursement.')->group(function () {
+    Route::get('/',                                          [ReimbursementController::class, 'index'])->name('index');
+    Route::get('/create',                                    [ReimbursementController::class, 'create'])->name('create');
+    Route::post('/',                                         [ReimbursementController::class, 'store'])->name('store');
+    Route::get('/{reimbursement}',                           [ReimbursementController::class, 'show'])->name('show');
+    Route::get('/{reimbursement}/edit',                      [ReimbursementController::class, 'edit'])->name('edit');
+    Route::put('/{reimbursement}',                           [ReimbursementController::class, 'update'])->name('update');
+    Route::post('/{reimbursement}/submit',                   [ReimbursementController::class, 'submit'])->name('submit');
+    Route::get('/{reimbursement}/pdf',                       [ReimbursementController::class, 'pdf'])->name('pdf');
+    Route::get('/{reimbursement}/attachment/{attachment}',   [ReimbursementController::class, 'attachment'])->name('attachment');
+});
+
+// ── Medical Reimbursement Admin — role:admin ──────────────────────────
+Route::middleware(['auth', 'role:admin'])->prefix('admin/reimbursement')->name('reimbursement.admin.')->group(function () {
+    Route::get('/',                                                          [ReimbursementAdminController::class, 'index'])->name('index');
+    Route::get('/balances',                                                  [ReimbursementBalanceController::class, 'index'])->name('balances');
+    Route::post('/balances',                                                 [ReimbursementBalanceController::class, 'upsert'])->name('balances.upsert');
+    Route::get('/{reimbursement}',                                           [ReimbursementAdminController::class, 'show'])->name('show');
+    Route::post('/{reimbursement}/approve',                                  [ReimbursementAdminController::class, 'approve'])->name('approve');
+    Route::post('/{reimbursement}/reject',                                   [ReimbursementAdminController::class, 'reject'])->name('reject');
+    Route::get('/{reimbursement}/pdf',                                       [ReimbursementAdminController::class, 'pdf'])->name('pdf');
+    Route::get('/{reimbursement}/attachment/{attachment}',                   [ReimbursementAdminController::class, 'attachment'])->name('attachment');
 });
 
 // ── Whistleblower admin — auth only ───────────────────────────────────

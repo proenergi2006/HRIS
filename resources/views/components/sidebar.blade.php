@@ -113,6 +113,33 @@
     </a>
   </li>
 
+  {{-- Medical Reimbursement — semua user --}}
+  <li class="sidebar-heading h6">Reimbursement</li>
+  <li class="side-nav-menu-item {{ Request::is('reimbursement*') && !Request::is('admin/reimbursement*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="{{ route('reimbursement.index') }}">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-wallet"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Medical
+        @php $pendingReim = \App\Models\Reimbursement\ReimbursementRequest::where('user_id', $sidebarUser?->id)->whereIn('status',['submitted'])->count(); @endphp
+        @if($pendingReim > 0)
+          <span class="badge badge-warning badge-pill ml-1" style="font-size:.7rem">{{ $pendingReim }}</span>
+        @endif
+      </span>
+    </a>
+  </li>
+  @if($sidebarUser?->hasRole('admin'))
+  <li class="side-nav-menu-item {{ Request::is('admin/reimbursement*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="{{ route('reimbursement.admin.index') }}">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-receipt"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Semua Pengajuan
+        @php $pendingAllReim = \App\Models\Reimbursement\ReimbursementRequest::where('status','submitted')->count(); @endphp
+        @if($pendingAllReim > 0)
+          <span class="badge badge-danger badge-pill ml-1" style="font-size:.7rem">{{ $pendingAllReim }}</span>
+        @endif
+      </span>
+    </a>
+  </li>
+  @endif
+
   {{-- Whistleblower — admin only --}}
   @if(auth()->user()?->hasRole('admin'))
   <li class="sidebar-heading h6">{{ __('nav.hr_tools') }}</li>
