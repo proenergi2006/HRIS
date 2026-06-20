@@ -65,7 +65,7 @@
         </tr>
       </thead>
       <tbody>
-      @forelse($requests as $r)
+      @foreach($requests as $r)
         <tr>
           <td class="font-weight-bold">{{ $r->request_number }}</td>
           <td>{{ $r->user->name }}</td>
@@ -83,9 +83,7 @@
             </a>
           </td>
         </tr>
-      @empty
-        <tr><td colspan="7" class="text-center text-muted py-4">Belum ada pengajuan.</td></tr>
-      @endforelse
+      @endforeach
       </tbody>
     </table>
   </div>
