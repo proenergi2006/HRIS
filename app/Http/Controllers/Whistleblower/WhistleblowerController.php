@@ -20,9 +20,12 @@ class WhistleblowerController extends Controller
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
+        if ($request->filled('branch')) {
+            $query->where('branch_location', $request->branch);
+        }
 
-        $reports  = $query->get();
-        $statuses = WhistleblowerReport::$statuses;
+        $reports    = $query->get();
+        $statuses   = WhistleblowerReport::$statuses;
         $categories = WhistleblowerReport::$categories;
 
         return view('whistleblower.admin.index', compact('reports', 'statuses', 'categories'));

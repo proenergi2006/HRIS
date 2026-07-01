@@ -12,11 +12,18 @@ class WhistleblowerReport extends Model
     protected $fillable = [
         'ticket_number',
         'category',
+        'branch_location',
+        'reporter_relation',
         'description',
+        'incident_location_time',
+        'suspected_parties',
+        'witnesses',
         'is_anonymous',
         'reporter_name',
         'reporter_email',
         'reporter_phone',
+        'previously_reported',
+        'willing_to_be_contacted',
         'attachment_path',
         'attachment_original_name',
         'status',
@@ -25,16 +32,39 @@ class WhistleblowerReport extends Model
     ];
 
     protected $casts = [
-        'is_anonymous' => 'boolean',
-        'reviewed_at'  => 'datetime',
+        'is_anonymous'           => 'boolean',
+        'willing_to_be_contacted'=> 'boolean',
+        'reviewed_at'            => 'datetime',
     ];
 
     public static $categories = [
-        'Pelanggaran Etika',
-        'Pelecehan / Bullying',
-        'Korupsi / Fraud',
-        'Keselamatan Kerja',
+        'Dugaan Gratifikasi',
+        'Penipuan',
+        'Pelanggaran Hukum',
+        'Konflik Kepentingan',
+        'Penyalahgunaan Wewenang',
+        'Pelecehan atau Diskriminasi',
+        'Kecurangan terkait Keuangan',
+        'Kebocoran Informasi / Rahasia Data Perusahaan',
         'Lainnya',
+    ];
+
+    public static $branches = [
+        'Jakarta',
+        'Banjarmasin',
+        'Samarinda',
+        'Surabaya',
+        'Palembang',
+        'Sulawesi',
+        'Pontianak',
+    ];
+
+    public static $reporterRelations = [
+        'Karyawan',
+        'Calon Karyawan',
+        'Customers',
+        'Vendor',
+        'Masyarakat Umum',
     ];
 
     public static $statuses = [

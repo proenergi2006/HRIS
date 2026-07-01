@@ -54,9 +54,18 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="form-group col-12 col-md-3 mb-2">
+                    <label class="mb-1">Cabang</label>
+                    <select name="branch" class="form-control form-control-sm">
+                        <option value="">Semua Cabang</option>
+                        @foreach (\App\Models\WhistleblowerReport::$branches as $branch)
+                            <option value="{{ $branch }}" {{ request('branch') === $branch ? 'selected' : '' }}>{{ $branch }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="form-group col-auto mb-2">
                     <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-                    @if(request()->hasAny(['status','category']))
+                    @if(request()->hasAny(['status','category','branch']))
                         <a href="{{ route('whistleblower.admin.index') }}" class="btn btn-outline-secondary btn-sm ml-1">Reset</a>
                     @endif
                 </div>
@@ -69,6 +78,7 @@
                     <tr>
                         <th class="font-weight-semi-bold border-top-0 py-2">No. Tiket</th>
                         <th class="font-weight-semi-bold border-top-0 py-2">Kategori</th>
+                        <th class="font-weight-semi-bold border-top-0 py-2">Cabang</th>
                         <th class="font-weight-semi-bold border-top-0 py-2">Pelapor</th>
                         <th class="font-weight-semi-bold border-top-0 py-2">Lampiran</th>
                         <th class="font-weight-semi-bold border-top-0 py-2">Status</th>
@@ -81,6 +91,7 @@
                     <tr>
                         <td class="py-3 font-weight-bold font-monospace">{{ $r->ticket_number }}</td>
                         <td class="py-3">{{ $r->category }}</td>
+                        <td class="py-3">{{ $r->branch_location ?? '—' }}</td>
                         <td class="py-3">
                             @if ($r->is_anonymous)
                                 <span class="badge badge-secondary">Anonim</span>

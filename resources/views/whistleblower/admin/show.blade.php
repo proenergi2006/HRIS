@@ -29,31 +29,8 @@
         <div class="row">
             {{-- Detail laporan --}}
             <div class="col-md-8">
+                {{-- Identitas Pelapor --}}
                 <div class="card border-0 bg-light mb-3">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <div class="text-muted small text-uppercase font-weight-bold mb-1">Kategori</div>
-                            <div>{{ $report->category }}</div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="text-muted small text-uppercase font-weight-bold mb-1">Uraian Kejadian</div>
-                            <div style="white-space:pre-wrap;line-height:1.7;">{{ $report->description }}</div>
-                        </div>
-                        @if ($report->attachment_path)
-                        <div>
-                            <div class="text-muted small text-uppercase font-weight-bold mb-1">Lampiran</div>
-                            <a href="{{ route('whistleblower.admin.download', $report) }}"
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="gd-download icon-text"></i>
-                                {{ $report->attachment_original_name ?? 'Unduh Lampiran' }}
-                            </a>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Identitas --}}
-                <div class="card border-0 bg-light">
                     <div class="card-body">
                         <div class="text-muted small text-uppercase font-weight-bold mb-2">Identitas Pelapor</div>
                         @if ($report->is_anonymous)
@@ -63,7 +40,7 @@
                             <div class="table-responsive">
                             <table class="table table-sm table-borderless mb-0">
                                 <tr>
-                                    <td class="text-muted pl-0" style="width:120px;">Nama</td>
+                                    <td class="text-muted pl-0" style="width:160px;">Nama</td>
                                     <td>{{ $report->reporter_name ?? '—' }}</td>
                                 </tr>
                                 <tr>
@@ -77,8 +54,97 @@
                             </table>
                             </div>
                         @endif
+                        @if ($report->reporter_relation)
+                        <div class="mt-2">
+                            <span class="text-muted small">Hubungan dengan Perusahaan:</span>
+                            <span class="badge badge-info ml-1">{{ $report->reporter_relation }}</span>
+                        </div>
+                        @endif
                     </div>
                 </div>
+
+                {{-- Detail Laporan --}}
+                <div class="card border-0 bg-light mb-3">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;width:200px;">Kategori</td>
+                                <td>{{ $report->category }}</td>
+                            </tr>
+                            @if ($report->branch_location)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Lokasi Cabang</td>
+                                <td>{{ $report->branch_location }}</td>
+                            </tr>
+                            @endif
+                            @if ($report->incident_location_time)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Waktu & Tempat</td>
+                                <td>{{ $report->incident_location_time }}</td>
+                            </tr>
+                            @endif
+                            @if ($report->suspected_parties)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Pihak yang Diduga</td>
+                                <td>{{ $report->suspected_parties }}</td>
+                            </tr>
+                            @endif
+                            @if ($report->witnesses)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Saksi / Pihak Lain</td>
+                                <td>{{ $report->witnesses }}</td>
+                            </tr>
+                            @endif
+                            @if ($report->previously_reported !== null)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Pernah Melapor</td>
+                                <td>
+                                    @if ($report->previously_reported === 'sudah')
+                                        <span class="badge badge-warning">Sudah Pernah</span>
+                                    @else
+                                        <span class="badge badge-secondary">Belum Pernah</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
+                            @if ($report->willing_to_be_contacted !== null)
+                            <tr>
+                                <td class="text-muted pl-0 font-weight-bold text-uppercase" style="font-size:.75rem;">Bersedia Dihubungi</td>
+                                <td>
+                                    @if ($report->willing_to_be_contacted)
+                                        <span class="badge badge-success">Ya</span>
+                                    @else
+                                        <span class="badge badge-secondary">Tidak</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
+                        </table>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Uraian Kejadian --}}
+                <div class="card border-0 bg-light mb-3">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase font-weight-bold mb-1">Uraian Kejadian</div>
+                        <div style="white-space:pre-wrap;line-height:1.7;">{{ $report->description }}</div>
+                    </div>
+                </div>
+
+                @if ($report->attachment_path)
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase font-weight-bold mb-1">Lampiran</div>
+                        <a href="{{ route('whistleblower.admin.download', $report) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="gd-download icon-text"></i>
+                            {{ $report->attachment_original_name ?? 'Unduh Lampiran' }}
+                        </a>
+                    </div>
+                </div>
+                @endif
             </div>
 
             {{-- Panel kanan: update status --}}

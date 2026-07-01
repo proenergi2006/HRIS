@@ -99,7 +99,7 @@
 
         /* ── Main card ── */
         .card-wrap {
-            max-width: 660px;
+            max-width: 720px;
             margin: -44px auto 48px;
             padding: 0 16px;
             position: relative;
@@ -135,7 +135,7 @@
         /* ── Category chips ── */
         .category-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
             margin-bottom: 4px;
         }
@@ -177,6 +177,34 @@
         }
         .cat-label:hover { border-color: #94a3b8; color: var(--text); }
 
+        /* ── Radio pill group ── */
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .radio-pill { position: relative; }
+        .radio-pill input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .radio-pill-label {
+            display: inline-block;
+            border: 2px solid var(--border);
+            border-radius: 100px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--muted);
+            transition: all .18s;
+            user-select: none;
+        }
+        .radio-pill input:checked + .radio-pill-label {
+            border-color: var(--navy-2);
+            background: #eff6ff;
+            color: var(--navy);
+            font-weight: 600;
+        }
+        .radio-pill-label:hover { border-color: #94a3b8; color: var(--text); }
+
         /* ── Form fields ── */
         .form-group { margin-bottom: 20px; }
         .form-label {
@@ -208,6 +236,7 @@
         .form-control::placeholder { color: #a0aec0; }
         textarea.form-control { resize: vertical; min-height: 130px; line-height: 1.6; }
         .char-counter { font-size: .75rem; color: var(--muted); text-align: right; margin-top: 4px; }
+        select.form-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 20px; padding-right: 38px; cursor: pointer; }
 
         /* ── File upload ── */
         .file-drop {
@@ -282,9 +311,36 @@
         /* ── Identity fields ── */
         .identity-fields { overflow: hidden; transition: max-height .3s ease, opacity .3s; }
         .identity-fields.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
-        .identity-fields.expanded { max-height: 400px; opacity: 1; }
+        .identity-fields.expanded { max-height: 600px; opacity: 1; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+        /* ── Disclosure box ── */
+        .disclosure-box {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .disclosure-box.is-invalid { border-color: var(--danger); background: #fef2f2; }
+        .disclosure-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .disclosure-check input[type=checkbox] {
+            width: 20px; height: 20px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            cursor: pointer;
+            accent-color: var(--navy-2);
+        }
+        .disclosure-check span {
+            font-size: .875rem;
+            color: var(--text);
+            line-height: 1.6;
+        }
 
         /* ── Submit ── */
         .btn-submit {
@@ -354,7 +410,7 @@
         /* ── Hint text ── */
         .hint { font-size: .78rem; color: var(--muted); margin-top: 5px; display: block; }
 
-        /* ── Hidden input display none ── */
+        /* ── Hidden ── */
         .d-none { display: none !important; }
     </style>
 </head>
@@ -402,18 +458,92 @@
             <form method="POST" action="{{ route('whistleblower.store') }}" enctype="multipart/form-data" id="wb-form">
                 @csrf
 
-                {{-- Kategori --}}
-                <div class="section-label">Kategori Pengaduan</div>
+                {{-- ── Identitas Anonim ── --}}
+                <div class="section-label">Identitas Pelapor</div>
+
+                <div class="form-group">
+                    <div class="anon-toggle" id="anon-toggle">
+                        <div style="font-size:1.5rem;">🎭</div>
+                        <div class="anon-toggle-text">
+                            <strong>Apakah Anda ingin melaporkan secara anonim?</strong>
+                            <span>Identitas Anda tidak akan disimpan sama sekali jika diaktifkan</span>
+                        </div>
+                        <div class="toggle-switch" id="toggle-switch"></div>
+                        <input type="checkbox" name="is_anonymous" id="is_anonymous"
+                            class="d-none" {{ old('is_anonymous') ? 'checked' : '' }}>
+                    </div>
+                </div>
+
+                <div class="identity-fields {{ old('is_anonymous') ? 'collapsed' : 'expanded' }}" id="identity-fields">
+                    <div class="form-group">
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" name="reporter_name" class="form-control @error('reporter_name') is-invalid @enderror"
+                            value="{{ old('reporter_name') }}" placeholder="Nama Anda">
+                        @error('reporter_name')<div class="field-error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="reporter_email" class="form-control @error('reporter_email') is-invalid @enderror"
+                                value="{{ old('reporter_email') }}" placeholder="email@proenergi.co.id">
+                            @error('reporter_email')<div class="field-error">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">No. HP</label>
+                            <input type="text" name="reporter_phone" class="form-control @error('reporter_phone') is-invalid @enderror"
+                                value="{{ old('reporter_phone') }}" placeholder="08xx-xxxx-xxxx">
+                            @error('reporter_phone')<div class="field-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                    <span class="hint" style="margin-bottom:8px;display:block;">Identitas hanya diketahui tim HRD dan dijaga kerahasiaannya.</span>
+                </div>
+
+                <div class="divider"></div>
+
+                {{-- ── Lokasi Cabang ── --}}
+                <div class="section-label">Lokasi & Hubungan</div>
+
+                <div class="form-row" style="margin-bottom:20px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Lokasi Cabang yang Diinformasikan <span class="req">*</span></label>
+                        <select name="branch_location" class="form-control @error('branch_location') is-invalid @enderror">
+                            <option value="">— Pilih Cabang —</option>
+                            @foreach ($branches as $branch)
+                                <option value="{{ $branch }}" {{ old('branch_location') === $branch ? 'selected' : '' }}>{{ $branch }}</option>
+                            @endforeach
+                        </select>
+                        @error('branch_location')<div class="field-error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Hubungan Anda dengan Perusahaan <span class="req">*</span></label>
+                        <select name="reporter_relation" class="form-control @error('reporter_relation') is-invalid @enderror">
+                            <option value="">— Pilih Hubungan —</option>
+                            @foreach ($relations as $rel)
+                                <option value="{{ $rel }}" {{ old('reporter_relation') === $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                            @endforeach
+                        </select>
+                        @error('reporter_relation')<div class="field-error">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                {{-- ── Kategori Pengaduan ── --}}
+                <div class="section-label">Informasi yang Ingin Anda Laporkan</div>
 
                 <div class="form-group">
                     <div class="category-grid">
                         @php
                         $catIcons = [
-                            'Pelanggaran Etika'    => ['icon' => '⚖️', 'desc' => 'Kode etik & integritas'],
-                            'Pelecehan / Bullying' => ['icon' => '🛡️', 'desc' => 'Kekerasan & intimidasi'],
-                            'Korupsi / Fraud'      => ['icon' => '💰', 'desc' => 'Penyelewengan dana'],
-                            'Keselamatan Kerja'    => ['icon' => '⛑️', 'desc' => 'K3 & lingkungan kerja'],
-                            'Lainnya'              => ['icon' => '📋', 'desc' => 'Masalah lainnya'],
+                            'Dugaan Gratifikasi'                             => ['icon' => '🎁', 'desc' => 'Suap & gratifikasi'],
+                            'Penipuan'                                       => ['icon' => '🎭', 'desc' => 'Fraud & manipulasi'],
+                            'Pelanggaran Hukum'                              => ['icon' => '⚖️', 'desc' => 'Hukum & regulasi'],
+                            'Konflik Kepentingan'                            => ['icon' => '⚡', 'desc' => 'Benturan kepentingan'],
+                            'Penyalahgunaan Wewenang'                        => ['icon' => '🔑', 'desc' => 'Abuse of authority'],
+                            'Pelecehan atau Diskriminasi'                    => ['icon' => '🛡️', 'desc' => 'Kekerasan & intimidasi'],
+                            'Kecurangan terkait Keuangan'                    => ['icon' => '💰', 'desc' => 'Penyelewengan dana'],
+                            'Kebocoran Informasi / Rahasia Data Perusahaan'  => ['icon' => '🔒', 'desc' => 'Data & kerahasiaan'],
+                            'Lainnya'                                        => ['icon' => '📋', 'desc' => 'Masalah lainnya'],
                         ];
                         @endphp
                         @foreach ($categories as $cat)
@@ -435,12 +565,46 @@
 
                 <div class="divider"></div>
 
-                {{-- Deskripsi --}}
+                {{-- ── Detail Kejadian ── --}}
                 <div class="section-label">Detail Kejadian</div>
 
                 <div class="form-group">
                     <label class="form-label">
-                        Uraian Kejadian <span class="req">*</span>
+                        Kapan dan di manakah kejadian ini terjadi? <span class="req">*</span>
+                    </label>
+                    <input type="text" name="incident_location_time"
+                        class="form-control @error('incident_location_time') is-invalid @enderror"
+                        value="{{ old('incident_location_time') }}"
+                        placeholder="Contoh: Januari 2026, di Kantor Jakarta">
+                    @error('incident_location_time')<div class="field-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Siapakah pihak yang Anda duga terlibat dalam kejadian ini? <span class="req">*</span>
+                    </label>
+                    <input type="text" name="suspected_parties"
+                        class="form-control @error('suspected_parties') is-invalid @enderror"
+                        value="{{ old('suspected_parties') }}"
+                        placeholder="Nama atau jabatan pihak yang terlibat">
+                    @error('suspected_parties')<div class="field-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Apakah ada saksi atau pihak lain yang mengetahui kejadian tersebut?
+                        <span class="opt">(opsional)</span>
+                    </label>
+                    <input type="text" name="witnesses"
+                        class="form-control @error('witnesses') is-invalid @enderror"
+                        value="{{ old('witnesses') }}"
+                        placeholder="Nama saksi atau keterangan lainnya">
+                    @error('witnesses')<div class="field-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Jelaskan secara rinci kejadian yang Anda alami atau ketahui <span class="req">*</span>
                     </label>
                     <textarea name="description" id="description" rows="6"
                         class="form-control @error('description') is-invalid @enderror"
@@ -473,47 +637,65 @@
 
                 <div class="divider"></div>
 
-                {{-- Identitas --}}
-                <div class="section-label">Identitas Pelapor</div>
+                {{-- ── Riwayat & Kesediaan ── --}}
+                <div class="section-label">Informasi Tambahan</div>
 
                 <div class="form-group">
-                    <div class="anon-toggle" id="anon-toggle">
-                        <div style="font-size:1.5rem;">🎭</div>
-                        <div class="anon-toggle-text">
-                            <strong>Lapor Secara Anonim</strong>
-                            <span>Identitas Anda tidak akan disimpan sama sekali</span>
-                        </div>
-                        <div class="toggle-switch" id="toggle-switch"></div>
-                        <input type="checkbox" name="is_anonymous" id="is_anonymous"
-                            class="d-none" {{ old('is_anonymous') ? 'checked' : '' }}>
+                    <label class="form-label">
+                        Apakah Anda pernah menyampaikan keluhan atau laporan terkait kejadian ini sebelumnya? <span class="req">*</span>
+                    </label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="previously_reported" value="sudah"
+                                {{ old('previously_reported') === 'sudah' ? 'checked' : '' }}>
+                            <span class="radio-pill-label">Sudah Pernah</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="previously_reported" value="belum"
+                                {{ old('previously_reported') === 'belum' ? 'checked' : '' }}>
+                            <span class="radio-pill-label">Belum Pernah</span>
+                        </label>
                     </div>
+                    @error('previously_reported')<div class="field-error">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="identity-fields {{ old('is_anonymous') ? 'collapsed' : 'expanded' }}" id="identity-fields">
-                    <div class="form-group">
-                        <label class="form-label">Nama Lengkap</label>
-                        <input type="text" name="reporter_name" class="form-control @error('reporter_name') is-invalid @enderror"
-                            value="{{ old('reporter_name') }}" placeholder="Nama Anda">
-                        @error('reporter_name')<div class="field-error">{{ $message }}</div>@enderror
+                <div class="form-group">
+                    <label class="form-label">
+                        Apakah Anda bersedia dihubungi untuk memberikan informasi tambahan apabila diperlukan? <span class="req">*</span>
+                    </label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="willing_to_be_contacted" value="ya"
+                                {{ old('willing_to_be_contacted') === 'ya' ? 'checked' : '' }}>
+                            <span class="radio-pill-label">Ya</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="willing_to_be_contacted" value="tidak"
+                                {{ old('willing_to_be_contacted') === 'tidak' ? 'checked' : '' }}>
+                            <span class="radio-pill-label">Tidak</span>
+                        </label>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="reporter_email" class="form-control @error('reporter_email') is-invalid @enderror"
-                                value="{{ old('reporter_email') }}" placeholder="email@proenergi.co.id">
-                            @error('reporter_email')<div class="field-error">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">No. HP</label>
-                            <input type="text" name="reporter_phone" class="form-control @error('reporter_phone') is-invalid @enderror"
-                                value="{{ old('reporter_phone') }}" placeholder="08xx-xxxx-xxxx">
-                            @error('reporter_phone')<div class="field-error">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-                    <span class="hint" style="margin-bottom:8px;display:block;">Identitas hanya diketahui tim HRD dan dijaga kerahasiaannya.</span>
+                    @error('willing_to_be_contacted')<div class="field-error">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="divider" style="margin-top:12px;"></div>
+                <div class="divider"></div>
+
+                {{-- ── Disclosure ── --}}
+                <div class="section-label">Disclosure</div>
+
+                <div class="form-group">
+                    <div class="disclosure-box @error('disclosure') is-invalid @enderror">
+                        <label class="disclosure-check">
+                            <input type="checkbox" name="disclosure" id="disclosure" value="1"
+                                {{ old('disclosure') ? 'checked' : '' }}>
+                            <span>
+                                Saya menyatakan bahwa informasi yang saya sampaikan adalah sesuai dengan apa yang
+                                telah saya alami dan disampaikan dengan itikad baik untuk perbaikan bersama.
+                            </span>
+                        </label>
+                    </div>
+                    @error('disclosure')<div class="field-error">{{ $message }}</div>@enderror
+                </div>
 
                 <button type="submit" class="btn-submit" id="wb-submit">
                     <span id="wb-submit-icon"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></span>
@@ -542,7 +724,6 @@
     // ── Anonymous toggle ──
     var anonToggle  = document.getElementById('anon-toggle');
     var anonCheck   = document.getElementById('is_anonymous');
-    var toggleSwitch = document.getElementById('toggle-switch');
     var idFields    = document.getElementById('identity-fields');
 
     function setAnon(val){
@@ -558,7 +739,6 @@
         }
     }
 
-    // init
     setAnon(anonCheck.checked);
 
     anonToggle.addEventListener('click', function(){
