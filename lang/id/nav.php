@@ -26,6 +26,12 @@ return [
     'medical_reimbursement'  => 'Medical',
     'all_requests'           => 'Semua Pengajuan',
 
+    // Perjalanan Dinas
+    'perdin'                 => 'Perjalanan Dinas',
+    'perdin_my'              => 'Permohonan Saya',
+    'perdin_approvals'       => 'Persetujuan',
+    'perdin_admin'           => 'Daftar Permohonan',
+
     // System
     'system'                 => 'Sistem',
     'users'                  => 'Pengguna',

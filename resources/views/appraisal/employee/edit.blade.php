@@ -79,6 +79,22 @@
             </div>
 
             <div class="form-row">
+                <div class="form-group col-12 col-md-6">
+                    <label for="manager_id">Atasan Langsung</label>
+                    <select id="manager_id" name="manager_id" class="form-control{{ $errors->has('manager_id') ? ' is-invalid' : '' }}">
+                        <option value="">-- Tidak ada / langsung ke HR --</option>
+                        @foreach($managers as $mgr)
+                            <option value="{{ $mgr->id }}" {{ old('manager_id', $employee->manager_id) == $mgr->id ? 'selected' : '' }}>
+                                {{ $mgr->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">Digunakan untuk alur persetujuan perjalanan dinas.</small>
+                    @error('manager_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group col-12 col-md-4">
                     <label for="start_date">Tanggal Mulai Kerja</label>
                     <input type="date" id="start_date" name="start_date"

@@ -14,6 +14,7 @@ class Employee extends Model
     protected $fillable = [
         'user_id',
         'level_id',
+        'manager_id',
         'name',
         'nip',
         'lob',
@@ -37,6 +38,16 @@ class Employee extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'manager_id');
+    }
+
+    public function subordinates(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'manager_id');
     }
 
     public function appraisals(): HasMany

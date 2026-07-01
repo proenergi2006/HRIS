@@ -26,6 +26,12 @@ return [
     'medical_reimbursement'  => 'Medical',
     'all_requests'           => 'All Requests',
 
+    // Business Travel
+    'perdin'                 => 'Business Travel',
+    'perdin_my'              => 'My Requests',
+    'perdin_approvals'       => 'Approvals',
+    'perdin_admin'           => 'All Requests',
+
     // System
     'system'                 => 'System',
     'users'                  => 'Users',

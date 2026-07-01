@@ -6,6 +6,7 @@ use App\Models\Appraisal\Appraisal;
 use App\Models\Appraisal\AppraisalPeriod;
 use App\Models\GA\Vehicle;
 use App\Models\GA\VehicleUsage;
+use App\Models\Perdin\PerdinRequest;
 use App\Models\Reimbursement\ReimbursementRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -105,7 +106,17 @@ class DashboardController extends Controller implements HasMiddleware
                                 ->latest('updated_at')->limit(5)->get(),
         ];
 
-        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb'));
+        $perdinPendingStatuses = ['submitted', 'reviewed_manager', 'reviewed_hr'];
+        $perdin = [
+            'pending'      => PerdinRequest::whereIn('status', $perdinPendingStatuses)->count(),
+            'approved'     => PerdinRequest::where('status', 'approved')->whereYear('updated_at', now()->year)->count(),
+            'total_budget' => PerdinRequest::where('status', 'approved')->whereYear('updated_at', now()->year)->sum('total_budget'),
+            'recent'       => PerdinRequest::with('user')->whereHas('user')
+                                ->whereIn('status', array_merge($perdinPendingStatuses, ['approved', 'rejected']))
+                                ->latest('updated_at')->limit(5)->get(),
+        ];
+
+        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb', 'perdin'));
     }
 
     private function step1ApproverDashboard($user)

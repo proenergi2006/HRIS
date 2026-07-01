@@ -24,8 +24,9 @@ class EmployeeController extends Controller implements HasMiddleware
 
     public function create()
     {
-        $levels = Level::orderBy('name')->get();
-        return view('appraisal.employee.edit', ['employee' => new Employee(), 'levels' => $levels]);
+        $levels    = Level::orderBy('name')->get();
+        $managers  = Employee::orderBy('name')->get();
+        return view('appraisal.employee.edit', ['employee' => new Employee(), 'levels' => $levels, 'managers' => $managers]);
     }
 
     public function store(Request $request)
@@ -37,8 +38,9 @@ class EmployeeController extends Controller implements HasMiddleware
 
     public function edit(Employee $employee)
     {
-        $levels = Level::orderBy('name')->get();
-        return view('appraisal.employee.edit', compact('employee', 'levels'));
+        $levels   = Level::orderBy('name')->get();
+        $managers = Employee::where('id', '!=', $employee->id)->orderBy('name')->get();
+        return view('appraisal.employee.edit', compact('employee', 'levels', 'managers'));
     }
 
     public function update(Request $request, Employee $employee)
@@ -64,6 +66,7 @@ class EmployeeController extends Controller implements HasMiddleware
             'name'              => 'required|string|max:255',
             'nip'               => 'nullable|string|max:50|unique:employees,nip,' . ($ignoreId ?? 'NULL'),
             'level_id'          => 'nullable|exists:levels,id',
+            'manager_id'        => 'nullable|exists:employees,id',
             'lob'               => 'nullable|string|max:100',
             'department'        => 'nullable|string|max:100',
             'position'          => 'nullable|string|max:100',

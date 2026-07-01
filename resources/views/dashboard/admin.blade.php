@@ -131,6 +131,81 @@
 </div>
 @endif
 
+{{-- ── Perjalanan Dinas Summary ── --}}
+<div class="row mb-3">
+    <div class="col-6 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-warning rounded-circle mr-3">
+                <i class="gd-briefcase icon-text d-inline-block text-warning"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1">{{ $perdin['pending'] }}</h4>
+                <h6 class="mb-0 text-muted">Perdin Menunggu Persetujuan</h6>
+            </div>
+            @if($perdin['pending'] > 0)
+            <a href="{{ route('perdin.admin.requests') }}" class="stretched-link"></a>
+            @endif
+        </div>
+    </div>
+    <div class="col-6 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-success rounded-circle mr-3">
+                <i class="gd-check icon-text d-inline-block text-success"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1">{{ $perdin['approved'] }}</h4>
+                <h6 class="mb-0 text-muted">Perdin Disetujui {{ now()->year }}</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-4 mb-3">
+        <div class="card flex-row align-items-center p-3">
+            <div class="icon icon-lg bg-soft-primary rounded-circle mr-3">
+                <i class="gd-money icon-text d-inline-block text-primary"></i>
+            </div>
+            <div>
+                <h4 class="lh-1 mb-1" style="font-size:1.1rem">Rp {{ number_format($perdin['total_budget'], 0, ',', '.') }}</h4>
+                <h6 class="mb-0 text-muted">Total Anggaran Disetujui {{ now()->year }}</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if($perdin['recent']->isNotEmpty())
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold">Aktivitas Perjalanan Dinas Terbaru</span>
+        <a href="{{ route('perdin.admin.requests') }}" class="btn btn-xs btn-outline-secondary">Lihat Semua</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+        <table class="table table-sm mb-0" style="font-size:.85rem">
+            <tbody>
+            @foreach($perdin['recent'] as $p)
+            <tr>
+                <td class="pl-3 font-weight-bold">{{ $p->no_advance }}</td>
+                <td>{{ $p->user?->name ?? '-' }}</td>
+                <td>{{ $p->destination }}</td>
+                <td class="text-right">Rp {{ number_format($p->total_budget, 0, ',', '.') }}</td>
+                <td class="text-center">
+                    <span class="badge badge-{{ \App\Models\Perdin\PerdinRequest::$statusBadges[$p->status] }}">
+                        {{ \App\Models\Perdin\PerdinRequest::$statusLabels[$p->status] }}
+                    </span>
+                </td>
+                <td class="pr-3">
+                    <a href="{{ route('perdin.show', $p) }}" class="btn btn-xs btn-outline-info">
+                        <i class="gd-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            @endforeach
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- ── Row 1: Periode + Grade chart + Aksi Cepat ── --}}
 <div class="row">
     {{-- Periode Aktif --}}

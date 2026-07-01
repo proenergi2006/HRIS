@@ -23,6 +23,9 @@ use App\Http\Controllers\GA\GaCleaningLogController;
 use App\Http\Controllers\Reimbursement\ReimbursementController;
 use App\Http\Controllers\Reimbursement\ReimbursementAdminController;
 use App\Http\Controllers\Reimbursement\ReimbursementBalanceController;
+use App\Http\Controllers\Perdin\PerdinController;
+use App\Http\Controllers\Perdin\PerdinApprovalController;
+use App\Http\Controllers\Perdin\PerdinAdminController;
 use App\Http\Controllers\ActivityLogController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -120,6 +123,29 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/reimbursement')->name('
     Route::post('/{reimbursement}/reject',                                   [ReimbursementAdminController::class, 'reject'])->name('reject');
     Route::get('/{reimbursement}/pdf',                                       [ReimbursementAdminController::class, 'pdf'])->name('pdf');
     Route::get('/{reimbursement}/attachment/{attachment}',                   [ReimbursementAdminController::class, 'attachment'])->name('attachment');
+});
+
+// ── Perjalanan Dinas (Perdin) — semua user yang login ─────────────────
+Route::middleware('auth')->prefix('perdin')->name('perdin.')->group(function () {
+    // Inbox approval (atasan langsung / HR / CEO) — letakkan sebelum {perdin}
+    Route::get('/approvals',                 [PerdinApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('/{perdin}/approve',         [PerdinApprovalController::class, 'approve'])->name('approve');
+    Route::post('/{perdin}/reject',          [PerdinApprovalController::class, 'reject'])->name('reject');
+
+    Route::get('/',                          [PerdinController::class, 'index'])->name('index');
+    Route::get('/create',                    [PerdinController::class, 'create'])->name('create');
+    Route::post('/',                         [PerdinController::class, 'store'])->name('store');
+    Route::get('/{perdin}',                  [PerdinController::class, 'show'])->name('show');
+    Route::get('/{perdin}/edit',             [PerdinController::class, 'edit'])->name('edit');
+    Route::put('/{perdin}',                  [PerdinController::class, 'update'])->name('update');
+    Route::delete('/{perdin}',               [PerdinController::class, 'destroy'])->name('destroy');
+    Route::post('/{perdin}/submit',          [PerdinController::class, 'submit'])->name('submit');
+    Route::get('/{perdin}/pdf',              [PerdinController::class, 'pdf'])->name('pdf');
+});
+
+// ── Perjalanan Dinas Admin — admin & hr_manager ───────────────────────
+Route::middleware(['auth', 'role:admin|hr_manager'])->prefix('admin/perdin')->name('perdin.admin.')->group(function () {
+    Route::get('/',                 [PerdinAdminController::class, 'requests'])->name('requests');
 });
 
 // ── Whistleblower admin — auth only ───────────────────────────────────
