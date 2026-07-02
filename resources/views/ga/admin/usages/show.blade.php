@@ -20,7 +20,6 @@
           <tr><td class="text-muted" style="width:40%">Kendaraan</td><td class="font-weight-bold">{{ $usage->vehicle->name }}</td></tr>
           <tr><td class="text-muted">No. Polisi</td><td><span class="badge badge-dark">{{ $usage->vehicle->plate }}</span></td></tr>
           <tr><td class="text-muted">Peminjam</td><td>{{ $usage->driver_name }}</td></tr>
-          <tr><td class="text-muted">No. HP</td><td>{{ $usage->driver_phone ?? '-' }}</td></tr>
           <tr><td class="text-muted">Tujuan</td><td>{{ $usage->destination }}</td></tr>
           <tr><td class="text-muted">Check In</td><td>{{ $usage->check_in_at->format('d M Y, H:i') }}</td></tr>
           <tr><td class="text-muted">Check Out</td><td>{{ $usage->check_out_at?->format('d M Y, H:i') ?? '-' }}</td></tr>

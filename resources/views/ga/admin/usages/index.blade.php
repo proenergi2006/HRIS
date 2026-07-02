@@ -62,10 +62,7 @@
             <div class="font-weight-bold" style="font-size:.85rem">{{ $u->vehicle->name }}</div>
             <small class="text-muted">{{ $u->vehicle->plate }}</small>
           </td>
-          <td>
-            <div>{{ $u->driver_name }}</div>
-            @if($u->driver_phone) <small class="text-muted">{{ $u->driver_phone }}</small> @endif
-          </td>
+          <td>{{ $u->driver_name }}</td>
           <td style="max-width:160px"><small>{{ $u->destination }}</small></td>
           <td><small>{{ $u->check_in_at->format('d/m/y H:i') }}</small></td>
           <td><small>{{ $u->check_out_at?->format('d/m/y H:i') ?? '-' }}</small></td>

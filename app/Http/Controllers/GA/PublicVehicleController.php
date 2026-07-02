@@ -23,7 +23,6 @@ class PublicVehicleController extends Controller
 
         $data = $request->validate([
             'driver_name' => 'required|string|max:100',
-            'driver_phone'=> 'nullable|string|max:30',
             'destination' => 'required|string|max:255',
         ]);
 

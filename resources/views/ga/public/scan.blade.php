@@ -212,11 +212,6 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
                  placeholder="Nama lengkap" required value="{{ old('driver_name') }}">
         </div>
         <div class="form-group">
-          <label>No. HP / WhatsApp</label>
-          <input type="tel" name="driver_phone" class="form-control"
-                 placeholder="08xxxxxxxxxx (opsional)" value="{{ old('driver_phone') }}">
-        </div>
-        <div class="form-group">
           <label>Tujuan *</label>
           <input type="text" name="destination" class="form-control"
                  placeholder="Contoh: Kantor Klien, Jl. Sudirman No.1" required value="{{ old('destination') }}">
