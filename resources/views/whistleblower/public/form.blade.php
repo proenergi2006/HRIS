@@ -418,7 +418,7 @@
 
 {{-- ── Hero ── --}}
 <div class="hero">
-    <img src="/img/logo-light.png" alt="PT. Pro Energi" style="height:48px;object-fit:contain;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;">
+    <img src="/img/logo-proenergi.png" alt="PT. Pro Energi" style="height:48px;object-fit:contain;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;">
     <div class="hero-badge">
         <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93C9.33 17.79 7 14.5 7 11V7.18L12 5z"/></svg>
         Sistem Pengaduan Rahasia
