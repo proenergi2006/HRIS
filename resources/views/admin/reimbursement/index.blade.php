@@ -4,11 +4,17 @@
 @section('content')
 @include('components.notification')
 
-<div class="mb-3 d-flex justify-content-between align-items-center">
+<div class="mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
   <div class="h3 mb-0">Semua Pengajuan Reimbursement</div>
-  <a href="{{ route('reimbursement.admin.balances') }}" class="btn btn-outline-primary btn-sm">
-    <i class="gd-wallet mr-1"></i> Kelola Saldo
-  </a>
+  <div class="d-flex" style="gap:.5rem">
+    <a href="{{ route('laporan.export.reimb', array_filter(request()->only(['status','year','month']))) }}"
+       class="btn btn-outline-success btn-sm">
+      <i class="gd-download mr-1"></i> Export Excel
+    </a>
+    <a href="{{ route('reimbursement.admin.balances') }}" class="btn btn-outline-primary btn-sm">
+      <i class="gd-wallet mr-1"></i> Kelola Saldo
+    </a>
+  </div>
 </div>
 
 {{-- Filter --}}

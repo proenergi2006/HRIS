@@ -9,8 +9,12 @@
 @section('content')
 @include('components.notification')
 
-<div class="mb-3">
+<div class="mb-3 d-flex justify-content-between align-items-center">
   <div class="h3 mb-0">Permohonan Perjalanan Dinas</div>
+  <a href="{{ route('laporan.export.perdin', array_filter(request()->only(['status']))) }}"
+     class="btn btn-outline-success btn-sm">
+    <i class="gd-download mr-1"></i> Export Excel
+  </a>
 </div>
 
 <div class="card mb-3">

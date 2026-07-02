@@ -13,9 +13,14 @@
                 </ol>
                 </nav>
                 
-                <div class="mb-3 mb-md-4 d-flex justify-content-between align-items-center">
+                <div class="mb-3 mb-md-4 d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
                 <div class="h3 mb-0">Data Karyawan</div>
-                <a href="{{ route('appraisal.employees.create') }}" class="btn btn-primary">Tambah Karyawan</a>
+                <div class="d-flex" style="gap:.5rem">
+                  <a href="{{ route('laporan.export.karyawan') }}" class="btn btn-outline-success">
+                    <i class="gd-download mr-1"></i> Export Excel
+                  </a>
+                  <a href="{{ route('appraisal.employees.create') }}" class="btn btn-primary">Tambah Karyawan</a>
+                </div>
                 </div>
                 
                 <div class="table-responsive-xl">

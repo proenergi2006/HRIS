@@ -28,6 +28,7 @@ use App\Http\Controllers\Perdin\PerdinController;
 use App\Http\Controllers\Perdin\PerdinApprovalController;
 use App\Http\Controllers\Perdin\PerdinAdminController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\LaporanController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -148,6 +149,15 @@ Route::middleware('auth')->prefix('perdin')->name('perdin.')->group(function () 
 // ── Perjalanan Dinas Admin — admin & hr_manager ───────────────────────
 Route::middleware(['auth', 'role:admin|hr_manager'])->prefix('admin/perdin')->name('perdin.admin.')->group(function () {
     Route::get('/',                 [PerdinAdminController::class, 'requests'])->name('requests');
+});
+
+// ── Laporan & Export — admin & hr_manager ────────────────────────────
+Route::middleware(['auth', 'role:admin|hr_manager'])->prefix('admin/laporan')->name('laporan.')->group(function () {
+    Route::get('/',                    [LaporanController::class, 'index'])->name('index');
+    Route::get('/pdf',                 [LaporanController::class, 'pdf'])->name('pdf');
+    Route::get('/export/karyawan',     [LaporanController::class, 'exportEmployees'])->name('export.karyawan');
+    Route::get('/export/reimbursement',[LaporanController::class, 'exportReimbursements'])->name('export.reimb');
+    Route::get('/export/perdin',       [LaporanController::class, 'exportPerdin'])->name('export.perdin');
 });
 
 // ── Whistleblower admin — auth only ───────────────────────────────────

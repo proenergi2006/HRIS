@@ -283,6 +283,16 @@
 
   @endif {{-- end !admin_ga --}}
 
+  {{-- ── Laporan — admin & hr_manager ── --}}
+  @if($sidebarUser?->hasAnyRole(['admin','hr_manager']))
+  <li class="side-nav-menu-item {{ Request::is('admin/laporan*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('laporan.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-bar-chart"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Laporan &amp; Export</span>
+    </a>
+  </li>
+  @endif
+
   {{-- ── System — admin only (gabung Users + Whistleblower) ── --}}
   @if($sidebarUser?->hasRole('admin'))
   @php $systemActive = Request::is('users*') || Request::is('admin/whistleblower*') || Request::is('admin/activity-log*'); @endphp
