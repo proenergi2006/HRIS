@@ -57,6 +57,11 @@ class Employee extends Model
         return $this->hasMany(Appraisal\Appraisal::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class);
+    }
+
     public function getEmploymentStatusLabelAttribute(): string
     {
         return match($this->employment_status) {

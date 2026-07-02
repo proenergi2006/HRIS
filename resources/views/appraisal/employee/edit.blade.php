@@ -134,7 +134,15 @@
 
             <div class="d-flex justify-content-between mt-2">
                 <a href="{{ route('appraisal.employees.index') }}" class="btn btn-secondary">Batal</a>
-                <button type="submit" class="btn btn-primary">{{ $employee->id ? 'Simpan Perubahan' : 'Tambah Karyawan' }}</button>
+                <div>
+                    @if($employee->id)
+                    <a href="{{ route('appraisal.employees.documents.index', $employee) }}"
+                       class="btn btn-outline-info mr-2">
+                        <i class="gd-file icon-text"></i> Dokumen
+                    </a>
+                    @endif
+                    <button type="submit" class="btn btn-primary">{{ $employee->id ? 'Simpan Perubahan' : 'Tambah Karyawan' }}</button>
+                </div>
             </div>
         </form>
     </div>

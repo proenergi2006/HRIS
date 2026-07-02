@@ -14,6 +14,7 @@ use App\Http\Controllers\Appraisal\AppraisalController;
 use App\Http\Controllers\Appraisal\ApprovalController;
 use App\Http\Controllers\Appraisal\FlowConfigController;
 use App\Http\Controllers\Appraisal\ReportController;
+use App\Http\Controllers\Appraisal\EmployeeDocumentController;
 use App\Http\Controllers\GA\PublicVehicleController;
 use App\Http\Controllers\GA\GaVehicleController;
 use App\Http\Controllers\GA\GaUsageController;
@@ -177,6 +178,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::prefix('appraisal')->name('appraisal.')->group(function () {
         Route::resource('levels',       LevelController::class);
         Route::resource('employees',    EmployeeController::class);
+        // Dokumen karyawan (nested under employee)
+        Route::prefix('employees/{employee}/documents')->name('employees.documents.')->group(function () {
+            Route::get('/',            [EmployeeDocumentController::class, 'index'])->name('index');
+            Route::get('/tambah',      [EmployeeDocumentController::class, 'create'])->name('create');
+            Route::post('/',           [EmployeeDocumentController::class, 'store'])->name('store');
+            Route::get('/{document}/download', [EmployeeDocumentController::class, 'download'])->name('download');
+            Route::delete('/{document}',       [EmployeeDocumentController::class, 'destroy'])->name('destroy');
+        });
         Route::resource('templates',    TemplateController::class);
         Route::resource('periods',      PeriodController::class);
         Route::patch('periods/{period}/toggle', [PeriodController::class, 'toggle'])->name('periods.toggle');

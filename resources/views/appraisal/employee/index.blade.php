@@ -78,8 +78,11 @@
                 @endif
                 </td>
                 <td class="py-3">
-                <a href="{{ route('appraisal.employees.edit', $employee) }}" class="link-dark d-inline-block mr-2">
+                <a href="{{ route('appraisal.employees.edit', $employee) }}" class="link-dark d-inline-block mr-2" title="Edit">
                 <i class="gd-pencil icon-text"></i>
+                </a>
+                <a href="{{ route('appraisal.employees.documents.index', $employee) }}" class="link-dark d-inline-block mr-2" title="Dokumen">
+                <i class="gd-file icon-text"></i>
                 </a>
                 <a href="#" class="link-dark d-inline-block"
                 data-confirm="Hapus karyawan &ldquo;{{ $employee->name }}&rdquo;? Data yang terkait juga akan ikut terhapus."
