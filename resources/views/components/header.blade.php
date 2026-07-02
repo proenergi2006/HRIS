@@ -50,7 +50,26 @@ if ($authUser) {
                 'time' => $w->updated_at->diffForHumans(),
             ]);
 
-        // 3. Penilaian masih dalam proses (monitoring admin)
+        // 3. Kontrak karyawan akan berakhir dalam 2 bulan
+        $contractNotif = \App\Models\Employee::where('employment_status', 'contract')
+            ->where('is_active', true)
+            ->whereNotNull('contract_end_date')
+            ->where('contract_end_date', '<=', now()->addMonths(2)->toDateString())
+            ->orderBy('contract_end_date')
+            ->take(5)
+            ->get()
+            ->map(fn($e) => [
+                'icon'  => 'gd-calendar',
+                'color' => now()->diffInDays($e->contract_end_date) <= 0 ? 'text-danger' : (now()->diffInDays($e->contract_end_date) <= 14 ? 'text-danger' : 'text-warning'),
+                'title' => now()->diffInDays($e->contract_end_date) <= 0 ? 'Kontrak Sudah Berakhir' : 'Kontrak Akan Berakhir',
+                'body'  => $e->name . ' — ' . ($e->position ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
+                'url'   => route('appraisal.employees.edit', $e),
+                'time'  => now()->diffInDays($e->contract_end_date) <= 0
+                    ? 'Berakhir ' . $e->contract_end_date->diffForHumans()
+                    : 'Berakhir ' . $e->contract_end_date->diffForHumans(),
+            ]);
+
+        // 4. Penilaian masih dalam proses (monitoring admin)
         $appraisalPending = Appraisal::whereIn('status', ['submitted', 'approved_user2'])
             ->whereHas('employee')
             ->whereHas('period')
@@ -70,7 +89,7 @@ if ($authUser) {
                 'time' => $a->updated_at->diffForHumans(),
             ]);
 
-        $notifItems = $reimbPending->merge($wbNew)->merge($appraisalPending)->take(6);
+        $notifItems = $contractNotif->merge($reimbPending)->merge($wbNew)->merge($appraisalPending)->take(8);
         $viewAllUrl = route('reimbursement.admin.index', ['status' => 'submitted']);
 
     // ── USER II ────────────────────────────────────────────────────────────────

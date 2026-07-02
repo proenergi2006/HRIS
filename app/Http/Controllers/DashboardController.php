@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appraisal\Appraisal;
 use App\Models\Appraisal\AppraisalPeriod;
+use App\Models\Employee;
 use App\Models\GA\Vehicle;
 use App\Models\GA\VehicleUsage;
 use App\Models\Perdin\PerdinRequest;
@@ -116,7 +117,21 @@ class DashboardController extends Controller implements HasMiddleware
                                 ->latest('updated_at')->limit(5)->get(),
         ];
 
-        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb', 'perdin'));
+        $contractExpiring = Employee::where('employment_status', 'contract')
+            ->where('is_active', true)
+            ->whereNotNull('contract_end_date')
+            ->whereBetween('contract_end_date', [now()->toDateString(), now()->addMonths(2)->toDateString()])
+            ->orderBy('contract_end_date')
+            ->get();
+
+        $contractExpired = Employee::where('employment_status', 'contract')
+            ->where('is_active', true)
+            ->whereNotNull('contract_end_date')
+            ->where('contract_end_date', '<', now()->toDateString())
+            ->orderBy('contract_end_date')
+            ->get();
+
+        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb', 'perdin', 'contractExpiring', 'contractExpired'));
     }
 
     private function step1ApproverDashboard($user)

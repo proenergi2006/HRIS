@@ -29,6 +29,7 @@
                 <th class="font-weight-semi-bold border-top-0 py-2">Jabatan</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Level</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Status</th>
+                <th class="font-weight-semi-bold border-top-0 py-2">Kontrak Berakhir</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -57,6 +58,24 @@
                 <span class="badge badge-secondary">Nonaktif</span>
                 @endif
                 <br><small class="text-muted">{{ $employee->employment_status_label }}</small>
+                </td>
+                <td class="py-3">
+                @if($employee->employment_status === 'contract' && $employee->contract_end_date)
+                    @php $sisa = now()->diffInDays($employee->contract_end_date, false); @endphp
+                    @if($sisa < 0)
+                        <span class="badge badge-danger">Berakhir {{ $employee->contract_end_date->format('d/m/Y') }}</span>
+                    @elseif($sisa <= 14)
+                        <span class="badge badge-danger">{{ $employee->contract_end_date->format('d/m/Y') }}</span>
+                        <br><small class="text-danger font-weight-bold">{{ $sisa }} hari lagi</small>
+                    @elseif($sisa <= 60)
+                        <span class="badge badge-warning">{{ $employee->contract_end_date->format('d/m/Y') }}</span>
+                        <br><small class="text-warning">{{ $sisa }} hari lagi</small>
+                    @else
+                        <span class="text-muted">{{ $employee->contract_end_date->format('d/m/Y') }}</span>
+                    @endif
+                @else
+                    <span class="text-muted">—</span>
+                @endif
                 </td>
                 <td class="py-3">
                 <a href="{{ route('appraisal.employees.edit', $employee) }}" class="link-dark d-inline-block mr-2">

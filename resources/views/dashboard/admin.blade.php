@@ -4,6 +4,72 @@
 @section('content')
 @include('components.notification')
 
+{{-- ── Banner Kontrak Berakhir ── --}}
+@if($contractExpired->isNotEmpty())
+<div class="alert alert-danger border-0 mb-3" style="border-left:4px solid #ef4444 !important;">
+    <div class="d-flex align-items-start">
+        <i class="gd-alert mr-3 mt-1" style="font-size:1.3rem;"></i>
+        <div class="flex-grow-1">
+            <strong>{{ $contractExpired->count() }} Kontrak Sudah Berakhir!</strong>
+            <div class="mt-1" style="font-size:.85rem;">
+                @foreach($contractExpired as $emp)
+                    <span class="badge badge-danger mr-1 mb-1">
+                        {{ $emp->name }}
+                        &mdash; berakhir {{ $emp->contract_end_date->format('d/m/Y') }}
+                    </span>
+                @endforeach
+            </div>
+            <a href="{{ route('appraisal.employees.index') }}" class="btn btn-sm btn-danger mt-2">
+                Kelola Data Karyawan
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($contractExpiring->isNotEmpty())
+<div class="alert alert-warning border-0 mb-3" style="border-left:4px solid #f59e0b !important;">
+    <div class="d-flex align-items-start">
+        <i class="gd-clock mr-3 mt-1" style="font-size:1.3rem;"></i>
+        <div class="flex-grow-1">
+            <strong>{{ $contractExpiring->count() }} Kontrak Akan Berakhir dalam 2 Bulan</strong>
+            <div class="mt-2" style="font-size:.85rem;">
+                <div class="table-responsive">
+                <table class="table table-sm table-borderless mb-0" style="background:transparent;">
+                    <thead><tr>
+                        <th class="pl-0 py-1">Nama</th>
+                        <th class="py-1">Jabatan</th>
+                        <th class="py-1">Departemen</th>
+                        <th class="py-1">Tgl. Berakhir</th>
+                        <th class="py-1">Sisa Hari</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach($contractExpiring as $emp)
+                    <tr>
+                        <td class="pl-0 py-1 font-weight-bold">{{ $emp->name }}</td>
+                        <td class="py-1">{{ $emp->position ?? '-' }}</td>
+                        <td class="py-1">{{ $emp->department ?? '-' }}</td>
+                        <td class="py-1">{{ $emp->contract_end_date->format('d/m/Y') }}</td>
+                        <td class="py-1">
+                            @php $sisa = now()->diffInDays($emp->contract_end_date); @endphp
+                            <span class="badge badge-{{ $sisa <= 14 ? 'danger' : 'warning' }}">
+                                {{ $sisa }} hari
+                            </span>
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            <a href="{{ route('appraisal.employees.index') }}" class="btn btn-sm btn-warning mt-1">
+                Lihat Data Karyawan
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="mb-3 mb-md-4 d-flex justify-content-between align-items-center">
     <div class="h3 mb-0">Dashboard</div>
     <small class="text-muted">Selamat datang, <strong>{{ auth()->user()->name }}</strong></small>
