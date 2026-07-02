@@ -142,16 +142,50 @@
 </div>
 
 {{-- Attachments --}}
-@if($reimbursement->attachments->isNotEmpty())
+@php
+  $docTypes   = \App\Models\Reimbursement\ReimbursementAttachment::$docTypes;
+  $attByType  = $reimbursement->attachments->keyBy('doc_type');
+  $hasAtt     = $reimbursement->attachments->isNotEmpty();
+@endphp
+@if($hasAtt)
 <div class="card">
-  <div class="card-header font-weight-bold">Lampiran</div>
-  <div class="card-body py-2">
-    @foreach($reimbursement->attachments as $att)
-      <a href="{{ route('reimbursement.attachment', [$reimbursement, $att]) }}" target="_blank"
-         class="btn btn-sm btn-outline-secondary mr-1 mb-1">
-        <i class="gd-clip mr-1"></i>{{ $att->file_name }}
-      </a>
-    @endforeach
+  <div class="card-header font-weight-bold">Dokumen Pendukung</div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead class="thead-light">
+        <tr>
+          <th style="width:220px">Jenis Dokumen</th>
+          <th>File</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($docTypes as $type => $label)
+          @if(isset($attByType[$type]))
+          <tr>
+            <td class="font-weight-bold" style="font-size:.88rem">{{ $label }}</td>
+            <td>
+              <a href="{{ route('reimbursement.attachment', [$reimbursement, $attByType[$type]]) }}"
+                 target="_blank" class="btn btn-xs btn-outline-primary">
+                <i class="gd-clip mr-1"></i>{{ $attByType[$type]->file_name }}
+              </a>
+            </td>
+          </tr>
+          @endif
+        @endforeach
+        {{-- Legacy attachments without doc_type --}}
+        @foreach($reimbursement->attachments->whereNull('doc_type') as $att)
+        <tr>
+          <td class="text-muted" style="font-size:.88rem">Lampiran</td>
+          <td>
+            <a href="{{ route('reimbursement.attachment', [$reimbursement, $att]) }}"
+               target="_blank" class="btn btn-xs btn-outline-secondary">
+              <i class="gd-clip mr-1"></i>{{ $att->file_name }}
+            </a>
+          </td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
   </div>
 </div>
 @endif

@@ -93,27 +93,54 @@
   </div>
 </div>
 
-{{-- Existing Attachments (edit mode) --}}
-@if($editing && $reimb->attachments->isNotEmpty())
+{{-- Upload Dokumen Pendukung --}}
+@php $docTypes = \App\Models\Reimbursement\ReimbursementAttachment::$docTypes; @endphp
 <div class="card mb-3">
-  <div class="card-header font-weight-bold">Lampiran yang Ada</div>
-  <div class="card-body py-2">
-    @foreach($reimb->attachments as $att)
-    <a href="{{ route('reimbursement.attachment', [$reimb, $att]) }}" target="_blank"
-       class="badge badge-secondary mr-1 mb-1" style="font-size:.85rem;padding:.4em .7em">
-      <i class="gd-clip mr-1"></i>{{ $att->file_name }}
-    </a>
-    @endforeach
-  </div>
-</div>
-@endif
-
-{{-- Upload Lampiran --}}
-<div class="card mb-3">
-  <div class="card-header font-weight-bold">Upload Kwitansi / Bukti</div>
-  <div class="card-body">
-    <input type="file" name="attachments[]" class="form-control-file" multiple accept=".jpg,.jpeg,.png,.pdf">
-    <small class="text-muted">Format: JPG, PNG, PDF. Maks 5 MB per file. Bisa pilih beberapa file sekaligus.</small>
+  <div class="card-header font-weight-bold">Dokumen Pendukung</div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead class="thead-light">
+        <tr>
+          <th style="width:220px">Jenis Dokumen</th>
+          <th>File</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($docTypes as $type => $label)
+        @php $existing = ($editing && $reimb) ? $reimb->attachments->firstWhere('doc_type', $type) : null; @endphp
+        <tr>
+          <td class="align-middle font-weight-bold" style="font-size:.88rem">{{ $label }}</td>
+          <td class="align-middle">
+            @if($existing)
+              <div class="d-flex align-items-center flex-wrap mb-1" style="gap:.4rem">
+                <a href="{{ route('reimbursement.attachment', [$reimb, $existing]) }}" target="_blank"
+                   class="btn btn-xs btn-outline-success">
+                  <i class="gd-clip mr-1"></i>{{ $existing->file_name }}
+                </a>
+                <form method="POST"
+                      action="{{ route('reimbursement.attachment.destroy', [$reimb, $existing]) }}"
+                      onsubmit="return confirm('Hapus lampiran ini?')">
+                  @csrf @method('DELETE')
+                  <button type="submit" class="btn btn-xs btn-outline-danger">
+                    <i class="gd-trash"></i>
+                  </button>
+                </form>
+                <small class="text-muted">Unggah baru untuk mengganti</small>
+              </div>
+            @endif
+            <div class="custom-file" style="max-width:340px">
+              <input type="file" name="attachments[{{ $type }}]"
+                     id="att_{{ $type }}"
+                     class="custom-file-input"
+                     accept=".jpg,.jpeg,.png,.pdf">
+              <label class="custom-file-label" for="att_{{ $type }}">Pilih file</label>
+            </div>
+          </td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+    <div class="px-3 py-2"><small class="text-muted">Format: JPG, PNG, PDF. Maks 5 MB per file. Tidak wajib semua diisi.</small></div>
   </div>
 </div>
 

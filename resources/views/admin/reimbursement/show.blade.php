@@ -111,16 +111,58 @@
 </div>
 
 {{-- Attachments --}}
+@php
+  $docTypes  = \App\Models\Reimbursement\ReimbursementAttachment::$docTypes;
+  $attByType = $reimbursement->attachments->keyBy('doc_type');
+@endphp
 @if($reimbursement->attachments->isNotEmpty())
 <div class="card mb-3">
-  <div class="card-header font-weight-bold">Lampiran</div>
-  <div class="card-body py-2">
-    @foreach($reimbursement->attachments as $att)
-      <a href="{{ route('reimbursement.admin.attachment', [$reimbursement, $att]) }}" target="_blank"
-         class="btn btn-sm btn-outline-secondary mr-1 mb-1">
-        <i class="gd-clip mr-1"></i>{{ $att->file_name }}
-      </a>
-    @endforeach
+  <div class="card-header font-weight-bold">Dokumen Pendukung</div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead class="thead-light">
+        <tr>
+          <th style="width:220px">Jenis Dokumen</th>
+          <th>File</th>
+          <th class="text-center" style="width:80px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($docTypes as $type => $label)
+          @if(isset($attByType[$type]))
+          @php $att = $attByType[$type]; @endphp
+          <tr>
+            <td class="font-weight-bold" style="font-size:.88rem">{{ $label }}</td>
+            <td>
+              <a href="{{ route('reimbursement.admin.attachment', [$reimbursement, $att]) }}"
+                 target="_blank" class="btn btn-xs btn-outline-primary">
+                <i class="gd-clip mr-1"></i>{{ $att->file_name }}
+              </a>
+            </td>
+            <td class="text-center">
+              <a href="{{ route('reimbursement.admin.attachment', [$reimbursement, $att]) }}"
+                 class="btn btn-xs btn-outline-secondary" download title="Unduh">
+                <i class="gd-download"></i>
+              </a>
+            </td>
+          </tr>
+          @endif
+        @endforeach
+        {{-- Legacy attachments without doc_type --}}
+        @foreach($reimbursement->attachments->whereNull('doc_type') as $att)
+        <tr>
+          <td class="text-muted" style="font-size:.88rem">Lampiran</td>
+          <td>
+            <a href="{{ route('reimbursement.admin.attachment', [$reimbursement, $att]) }}"
+               target="_blank" class="btn btn-xs btn-outline-secondary">
+              <i class="gd-clip mr-1"></i>{{ $att->file_name }}
+            </a>
+          </td>
+          <td></td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
   </div>
 </div>
 @endif

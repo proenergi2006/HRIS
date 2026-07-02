@@ -89,3 +89,12 @@
   }
 })();
 </script>
+<script>
+// Update custom-file-label text when a file is selected
+document.querySelectorAll('.custom-file-input').forEach(function(input) {
+  input.addEventListener('change', function() {
+    var label = this.nextElementSibling;
+    label.textContent = this.files.length ? this.files[0].name : 'Pilih file';
+  });
+});
+</script>

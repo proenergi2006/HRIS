@@ -111,7 +111,8 @@ Route::middleware('auth')->prefix('reimbursement')->name('reimbursement.')->grou
     Route::put('/{reimbursement}',                           [ReimbursementController::class, 'update'])->name('update');
     Route::post('/{reimbursement}/submit',                   [ReimbursementController::class, 'submit'])->name('submit');
     Route::get('/{reimbursement}/pdf',                       [ReimbursementController::class, 'pdf'])->name('pdf');
-    Route::get('/{reimbursement}/attachment/{attachment}',   [ReimbursementController::class, 'attachment'])->name('attachment');
+    Route::get('/{reimbursement}/attachment/{attachment}',    [ReimbursementController::class, 'attachment'])->name('attachment');
+    Route::delete('/{reimbursement}/attachment/{attachment}', [ReimbursementController::class, 'destroyAttachment'])->name('attachment.destroy');
 });
 
 // ── Medical Reimbursement Admin — role:admin ──────────────────────────

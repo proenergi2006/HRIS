@@ -40,7 +40,7 @@ class ReimbursementController extends Controller
             'marital_status' => 'required|in:single,married',
             'notes'          => 'nullable|string|max:1000',
             'attachments'    => 'nullable|array',
-            'attachments.*'  => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'attachments.*'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ], $this->itemRules());
     }
 
@@ -186,6 +186,18 @@ class ReimbursementController extends Controller
         return Storage::disk('local')->response($attachment->file_path, $attachment->file_name);
     }
 
+    public function destroyAttachment(ReimbursementRequest $reimbursement, ReimbursementAttachment $attachment)
+    {
+        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($reimbursement->isDraft(), 403);
+        abort_unless($attachment->reimbursement_request_id === $reimbursement->id, 404);
+
+        Storage::disk('local')->delete($attachment->file_path);
+        $attachment->delete();
+
+        return back()->with('status', 'Lampiran berhasil dihapus.');
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────────
 
     private function syncItems(ReimbursementRequest $reimb, array $items): void
@@ -210,12 +222,23 @@ class ReimbursementController extends Controller
     private function handleAttachments(ReimbursementRequest $reimb, Request $request): void
     {
         if (! $request->hasFile('attachments')) return;
-        foreach ($request->file('attachments') as $file) {
+
+        foreach ($request->file('attachments') as $docType => $file) {
+            if (! $file || ! $file->isValid()) continue;
+
+            // Replace existing attachment of same type
+            $existing = $reimb->attachments()->where('doc_type', $docType)->first();
+            if ($existing) {
+                Storage::disk('local')->delete($existing->file_path);
+                $existing->delete();
+            }
+
             $path = $file->store("reimbursement/{$reimb->id}", 'local');
             ReimbursementAttachment::create([
                 'reimbursement_request_id' => $reimb->id,
                 'file_path' => $path,
                 'file_name' => $file->getClientOriginalName(),
+                'doc_type'  => $docType,
             ]);
         }
     }
