@@ -21,13 +21,15 @@ class Employee extends Model
         'department',
         'position',
         'start_date',
+        'contract_end_date',
         'employment_status',
         'is_active',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'is_active'  => 'boolean',
+        'start_date'        => 'date',
+        'contract_end_date' => 'date',
+        'is_active'         => 'boolean',
     ];
 
     public function user(): BelongsTo

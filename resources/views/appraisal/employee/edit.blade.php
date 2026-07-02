@@ -121,6 +121,17 @@
                 </div>
             </div>
 
+            <div class="form-row" id="contract-end-row" style="{{ old('employment_status', $employee->employment_status) === 'contract' ? '' : 'display:none;' }}">
+                <div class="form-group col-12 col-md-4">
+                    <label for="contract_end_date">Tanggal Kontrak Berakhir <span class="text-danger">*</span></label>
+                    <input type="date" id="contract_end_date" name="contract_end_date"
+                           class="form-control{{ $errors->has('contract_end_date') ? ' is-invalid' : '' }}"
+                           value="{{ old('contract_end_date', $employee->contract_end_date?->format('Y-m-d')) }}">
+                    @error('contract_end_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <small class="text-muted">Wajib diisi jika status karyawan adalah Kontrak.</small>
+                </div>
+            </div>
+
             <div class="d-flex justify-content-between mt-2">
                 <a href="{{ route('appraisal.employees.index') }}" class="btn btn-secondary">Batal</a>
                 <button type="submit" class="btn btn-primary">{{ $employee->id ? 'Simpan Perubahan' : 'Tambah Karyawan' }}</button>
@@ -128,4 +139,23 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+(function () {
+    var statusEl = document.getElementById('employment_status');
+    var contractRow = document.getElementById('contract-end-row');
+    var contractInput = document.getElementById('contract_end_date');
+
+    function toggle() {
+        var isContract = statusEl.value === 'contract';
+        contractRow.style.display = isContract ? '' : 'none';
+        contractInput.required = isContract;
+        if (!isContract) contractInput.value = '';
+    }
+
+    statusEl.addEventListener('change', toggle);
+})();
+</script>
 @endsection

@@ -71,6 +71,7 @@ class EmployeeController extends Controller implements HasMiddleware
             'department'        => 'nullable|string|max:100',
             'position'          => 'nullable|string|max:100',
             'start_date'        => 'nullable|date',
+            'contract_end_date' => 'nullable|date|required_if:employment_status,contract',
             'employment_status' => 'required|in:permanent,contract,probation',
             'is_active'         => 'boolean',
         ]);
