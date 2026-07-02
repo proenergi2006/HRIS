@@ -9,6 +9,7 @@ use App\Models\GA\Vehicle;
 use App\Models\GA\VehicleUsage;
 use App\Models\Perdin\PerdinRequest;
 use App\Models\Reimbursement\ReimbursementRequest;
+use App\Models\WhistleblowerReport;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ class DashboardController extends Controller implements HasMiddleware
             return $this->gaDashboard();
         }
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasAnyRole(['admin', 'hr_manager'])) {
             return $this->adminDashboard();
         }
 
@@ -117,6 +118,20 @@ class DashboardController extends Controller implements HasMiddleware
                                 ->latest('updated_at')->limit(5)->get(),
         ];
 
+        $wb = [
+            'new'       => WhistleblowerReport::where('status', 'new')->count(),
+            'in_review' => WhistleblowerReport::where('status', 'in_review')->count(),
+            'resolved'  => WhistleblowerReport::where('status', 'resolved')->count(),
+            'closed'    => WhistleblowerReport::where('status', 'closed')->count(),
+            'total'     => WhistleblowerReport::count(),
+            'by_category' => WhistleblowerReport::select('category', DB::raw('count(*) as total'))
+                                ->groupBy('category')->orderByDesc('total')->get(),
+            'by_branch'   => WhistleblowerReport::whereNotNull('branch_location')
+                                ->select('branch_location', DB::raw('count(*) as total'))
+                                ->groupBy('branch_location')->orderByDesc('total')->get(),
+            'recent'    => WhistleblowerReport::latest()->limit(8)->get(),
+        ];
+
         $contractExpiring = Employee::where('employment_status', 'contract')
             ->where('is_active', true)
             ->whereNotNull('contract_end_date')
@@ -131,7 +146,10 @@ class DashboardController extends Controller implements HasMiddleware
             ->orderBy('contract_end_date')
             ->get();
 
-        return view('dashboard.admin', compact('stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib', 'reimb', 'perdin', 'contractExpiring', 'contractExpired'));
+        return view('dashboard.admin', compact(
+            'stats', 'gradeDistrib', 'openPeriods', 'recentAppraisals', 'statusDistrib', 'deptDistrib',
+            'reimb', 'perdin', 'wb', 'contractExpiring', 'contractExpired'
+        ));
     }
 
     private function step1ApproverDashboard($user)

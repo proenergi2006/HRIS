@@ -92,6 +92,39 @@ if ($authUser) {
         $notifItems = $contractNotif->merge($reimbPending)->merge($wbNew)->merge($appraisalPending)->take(8);
         $viewAllUrl = route('reimbursement.admin.index', ['status' => 'submitted']);
 
+    // ── HR MANAGER ────────────────────────────────────────────────────────────
+    } elseif ($authUser->hasRole('hr_manager')) {
+
+        $contractNotifHr = \App\Models\Employee::where('employment_status', 'contract')
+            ->where('is_active', true)
+            ->whereNotNull('contract_end_date')
+            ->where('contract_end_date', '<=', now()->addMonths(2)->toDateString())
+            ->orderBy('contract_end_date')
+            ->take(5)
+            ->get()
+            ->map(fn($e) => [
+                'icon'  => 'gd-calendar',
+                'color' => now()->diffInDays($e->contract_end_date, false) <= 0 ? 'text-danger' : (now()->diffInDays($e->contract_end_date) <= 14 ? 'text-danger' : 'text-warning'),
+                'title' => now()->diffInDays($e->contract_end_date, false) <= 0 ? 'Kontrak Sudah Berakhir' : 'Kontrak Akan Berakhir',
+                'body'  => $e->name . ' — ' . ($e->position ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
+                'url'   => route('appraisal.employees.edit', $e),
+                'time'  => 'Berakhir ' . $e->contract_end_date->diffForHumans(),
+            ]);
+
+        $wbNewHr = \App\Models\WhistleblowerReport::where('status', 'new')
+            ->latest('updated_at')->take(3)->get()
+            ->map(fn($w) => [
+                'icon'  => 'gd-alert',
+                'color' => 'text-danger',
+                'title' => 'Laporan Pengaduan Baru',
+                'body'  => 'Tiket ' . $w->ticket_number . ' — ' . $w->category,
+                'url'   => route('whistleblower.admin.show', $w),
+                'time'  => $w->created_at->diffForHumans(),
+            ]);
+
+        $notifItems = $contractNotifHr->merge($wbNewHr)->take(8);
+        $viewAllUrl = route('dashboard');
+
     // ── USER II ────────────────────────────────────────────────────────────────
     } elseif ($authUser->hasRole('user_ii')) {
 
