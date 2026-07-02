@@ -63,7 +63,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
 <body>
 
 <div class="hero">
-  <img src="/img/logo-proenergi.png" alt="PT. Pro Energi" style="height:40px;object-fit:contain;margin-bottom:12px;filter:brightness(0) invert(1);display:block;margin-left:auto;margin-right:auto;">
+  <img src="/img/logo-light.png" alt="PT. Pro Energi" style="height:40px;object-fit:contain;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">
   <div class="hero-badge">Penggunaan Kendaraan · PT Pro Energi</div>
   <h1>{{ $vehicle->name }}</h1>
   <div class="plate">{{ strtoupper($vehicle->plate) }}</div>
