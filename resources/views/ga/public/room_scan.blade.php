@@ -33,6 +33,7 @@
 <body>
 
 <div class="hero">
+  <img src="/img/logo-proenergi.png" alt="PT. Pro Energi" style="height:40px;object-fit:contain;margin-bottom:12px;filter:brightness(0) invert(1);display:block;margin-left:auto;margin-right:auto;">
   <h1>Laporan Kebersihan</h1>
   <p>{{ $room->name }}{{ $room->location ? ' — ' . $room->location : '' }}</p>
 </div>
