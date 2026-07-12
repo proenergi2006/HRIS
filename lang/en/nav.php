@@ -9,6 +9,8 @@ return [
     'vehicle_usage'          => 'Vehicle Usage',
     'meeting_rooms'          => 'Meeting Rooms',
     'cleaning_history'       => 'Cleaning History',
+    'vault_documents'        => 'Vault Document Barcode',
+    'vault_transactions'     => 'Vault Transaction History',
 
     // Appraisal
     'appraisal'              => 'Performance Appraisal',

@@ -140,6 +140,16 @@
           <i class="gd-check-box mr-2"></i>{{ __('nav.cleaning_history') }}
         </a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-documents*') || Request::is('admin/ga/vault-categories*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.vault-documents.index') }}">
+          <i class="gd-lock mr-2"></i>{{ __('nav.vault_documents') }}
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-transactions*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.vault-transactions.index') }}">
+          <i class="gd-list mr-2"></i>{{ __('nav.vault_transactions') }}
+        </a>
+      </li>
     </ul>
   </li>
   @endif

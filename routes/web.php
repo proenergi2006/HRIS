@@ -16,11 +16,15 @@ use App\Http\Controllers\Appraisal\FlowConfigController;
 use App\Http\Controllers\Appraisal\ReportController;
 use App\Http\Controllers\Appraisal\EmployeeDocumentController;
 use App\Http\Controllers\GA\PublicVehicleController;
+use App\Http\Controllers\GA\PublicVaultController;
 use App\Http\Controllers\GA\GaVehicleController;
 use App\Http\Controllers\GA\GaUsageController;
 use App\Http\Controllers\GA\PublicRoomController;
 use App\Http\Controllers\GA\GaRoomController;
 use App\Http\Controllers\GA\GaCleaningLogController;
+use App\Http\Controllers\GA\GaVaultCategoryController;
+use App\Http\Controllers\GA\GaVaultDocumentController;
+use App\Http\Controllers\GA\GaVaultTransactionController;
 use App\Http\Controllers\Reimbursement\ReimbursementController;
 use App\Http\Controllers\Reimbursement\ReimbursementAdminController;
 use App\Http\Controllers\Reimbursement\ReimbursementBalanceController;
@@ -45,6 +49,11 @@ Route::post('/ga/kendaraan/{vehicle}/checkout',[PublicVehicleController::class, 
 Route::get('/ga/ruangan/{room}',         [PublicRoomController::class, 'scan'])->name('ga.room.scan');
 Route::post('/ga/ruangan/{room}/submit', [PublicRoomController::class, 'submit'])->name('ga.room.submit')->middleware('throttle:30,60');
 Route::get('/ga/ruangan/{room}/sukses',  [PublicRoomController::class, 'success'])->name('ga.room.success');
+
+// ── GA Barcode Dokumen Brankas — public (QR scan, no auth) ────────────
+Route::get('/ga/dokumen/{document}',         [PublicVaultController::class, 'scan'])->name('ga.vault.scan');
+Route::post('/ga/dokumen/{document}/submit', [PublicVaultController::class, 'submit'])->name('ga.vault.submit')->middleware('throttle:30,60');
+Route::get('/ga/dokumen/{document}/sukses',  [PublicVaultController::class, 'success'])->name('ga.vault.success');
 
 // ── Whistleblower — public (no auth) ──────────────────────────────────
 Route::get('/whistleblower',                  [PublicWhistleblowerController::class, 'show'])->name('whistleblower.form');
@@ -100,6 +109,18 @@ Route::middleware(['auth', 'role:admin_ga|admin'])->prefix('admin/ga')->name('ga
     Route::get('cleaning-logs',                           [GaCleaningLogController::class, 'index'])->name('cleaning-logs.index');
     Route::get('cleaning-logs/{log}',                     [GaCleaningLogController::class, 'show'])->name('cleaning-logs.show');
     Route::get('cleaning-logs/{log}/photo/{photo}',       [GaCleaningLogController::class, 'photo'])->name('cleaning-logs.photo');
+
+    // Barcode Dokumen Brankas
+    Route::resource('vault-categories', GaVaultCategoryController::class)
+        ->parameters(['vault-categories' => 'category'])->except(['show', 'create', 'edit']);
+
+    Route::resource('vault-documents', GaVaultDocumentController::class)
+        ->parameters(['vault-documents' => 'document']);
+    Route::get('vault-documents/{document}/qrcode', [GaVaultDocumentController::class, 'qrcode'])->name('vault-documents.qrcode');
+    Route::post('vault-documents/{document}/transactions', [GaVaultTransactionController::class, 'store'])->name('vault-documents.transactions.store');
+
+    Route::get('vault-transactions',                      [GaVaultTransactionController::class, 'index'])->name('vault-transactions.index');
+    Route::get('vault-transactions/{transaction}/photo',  [GaVaultTransactionController::class, 'photo'])->name('vault-transactions.photo');
 });
 
 // ── Medical Reimbursement — semua user yang login ─────────────────────

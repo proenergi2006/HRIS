@@ -9,6 +9,8 @@ return [
     'vehicle_usage'          => 'Penggunaan',
     'meeting_rooms'          => 'Ruang Meeting',
     'cleaning_history'       => 'Riwayat Kebersihan',
+    'vault_documents'        => 'Barcode Dokumen Brankas',
+    'vault_transactions'     => 'Riwayat Transaksi Brankas',
 
     // Appraisal
     'appraisal'              => 'Penilaian Kinerja',
