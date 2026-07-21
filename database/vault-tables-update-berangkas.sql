@@ -26,6 +26,12 @@ ALTER TABLE `vault_documents`
   ADD CONSTRAINT `vault_documents_vault_id_foreign`
     FOREIGN KEY (`vault_id`) REFERENCES `vaults` (`id`) ON DELETE SET NULL;
 
+-- 3) Kategori dokumen tidak lagi wajib diisi — dokumen dikelompokkan
+--    berdasarkan berangkas saja. Kolom category_id dibuat nullable
+--    (kolom & data lama tidak dihapus, cuma tidak wajib lagi).
+ALTER TABLE `vault_documents`
+  MODIFY `category_id` bigint(20) unsigned DEFAULT NULL;
+
 -- Setelah dijalankan:
 --   1. Buka menu "Berangkas" di admin, buat berangkas yang sesuai (misal
 --      "Berangkas 1"). Barcode otomatis ter-generate.
@@ -38,4 +44,5 @@ ALTER TABLE `vault_documents`
 --
 -- INSERT INTO `migrations` (`migration`, `batch`) VALUES
 -- ('2026_07_21_100000_create_vaults_table', 25),
--- ('2026_07_21_100001_add_vault_id_to_vault_documents_table', 25);
+-- ('2026_07_21_100001_add_vault_id_to_vault_documents_table', 25),
+-- ('2026_07_21_100002_make_category_id_nullable_on_vault_documents', 25);
