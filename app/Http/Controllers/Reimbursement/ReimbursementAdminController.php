@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Reimbursement;
 use App\Http\Controllers\Controller;
 use App\Mail\ReimbursementApprovedMail;
 use App\Mail\ReimbursementRejectedMail;
+use App\Models\Reimbursement\ReimbursementAttachment;
 use App\Models\Reimbursement\ReimbursementBalance;
 use App\Models\Reimbursement\ReimbursementRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -94,10 +95,32 @@ class ReimbursementAdminController extends Controller
         return back()->with('status', 'Pengajuan ditolak.');
     }
 
-    public function attachment(ReimbursementRequest $reimbursement, \App\Models\Reimbursement\ReimbursementAttachment $attachment)
+    public function attachment(ReimbursementRequest $reimbursement, ReimbursementAttachment $attachment)
     {
         abort_unless($attachment->reimbursement_request_id === $reimbursement->id, 404);
         return \Illuminate\Support\Facades\Storage::disk('local')->response($attachment->file_path, $attachment->file_name);
+    }
+
+    public function updateAttachmentType(Request $request, ReimbursementRequest $reimbursement, ReimbursementAttachment $attachment)
+    {
+        abort_unless($attachment->reimbursement_request_id === $reimbursement->id, 404);
+
+        $data = $request->validate([
+            'doc_type' => 'required|in:' . implode(',', array_keys(ReimbursementAttachment::$docTypes)),
+        ]);
+
+        $taken = $reimbursement->attachments()
+            ->where('doc_type', $data['doc_type'])
+            ->where('id', '!=', $attachment->id)
+            ->exists();
+
+        if ($taken) {
+            return back()->with('error', 'Jenis dokumen itu sudah dipakai lampiran lain di pengajuan ini.');
+        }
+
+        $attachment->update($data);
+
+        return back()->with('status', 'Jenis dokumen lampiran berhasil disimpan.');
     }
 
     public function pdf(ReimbursementRequest $reimbursement)

@@ -148,10 +148,24 @@
           </tr>
           @endif
         @endforeach
-        {{-- Legacy attachments without doc_type --}}
+        {{-- Legacy attachments without doc_type: admin bisa set jenisnya --}}
         @foreach($reimbursement->attachments->whereNull('doc_type') as $att)
         <tr>
-          <td class="text-muted" style="font-size:.88rem">Lampiran</td>
+          <td style="font-size:.88rem">
+            <form method="POST" action="{{ route('reimbursement.admin.attachment.doc-type', [$reimbursement, $att]) }}"
+                  class="d-flex align-items-center" style="gap:.35rem">
+              @csrf
+              <select name="doc_type" class="form-control form-control-sm" style="max-width:220px" required>
+                <option value="">-- Jenis dokumen? --</option>
+                @foreach($docTypes as $type => $label)
+                  <option value="{{ $type }}">{{ $label }}</option>
+                @endforeach
+              </select>
+              <button type="submit" class="btn btn-xs btn-outline-primary" title="Simpan jenis dokumen">
+                <i class="gd-check"></i>
+              </button>
+            </form>
+          </td>
           <td>
             <a href="{{ route('reimbursement.admin.attachment', [$reimbursement, $att]) }}"
                target="_blank" class="btn btn-xs btn-outline-secondary">

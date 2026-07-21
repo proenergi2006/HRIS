@@ -160,6 +160,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/reimbursement')->name('
     Route::post('/{reimbursement}/reject',                                   [ReimbursementAdminController::class, 'reject'])->name('reject');
     Route::get('/{reimbursement}/pdf',                                       [ReimbursementAdminController::class, 'pdf'])->name('pdf');
     Route::get('/{reimbursement}/attachment/{attachment}',                   [ReimbursementAdminController::class, 'attachment'])->name('attachment');
+    Route::post('/{reimbursement}/attachment/{attachment}/doc-type',         [ReimbursementAdminController::class, 'updateAttachmentType'])->name('attachment.doc-type');
 });
 
 // ── Perjalanan Dinas (Perdin) — semua user yang login ─────────────────
