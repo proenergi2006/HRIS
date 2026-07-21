@@ -10,9 +10,6 @@
     <a href="{{ route('ga.admin.vaults.index') }}" class="btn btn-outline-secondary mr-1">
       <i class="gd-lock mr-1"></i> Kelola Berangkas
     </a>
-    <a href="{{ route('ga.admin.vault-categories.index') }}" class="btn btn-outline-secondary mr-1">
-      <i class="gd-tag mr-1"></i> Kelola Kategori
-    </a>
     <a href="{{ route('ga.admin.vault-documents.create') }}" class="btn btn-primary">
       <i class="gd-plus mr-1"></i> Tambah Dokumen
     </a>
@@ -32,16 +29,7 @@
           @endforeach
         </select>
       </div>
-      <div class="form-group col-md-3 mb-0">
-        <label class="small font-weight-bold">Kategori</label>
-        <select name="category_id" class="form-control form-control-sm">
-          <option value="">Semua</option>
-          @foreach($categories as $c)
-            <option value="{{ $c->id }}" {{ request('category_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-          @endforeach
-        </select>
-      </div>
-      <div class="form-group col-md-4 mb-0">
+      <div class="form-group col-md-5 mb-0">
         <label class="small font-weight-bold">Cari</label>
         <input type="text" name="q" class="form-control form-control-sm" placeholder="Barcode / detail dokumen" value="{{ request('q') }}">
       </div>
@@ -61,7 +49,6 @@
         <tr>
           <th>Barcode</th>
           <th>Berangkas</th>
-          <th>Kategori</th>
           <th>Detail Dokumen</th>
           <th class="text-center">Status</th>
           <th class="text-center">Transaksi</th>
@@ -80,7 +67,6 @@
               <span class="badge badge-danger">Belum diset</span>
             @endif
           </td>
-          <td>{{ $d->category->name }}</td>
           <td style="max-width:280px"><small>{{ \Illuminate\Support\Str::limit($d->detail, 80) }}</small></td>
           <td class="text-center">
             @if($d->isOut())

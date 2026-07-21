@@ -59,7 +59,7 @@
         <tr>
           <th>Tanggal</th>
           <th>Barcode</th>
-          <th>Kategori</th>
+          <th>Berangkas</th>
           <th class="text-center">Status</th>
           <th>Nama</th>
           <th>Keperluan</th>
@@ -76,7 +76,7 @@
               <span class="badge badge-dark">{{ $t->document->barcode }}</span>
             </a>
           </td>
-          <td><small>{{ $t->document->category->name }}</small></td>
+          <td><small>{{ $t->document->vault->name ?? '-' }}</small></td>
           <td class="text-center">
             @if($t->status === 'pengambilan')
               <span class="badge badge-warning">Pengambilan</span>

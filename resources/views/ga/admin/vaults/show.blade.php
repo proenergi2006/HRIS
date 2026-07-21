@@ -42,7 +42,6 @@
           <thead class="thead-light">
             <tr>
               <th>Barcode</th>
-              <th>Kategori</th>
               <th>Detail Dokumen</th>
               <th class="text-center">Status</th>
               <th></th>
@@ -52,7 +51,6 @@
           @forelse($documents as $d)
             <tr>
               <td><span class="badge badge-dark">{{ $d->barcode }}</span></td>
-              <td><small>{{ $d->category->name }}</small></td>
               <td style="max-width:220px"><small>{{ \Illuminate\Support\Str::limit($d->detail, 60) }}</small></td>
               <td class="text-center">
                 @if($d->isOut())
@@ -68,7 +66,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="5" class="text-center text-muted small py-3">Belum ada dokumen di berangkas ini.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted small py-3">Belum ada dokumen di berangkas ini.</td></tr>
           @endforelse
           </tbody>
         </table>

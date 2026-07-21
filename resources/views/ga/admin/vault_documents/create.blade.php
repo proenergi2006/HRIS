@@ -41,20 +41,6 @@
       </div>
 
       <div class="form-group">
-        <label>Kategori Dokumen <span class="text-danger">*</span></label>
-        <select name="category_id" class="form-control @error('category_id') is-invalid @enderror">
-          <option value="">-- Pilih Kategori --</option>
-          @foreach($categories as $c)
-            <option value="{{ $c->id }}" {{ old('category_id', $document->category_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-          @endforeach
-        </select>
-        @error('category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        @if($categories->isEmpty())
-          <small class="text-muted">Belum ada kategori. <a href="{{ route('ga.admin.vault-categories.index') }}">Tambah kategori dulu</a>.</small>
-        @endif
-      </div>
-
-      <div class="form-group">
         <label>Detail Dokumen <span class="text-danger">*</span></label>
         <textarea name="detail" rows="4" class="form-control @error('detail') is-invalid @enderror"
                   placeholder="Contoh: Sertifikat Tanah Blok A No. 123, an. PT Pro Energi">{{ old('detail', $document->detail) }}</textarea>

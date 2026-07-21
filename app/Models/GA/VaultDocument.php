@@ -12,7 +12,7 @@ class VaultDocument extends Model
 {
     use HasHashid;
 
-    protected $fillable = ['category_id', 'vault_id', 'barcode', 'detail', 'is_active'];
+    protected $fillable = ['vault_id', 'barcode', 'detail', 'is_active'];
     protected $casts    = ['is_active' => 'boolean'];
 
     protected static function booted(): void

@@ -16,7 +16,7 @@ class PublicVaultController extends Controller
             abort(404);
         }
 
-        $documents = $vault->documents()->where('is_active', true)->with('category')->orderBy('detail')->get();
+        $documents = $vault->documents()->where('is_active', true)->orderBy('detail')->get();
 
         return view('ga.public.vault_scan', compact('vault', 'documents'));
     }
@@ -26,8 +26,6 @@ class PublicVaultController extends Controller
         if (! $vault->is_active || ! $document->is_active || $document->vault_id !== $vault->id) {
             abort(404);
         }
-
-        $document->load('category');
 
         return view('ga.public.vault_document', compact('vault', 'document'));
     }
@@ -60,8 +58,6 @@ class PublicVaultController extends Controller
         if ($document->vault_id !== $vault->id) {
             abort(404);
         }
-
-        $document->load('category');
 
         return view('ga.public.vault_success', compact('vault', 'document'));
     }

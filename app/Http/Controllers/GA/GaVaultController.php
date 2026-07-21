@@ -36,7 +36,7 @@ class GaVaultController extends Controller
 
     public function show(Vault $vault)
     {
-        $documents = $vault->documents()->with('category')->withCount('transactions')->latest()->get();
+        $documents = $vault->documents()->withCount('transactions')->latest()->get();
         return view('ga.admin.vaults.show', compact('vault', 'documents'));
     }
 

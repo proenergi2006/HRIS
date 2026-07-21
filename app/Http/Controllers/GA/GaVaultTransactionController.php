@@ -12,7 +12,7 @@ class GaVaultTransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = VaultDocumentTransaction::with(['document.category', 'creator'])
+        $query = VaultDocumentTransaction::with(['document.vault', 'creator'])
             ->latest('transaction_date')->latest('id');
 
         if ($request->filled('document_id')) {

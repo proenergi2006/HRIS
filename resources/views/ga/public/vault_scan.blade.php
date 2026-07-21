@@ -14,7 +14,6 @@
     .doc-card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.08); padding: 1rem 1.1rem; margin-bottom: .85rem; display:flex; justify-content:space-between; align-items:center; gap: .75rem; }
     .doc-card .code { font-size:.75rem; color:#6b7280; letter-spacing:.06em; margin-bottom:2px; }
     .doc-card .detail { font-size:.88rem; color:#212529; }
-    .doc-card .cat { font-size:.75rem; color:#2e6da4; font-weight:700; margin-top:2px; }
     .status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-weight:700;font-size:11px;white-space:nowrap}
     .status-pill.available{background:#dcfce7;color:#166534}
     .status-pill.taken{background:#fef3c7;color:#92400e}
@@ -41,7 +40,6 @@
         <div>
           <div class="code">{{ $d->barcode }}</div>
           <div class="detail">{{ \Illuminate\Support\Str::limit($d->detail, 70) }}</div>
-          <div class="cat">{{ $d->category->name }}</div>
         </div>
         @if($d->isOut())
           <span class="status-pill taken">Diambil</span>

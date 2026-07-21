@@ -33,7 +33,7 @@
   </div>
   <h1>Dokumen Brankas</h1>
   <div class="code">{{ $document->barcode }}</div>
-  <div class="cat">{{ $document->category->name }} &middot; {{ $vault->name }}</div>
+  <div class="cat">{{ $vault->name }}</div>
   <div class="back-link"><a href="{{ route('ga.vault.scan', $vault) }}">&larr; Kembali ke daftar dokumen {{ $vault->name }}</a></div>
 </div>
 
