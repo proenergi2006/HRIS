@@ -73,7 +73,13 @@
       @foreach($documents as $d)
         <tr>
           <td><span class="badge badge-dark" style="font-size:.85rem;letter-spacing:.06em">{{ $d->barcode }}</span></td>
-          <td>{{ $d->vault->name }}</td>
+          <td>
+            @if($d->vault)
+              {{ $d->vault->name }}
+            @else
+              <span class="badge badge-danger">Belum diset</span>
+            @endif
+          </td>
           <td>{{ $d->category->name }}</td>
           <td style="max-width:280px"><small>{{ \Illuminate\Support\Str::limit($d->detail, 80) }}</small></td>
           <td class="text-center">
