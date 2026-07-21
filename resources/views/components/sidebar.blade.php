@@ -147,7 +147,7 @@
       </li>
       <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-documents*') || Request::is('admin/ga/vault-categories*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('ga.admin.vault-documents.index') }}">
-          <i class="gd-file-text mr-2"></i>{{ __('nav.vault_documents') }}
+          <i class="gd-file mr-2"></i>{{ __('nav.vault_documents') }}
         </a>
       </li>
       <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-transactions*') ? 'active' : '' }}">
