@@ -19,8 +19,8 @@
     </svg>
   </div>
   <h2 class="h4 font-weight-bold mb-2">Transaksi Tersimpan!</h2>
-  <p class="text-muted mb-3">Transaksi dokumen <strong>{{ $document->barcode }}</strong> ({{ $document->category->name }}) berhasil disimpan. Terima kasih!</p>
-  <a href="{{ route('ga.vault.scan', $document) }}" class="btn btn-outline-primary btn-sm">Transaksi Baru</a>
+  <p class="text-muted mb-3">Transaksi dokumen <strong>{{ $document->barcode }}</strong> ({{ $document->category->name }}) di berangkas <strong>{{ $vault->name }}</strong> berhasil disimpan. Terima kasih!</p>
+  <a href="{{ route('ga.vault.scan', $vault) }}" class="btn btn-outline-primary btn-sm">Kembali ke Daftar Dokumen</a>
 </div>
 </body>
 </html>

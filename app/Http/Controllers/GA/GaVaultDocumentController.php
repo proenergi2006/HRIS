@@ -3,19 +3,22 @@
 namespace App\Http\Controllers\GA;
 
 use App\Http\Controllers\Controller;
+use App\Models\GA\Vault;
 use App\Models\GA\VaultDocument;
 use App\Models\GA\VaultDocumentCategory;
 use Illuminate\Http\Request;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class GaVaultDocumentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = VaultDocument::with('category')->withCount('transactions')->latest();
+        $query = VaultDocument::with(['category', 'vault'])->withCount('transactions')->latest();
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
+        }
+        if ($request->filled('vault_id')) {
+            $query->where('vault_id', $request->vault_id);
         }
         if ($request->filled('q')) {
             $query->where(function ($sub) use ($request) {
@@ -26,20 +29,23 @@ class GaVaultDocumentController extends Controller
 
         $documents  = $query->get();
         $categories = VaultDocumentCategory::orderBy('name')->get();
+        $vaults     = Vault::orderBy('name')->get();
 
-        return view('ga.admin.vault_documents.index', compact('documents', 'categories'));
+        return view('ga.admin.vault_documents.index', compact('documents', 'categories', 'vaults'));
     }
 
     public function create()
     {
         $categories = VaultDocumentCategory::where('is_active', true)->orderBy('name')->get();
-        return view('ga.admin.vault_documents.create', ['document' => new VaultDocument, 'categories' => $categories]);
+        $vaults     = Vault::where('is_active', true)->orderBy('name')->get();
+        return view('ga.admin.vault_documents.create', ['document' => new VaultDocument, 'categories' => $categories, 'vaults' => $vaults]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'category_id' => 'required|exists:vault_document_categories,id',
+            'vault_id'    => 'required|exists:vaults,id',
             'detail'      => 'required|string',
             'is_active'   => 'boolean',
         ]);
@@ -48,12 +54,12 @@ class GaVaultDocumentController extends Controller
         $document = VaultDocument::create($data);
 
         return redirect()->route('ga.admin.vault-documents.show', $document)
-            ->with('status', 'Dokumen berhasil ditambahkan. Barcode: ' . $document->barcode);
+            ->with('status', 'Dokumen berhasil ditambahkan.');
     }
 
     public function show(VaultDocument $document)
     {
-        $document->load('category');
+        $document->load(['category', 'vault']);
         $transactions = $document->transactions()->with('creator')->latest('transaction_date')->latest('id')->get();
 
         return view('ga.admin.vault_documents.show', compact('document', 'transactions'));
@@ -62,13 +68,15 @@ class GaVaultDocumentController extends Controller
     public function edit(VaultDocument $document)
     {
         $categories = VaultDocumentCategory::where('is_active', true)->orderBy('name')->get();
-        return view('ga.admin.vault_documents.create', compact('document', 'categories'));
+        $vaults     = Vault::where('is_active', true)->orderBy('name')->get();
+        return view('ga.admin.vault_documents.create', compact('document', 'categories', 'vaults'));
     }
 
     public function update(Request $request, VaultDocument $document)
     {
         $data = $request->validate([
             'category_id' => 'required|exists:vault_document_categories,id',
+            'vault_id'    => 'required|exists:vaults,id',
             'detail'      => 'required|string',
             'is_active'   => 'boolean',
         ]);
@@ -83,13 +91,5 @@ class GaVaultDocumentController extends Controller
     {
         $document->delete();
         return redirect()->route('ga.admin.vault-documents.index')->with('status', 'Dokumen berhasil dihapus.');
-    }
-
-    public function qrcode(VaultDocument $document)
-    {
-        $url = route('ga.vault.scan', $document);
-        $qr  = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($url);
-
-        return view('ga.admin.vault_documents.qrcode', compact('document', 'qr', 'url'));
     }
 }

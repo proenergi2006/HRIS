@@ -27,6 +27,20 @@
       @endif
 
       <div class="form-group">
+        <label>Berangkas <span class="text-danger">*</span></label>
+        <select name="vault_id" class="form-control @error('vault_id') is-invalid @enderror">
+          <option value="">-- Pilih Berangkas --</option>
+          @foreach($vaults as $v)
+            <option value="{{ $v->id }}" {{ old('vault_id', $document->vault_id) == $v->id ? 'selected' : '' }}>{{ $v->name }}</option>
+          @endforeach
+        </select>
+        @error('vault_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @if($vaults->isEmpty())
+          <small class="text-muted">Belum ada berangkas. <a href="{{ route('ga.admin.vaults.create') }}">Tambah berangkas dulu</a>.</small>
+        @endif
+      </div>
+
+      <div class="form-group">
         <label>Kategori Dokumen <span class="text-danger">*</span></label>
         <select name="category_id" class="form-control @error('category_id') is-invalid @enderror">
           <option value="">-- Pilih Kategori --</option>

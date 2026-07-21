@@ -26,13 +26,14 @@
         <div class="table-responsive">
         <table class="table table-sm mb-0">
           <tr><td class="text-muted" style="width:40%">Barcode</td><td><span class="badge badge-dark">{{ $document->barcode }}</span></td></tr>
+          <tr><td class="text-muted">Berangkas</td><td class="font-weight-bold">{{ $document->vault->name }}</td></tr>
           <tr><td class="text-muted">Kategori</td><td class="font-weight-bold">{{ $document->category->name }}</td></tr>
           <tr><td class="text-muted">Detail</td><td>{{ $document->detail }}</td></tr>
           <tr><td class="text-muted">Aktif</td><td>{{ $document->is_active ? 'Ya' : 'Non-aktif' }}</td></tr>
         </table>
         </div>
-        <a href="{{ route('ga.admin.vault-documents.qrcode', $document) }}" class="btn btn-sm btn-outline-primary mt-3">
-          <i class="gd-layers mr-1"></i> Lihat Barcode
+        <a href="{{ route('ga.admin.vaults.qrcode', $document->vault) }}" class="btn btn-sm btn-outline-primary mt-3">
+          <i class="gd-layers mr-1"></i> Lihat Barcode Berangkas
         </a>
       </div>
     </div>

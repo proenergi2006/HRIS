@@ -140,9 +140,14 @@
           <i class="gd-check-box mr-2"></i>{{ __('nav.cleaning_history') }}
         </a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('admin/ga/vaults*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('ga.admin.vaults.index') }}">
+          <i class="gd-lock mr-2"></i>{{ __('nav.vaults') }}
+        </a>
+      </li>
       <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-documents*') || Request::is('admin/ga/vault-categories*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('ga.admin.vault-documents.index') }}">
-          <i class="gd-lock mr-2"></i>{{ __('nav.vault_documents') }}
+          <i class="gd-file-text mr-2"></i>{{ __('nav.vault_documents') }}
         </a>
       </li>
       <li class="side-nav-menu-item {{ Request::is('admin/ga/vault-transactions*') ? 'active' : '' }}">
@@ -292,6 +297,40 @@
   </li>
 
   @endif {{-- end !admin_ga --}}
+
+  {{-- ── HR: Absensi, Cuti, Penggajian ── --}}
+  @if($sidebarUser?->hasAnyRole(['admin','hr_manager']))
+  @php $hrActive = Request::is('hr/*'); @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $hrActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subHR">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-user"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">HR Manajemen</span>
+      <span class="side-nav-control-icon ml-auto"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
+    </a>
+    <ul class="side-nav-menu side-nav-menu-second-level collapse {{ $hrActive ? 'show' : '' }}" id="subHR">
+      <li class="side-nav-menu-item {{ Request::is('hr/attendance*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.attendance.index') }}">
+          <i class="gd-calendar mr-2"></i>Absensi
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/overtime*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.overtime.index') }}">
+          <i class="gd-alarm-clock mr-2"></i>Lembur
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/leave*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.leave.index') }}">
+          <i class="gd-check mr-2"></i>Cuti
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/payroll*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.payroll.index') }}">
+          <i class="gd-wallet mr-2"></i>Penggajian
+        </a>
+      </li>
+    </ul>
+  </li>
+  @endif
 
   {{-- ── Laporan — admin & hr_manager ── --}}
   @if($sidebarUser?->hasAnyRole(['admin','hr_manager']))

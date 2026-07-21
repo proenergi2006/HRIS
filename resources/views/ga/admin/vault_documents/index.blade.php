@@ -5,8 +5,11 @@
 @include('components.notification')
 
 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
-  <div class="h3 mb-0">Barcode Dokumen Brankas</div>
+  <div class="h3 mb-0">Dokumen Brankas</div>
   <div>
+    <a href="{{ route('ga.admin.vaults.index') }}" class="btn btn-outline-secondary mr-1">
+      <i class="gd-lock mr-1"></i> Kelola Berangkas
+    </a>
     <a href="{{ route('ga.admin.vault-categories.index') }}" class="btn btn-outline-secondary mr-1">
       <i class="gd-tag mr-1"></i> Kelola Kategori
     </a>
@@ -20,7 +23,16 @@
 <div class="card mb-3">
   <div class="card-body py-3">
     <form method="GET" class="form-row align-items-end mb-0">
-      <div class="form-group col-md-4 mb-0">
+      <div class="form-group col-md-3 mb-0">
+        <label class="small font-weight-bold">Berangkas</label>
+        <select name="vault_id" class="form-control form-control-sm">
+          <option value="">Semua</option>
+          @foreach($vaults as $v)
+            <option value="{{ $v->id }}" {{ request('vault_id') == $v->id ? 'selected' : '' }}>{{ $v->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="form-group col-md-3 mb-0">
         <label class="small font-weight-bold">Kategori</label>
         <select name="category_id" class="form-control form-control-sm">
           <option value="">Semua</option>
@@ -48,6 +60,7 @@
       <thead class="thead-light">
         <tr>
           <th>Barcode</th>
+          <th>Berangkas</th>
           <th>Kategori</th>
           <th>Detail Dokumen</th>
           <th class="text-center">Status</th>
@@ -60,6 +73,7 @@
       @foreach($documents as $d)
         <tr>
           <td><span class="badge badge-dark" style="font-size:.85rem;letter-spacing:.06em">{{ $d->barcode }}</span></td>
+          <td>{{ $d->vault->name }}</td>
           <td>{{ $d->category->name }}</td>
           <td style="max-width:280px"><small>{{ \Illuminate\Support\Str::limit($d->detail, 80) }}</small></td>
           <td class="text-center">
@@ -77,9 +91,6 @@
           <td class="text-right" style="white-space:nowrap">
             <a href="{{ route('ga.admin.vault-documents.show', $d) }}" class="btn btn-xs btn-outline-info mr-1" title="Detail & Transaksi">
               <i class="gd-eye icon-text"></i>
-            </a>
-            <a href="{{ route('ga.admin.vault-documents.qrcode', $d) }}" class="btn btn-xs btn-outline-primary mr-1" title="Barcode / QR">
-              <i class="gd-layers icon-text"></i>
             </a>
             <a href="{{ route('ga.admin.vault-documents.edit', $d) }}" class="btn btn-xs btn-outline-warning mr-1">
               <i class="gd-pencil icon-text"></i>

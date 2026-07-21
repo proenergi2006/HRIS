@@ -15,6 +15,9 @@ use App\Http\Controllers\Appraisal\ApprovalController;
 use App\Http\Controllers\Appraisal\FlowConfigController;
 use App\Http\Controllers\Appraisal\ReportController;
 use App\Http\Controllers\Appraisal\EmployeeDocumentController;
+use App\Http\Controllers\Appraisal\EmployeeImportController;
+use App\Http\Controllers\Appraisal\DepartmentController;
+use App\Http\Controllers\Appraisal\PositionController;
 use App\Http\Controllers\GA\PublicVehicleController;
 use App\Http\Controllers\GA\PublicVaultController;
 use App\Http\Controllers\GA\GaVehicleController;
@@ -23,6 +26,7 @@ use App\Http\Controllers\GA\PublicRoomController;
 use App\Http\Controllers\GA\GaRoomController;
 use App\Http\Controllers\GA\GaCleaningLogController;
 use App\Http\Controllers\GA\GaVaultCategoryController;
+use App\Http\Controllers\GA\GaVaultController;
 use App\Http\Controllers\GA\GaVaultDocumentController;
 use App\Http\Controllers\GA\GaVaultTransactionController;
 use App\Http\Controllers\Reimbursement\ReimbursementController;
@@ -33,6 +37,10 @@ use App\Http\Controllers\Perdin\PerdinApprovalController;
 use App\Http\Controllers\Perdin\PerdinAdminController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\HR\AttendanceController;
+use App\Http\Controllers\HR\OvertimeController;
+use App\Http\Controllers\HR\LeaveController;
+use App\Http\Controllers\HR\PayrollController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -51,9 +59,11 @@ Route::post('/ga/ruangan/{room}/submit', [PublicRoomController::class, 'submit']
 Route::get('/ga/ruangan/{room}/sukses',  [PublicRoomController::class, 'success'])->name('ga.room.success');
 
 // ── GA Barcode Dokumen Brankas — public (QR scan, no auth) ────────────
-Route::get('/ga/dokumen/{document}',         [PublicVaultController::class, 'scan'])->name('ga.vault.scan');
-Route::post('/ga/dokumen/{document}/submit', [PublicVaultController::class, 'submit'])->name('ga.vault.submit')->middleware('throttle:30,60');
-Route::get('/ga/dokumen/{document}/sukses',  [PublicVaultController::class, 'success'])->name('ga.vault.success');
+// QR discan per berangkas (satu berangkas berisi banyak dokumen).
+Route::get('/ga/berangkas/{vault}',                          [PublicVaultController::class, 'scan'])->name('ga.vault.scan');
+Route::get('/ga/berangkas/{vault}/dokumen/{document}',       [PublicVaultController::class, 'document'])->name('ga.vault.document');
+Route::post('/ga/berangkas/{vault}/dokumen/{document}/submit', [PublicVaultController::class, 'submit'])->name('ga.vault.submit')->middleware('throttle:30,60');
+Route::get('/ga/berangkas/{vault}/dokumen/{document}/sukses', [PublicVaultController::class, 'success'])->name('ga.vault.success');
 
 // ── Whistleblower — public (no auth) ──────────────────────────────────
 Route::get('/whistleblower',                  [PublicWhistleblowerController::class, 'show'])->name('whistleblower.form');
@@ -114,9 +124,12 @@ Route::middleware(['auth', 'role:admin_ga|admin'])->prefix('admin/ga')->name('ga
     Route::resource('vault-categories', GaVaultCategoryController::class)
         ->parameters(['vault-categories' => 'category'])->except(['show', 'create', 'edit']);
 
+    Route::resource('vaults', GaVaultController::class)
+        ->parameters(['vaults' => 'vault']);
+    Route::get('vaults/{vault}/qrcode', [GaVaultController::class, 'qrcode'])->name('vaults.qrcode');
+
     Route::resource('vault-documents', GaVaultDocumentController::class)
         ->parameters(['vault-documents' => 'document']);
-    Route::get('vault-documents/{document}/qrcode', [GaVaultDocumentController::class, 'qrcode'])->name('vault-documents.qrcode');
     Route::post('vault-documents/{document}/transactions', [GaVaultTransactionController::class, 'store'])->name('vault-documents.transactions.store');
 
     Route::get('vault-transactions',                      [GaVaultTransactionController::class, 'index'])->name('vault-transactions.index');
@@ -181,6 +194,63 @@ Route::middleware(['auth', 'role:admin|hr_manager'])->prefix('admin/laporan')->n
     Route::get('/export/perdin',       [LaporanController::class, 'exportPerdin'])->name('export.perdin');
 });
 
+// ── HR: Absensi, Cuti, Penggajian — admin & hr_manager ───────────────
+Route::middleware(['auth', 'role:admin|hr_manager'])->prefix('hr')->name('hr.')->group(function () {
+
+    // Absensi
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/',                [AttendanceController::class, 'index'])->name('index');
+        Route::get('/input',           [AttendanceController::class, 'create'])->name('create');
+        Route::post('/input',          [AttendanceController::class, 'store'])->name('store');
+        Route::post('/bulk',           [AttendanceController::class, 'bulkStore'])->name('bulk');
+        Route::get('/import',          [AttendanceController::class, 'importForm'])->name('import.form');
+        Route::post('/import',         [AttendanceController::class, 'import'])->name('import');
+    });
+
+    // Lembur
+    Route::prefix('overtime')->name('overtime.')->group(function () {
+        Route::get('/',        [OvertimeController::class, 'index'])->name('index');
+        Route::get('/input',   [OvertimeController::class, 'create'])->name('create');
+        Route::post('/input',  [OvertimeController::class, 'store'])->name('store');
+    });
+
+    // Cuti
+    Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/',                [LeaveController::class, 'index'])->name('index');
+        Route::get('/create',          [LeaveController::class, 'create'])->name('create');
+        Route::post('/',               [LeaveController::class, 'store'])->name('store');
+        Route::get('/{leave}',         [LeaveController::class, 'show'])->name('show');
+        Route::post('/{leave}/approve-manager', [LeaveController::class, 'approveManager'])->name('approve.manager');
+        Route::post('/{leave}/approve-hr',      [LeaveController::class, 'approveHR'])->name('approve.hr');
+        Route::post('/{leave}/reject',          [LeaveController::class, 'reject'])->name('reject');
+        Route::get('/{leave}/attachment',       [LeaveController::class, 'attachment'])->name('attachment');
+        Route::get('/balances/index',  [LeaveController::class, 'balances'])->name('balances');
+        Route::post('/balances/upsert',[LeaveController::class, 'upsertBalance'])->name('balances.upsert');
+    });
+
+    // Penggajian
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        Route::get('/',                     [PayrollController::class, 'periods'])->name('index');
+        Route::get('/create',               [PayrollController::class, 'createPeriod'])->name('create');
+        Route::post('/',                    [PayrollController::class, 'storePeriod'])->name('store');
+        Route::get('/{period}',             [PayrollController::class, 'show'])->name('show');
+        Route::post('/{period}/generate',   [PayrollController::class, 'generate'])->name('generate');
+        Route::post('/{period}/close',      [PayrollController::class, 'close'])->name('close');
+        Route::get('/{period}/slip/{slip}/pdf', [PayrollController::class, 'slipPdf'])->name('slip.pdf');
+
+        // Komponen gaji master
+        Route::get('/components/index',     [PayrollController::class, 'components'])->name('components');
+        Route::post('/components',          [PayrollController::class, 'storeComponent'])->name('components.store');
+        Route::put('/components/{component}/rate', [PayrollController::class, 'updateComponentRate'])->name('components.rate');
+        Route::delete('/components/{component}', [PayrollController::class, 'destroyComponent'])->name('components.destroy');
+
+        // Struktur gaji per karyawan
+        Route::get('/salary/index',         [PayrollController::class, 'salaryIndex'])->name('salary.index');
+        Route::get('/salary/{employee}',    [PayrollController::class, 'salaryEdit'])->name('salary.edit');
+        Route::post('/salary/{employee}',   [PayrollController::class, 'salaryUpdate'])->name('salary.update');
+    });
+});
+
 // ── Whistleblower admin — auth only ───────────────────────────────────
 Route::middleware(['auth', 'role:admin'])->prefix('admin/whistleblower')->name('whistleblower.admin.')->group(function () {
     Route::get('/',                                      [WhistleblowerController::class, 'index'])->name('index');
@@ -210,6 +280,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::prefix('appraisal')->name('appraisal.')->group(function () {
         Route::resource('levels',       LevelController::class);
         Route::resource('employees',    EmployeeController::class);
+        Route::get('employees/{employee}/photo', [EmployeeController::class, 'photo'])->name('employees.photo');
+
+        // Import data karyawan (Excel)
+        Route::get('employees-import/template', [EmployeeImportController::class, 'template'])->name('employees.import.template');
+        Route::get('employees-import',           [EmployeeImportController::class, 'form'])->name('employees.import.form');
+        Route::post('employees-import',          [EmployeeImportController::class, 'import'])->name('employees.import');
+
+        // Master data Departemen & Jabatan
+        Route::resource('departments', DepartmentController::class)->except(['show', 'create', 'edit']);
+        Route::resource('positions',   PositionController::class)->except(['show', 'create', 'edit']);
+
         // Dokumen karyawan (nested under employee)
         Route::prefix('employees/{employee}/documents')->name('employees.documents.')->group(function () {
             Route::get('/',            [EmployeeDocumentController::class, 'index'])->name('index');
