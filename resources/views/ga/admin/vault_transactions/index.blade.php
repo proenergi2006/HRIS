@@ -105,6 +105,13 @@
 
 @section('scripts')
 <script>
-$('#dt-vault-transactions').DataTable({ language: window.siproDtLang, order: [[1,'desc']], columnDefs: [{orderable:false,targets:[0,-1]}] });
+$('#dt-vault-transactions').DataTable({
+  language: window.siproDtLang,
+  order: [[1,'desc']],
+  columnDefs: [
+    { orderable: false, targets: [0, -1] },
+    { targets: 0, render: function (data, type, row, meta) { return meta.row + meta.settings._iDisplayStart + 1; } }
+  ]
+});
 </script>
 @endsection

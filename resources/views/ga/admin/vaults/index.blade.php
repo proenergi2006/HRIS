@@ -73,6 +73,13 @@
 
 @section('scripts')
 <script>
-$('#dt-vaults').DataTable({ language: window.siproDtLang, order: [[2,'asc']], columnDefs: [{orderable:false,targets:[0,-1]}] });
+$('#dt-vaults').DataTable({
+  language: window.siproDtLang,
+  order: [[2,'asc']],
+  columnDefs: [
+    { orderable: false, targets: [0, -1] },
+    { targets: 0, render: function (data, type, row, meta) { return meta.row + meta.settings._iDisplayStart + 1; } }
+  ]
+});
 </script>
 @endsection
