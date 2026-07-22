@@ -114,10 +114,13 @@
 $('#dt-vault-documents').DataTable({
   language: window.siproDtLang,
   order: [[1,'desc']],
-  columnDefs: [
-    { orderable: false, targets: [0, -1] },
-    { targets: 0, render: function (data, type, row, meta) { return meta.row + meta.settings._iDisplayStart + 1; } }
-  ]
+  columnDefs: [{ orderable: false, targets: [0, -1] }],
+  drawCallback: function () {
+    var start = this.api().page.info().start;
+    this.api().column(0, { page: 'current' }).nodes().each(function (cell, i) {
+      cell.innerHTML = start + i + 1;
+    });
+  }
 });
 </script>
 @endsection
