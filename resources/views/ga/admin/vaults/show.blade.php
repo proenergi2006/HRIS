@@ -41,6 +41,7 @@
         <table class="table table-hover mb-0">
           <thead class="thead-light">
             <tr>
+              <th class="text-center" style="width:50px">No</th>
               <th>Barcode</th>
               <th>Detail Dokumen</th>
               <th class="text-center">Status</th>
@@ -50,6 +51,7 @@
           <tbody>
           @forelse($documents as $d)
             <tr>
+              <td class="text-center">{{ $loop->iteration }}</td>
               <td><span class="badge badge-dark">{{ $d->barcode }}</span></td>
               <td style="max-width:220px"><small>{{ \Illuminate\Support\Str::limit($d->detail, 60) }}</small></td>
               <td class="text-center">
@@ -66,7 +68,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="4" class="text-center text-muted small py-3">Belum ada dokumen di berangkas ini.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted small py-3">Belum ada dokumen di berangkas ini.</td></tr>
           @endforelse
           </tbody>
         </table>

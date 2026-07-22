@@ -22,6 +22,7 @@
     <table id="dt-vaults" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
+          <th class="text-center" style="width:50px">No</th>
           <th>Barcode</th>
           <th>Nama Berangkas</th>
           <th class="text-center">Jumlah Dokumen</th>
@@ -32,6 +33,7 @@
       <tbody>
       @foreach($vaults as $v)
         <tr>
+          <td class="text-center">{{ $loop->iteration }}</td>
           <td><span class="badge badge-dark" style="font-size:.85rem;letter-spacing:.06em">{{ $v->barcode }}</span></td>
           <td>{{ $v->name }}</td>
           <td class="text-center">{{ $v->documents_count }}</td>
@@ -71,6 +73,6 @@
 
 @section('scripts')
 <script>
-$('#dt-vaults').DataTable({ language: window.siproDtLang, order: [[1,'asc']], columnDefs: [{orderable:false,targets:-1}] });
+$('#dt-vaults').DataTable({ language: window.siproDtLang, order: [[2,'asc']], columnDefs: [{orderable:false,targets:[0,-1]}] });
 </script>
 @endsection

@@ -47,6 +47,7 @@
     <table id="dt-vault-documents" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
+          <th class="text-center" style="width:50px">No</th>
           <th>Barcode</th>
           <th>Berangkas</th>
           <th>Detail Dokumen</th>
@@ -59,6 +60,7 @@
       <tbody>
       @foreach($documents as $d)
         <tr>
+          <td class="text-center">{{ $loop->iteration }}</td>
           <td><span class="badge badge-dark" style="font-size:.85rem;letter-spacing:.06em">{{ $d->barcode }}</span></td>
           <td>
             @if($d->vault)
@@ -109,6 +111,6 @@
 
 @section('scripts')
 <script>
-$('#dt-vault-documents').DataTable({ language: window.siproDtLang, order: [[0,'desc']], columnDefs: [{orderable:false,targets:-1}] });
+$('#dt-vault-documents').DataTable({ language: window.siproDtLang, order: [[1,'desc']], columnDefs: [{orderable:false,targets:[0,-1]}] });
 </script>
 @endsection

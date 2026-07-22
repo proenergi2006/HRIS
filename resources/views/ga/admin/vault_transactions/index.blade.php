@@ -57,6 +57,7 @@
     <table id="dt-vault-transactions" class="table table-hover mb-0" style="width:100%">
       <thead class="thead-light">
         <tr>
+          <th class="text-center" style="width:50px">No</th>
           <th>Tanggal</th>
           <th>Barcode</th>
           <th>Berangkas</th>
@@ -70,6 +71,7 @@
       <tbody>
       @foreach($transactions as $t)
         <tr>
+          <td class="text-center">{{ $loop->iteration }}</td>
           <td><small>{{ $t->transaction_date->format('d/m/Y') }}</small></td>
           <td>
             <a href="{{ route('ga.admin.vault-documents.show', $t->document) }}">
@@ -103,6 +105,6 @@
 
 @section('scripts')
 <script>
-$('#dt-vault-transactions').DataTable({ language: window.siproDtLang, order: [[0,'desc']], columnDefs: [{orderable:false,targets:-1}] });
+$('#dt-vault-transactions').DataTable({ language: window.siproDtLang, order: [[1,'desc']], columnDefs: [{orderable:false,targets:[0,-1]}] });
 </script>
 @endsection
