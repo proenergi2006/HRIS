@@ -11,6 +11,9 @@
     .hero h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: .25rem; }
     .hero .code { display:inline-block;background:#fff;color:#1a3c5e;border-radius:8px;padding:4px 16px;font-size:1rem;font-weight:800;letter-spacing:.1em;margin-top:6px }
     .list-wrap { max-width: 560px; margin: 1.5rem auto 2rem; padding: 0 1rem; }
+    .search-box { position: sticky; top: 0; z-index: 5; background: #f4f6fa; padding: .75rem 0; margin-bottom: .25rem; }
+    .search-box input { width: 100%; border: 1px solid #dee2e6; border-radius: 10px; padding: .6rem .9rem; font-size: .9rem; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .search-box input:focus { outline: none; border-color: #2e6da4; }
     .doc-card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.08); padding: 1rem 1.1rem; margin-bottom: .85rem; display:flex; justify-content:space-between; align-items:center; gap: .75rem; }
     .doc-card .code { font-size:.75rem; color:#6b7280; letter-spacing:.06em; margin-bottom:2px; }
     .doc-card .detail { font-size:.88rem; color:#212529; }
@@ -35,22 +38,50 @@
   @if($documents->isEmpty())
     <div class="empty">Belum ada dokumen terdaftar di berangkas ini.</div>
   @else
-    @foreach($documents as $d)
-      <a href="{{ route('ga.vault.document', [$vault, $d]) }}" class="doc-card" style="text-decoration:none;color:inherit">
-        <div>
-          <div class="code">{{ $d->barcode }}</div>
-          <div class="detail">{{ \Illuminate\Support\Str::limit($d->detail, 70) }}</div>
-        </div>
-        @if($d->isOut())
-          <span class="status-pill taken">Diambil</span>
-        @else
-          <span class="status-pill available">Di Brankas</span>
-        @endif
-      </a>
-    @endforeach
+    <div class="search-box">
+      <input type="text" id="doc-search" placeholder="Cari dokumen (barcode / detail)..." autocomplete="off">
+    </div>
+    <div id="doc-list">
+      @foreach($documents as $d)
+        <a href="{{ route('ga.vault.document', [$vault, $d]) }}" class="doc-card"
+           style="text-decoration:none;color:inherit"
+           data-search="{{ strtolower($d->barcode . ' ' . $d->detail) }}">
+          <div>
+            <div class="code">{{ $d->barcode }}</div>
+            <div class="detail">{{ \Illuminate\Support\Str::limit($d->detail, 70) }}</div>
+          </div>
+          @if($d->isOut())
+            <span class="status-pill taken">Diambil</span>
+          @else
+            <span class="status-pill available">Di Brankas</span>
+          @endif
+        </a>
+      @endforeach
+    </div>
+    <div class="empty" id="doc-no-result" style="display:none">Dokumen tidak ditemukan.</div>
   @endif
 </div>
 
 <footer>SIPRO &mdash; PT. Pro Energi</footer>
+
+<script>
+(function() {
+  var input = document.getElementById('doc-search');
+  if (!input) return;
+  var cards    = Array.prototype.slice.call(document.querySelectorAll('#doc-list .doc-card'));
+  var noResult = document.getElementById('doc-no-result');
+
+  input.addEventListener('input', function() {
+    var q = input.value.trim().toLowerCase();
+    var visible = 0;
+    cards.forEach(function(card) {
+      var match = card.getAttribute('data-search').indexOf(q) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noResult.style.display = visible === 0 ? 'block' : 'none';
+  });
+})();
+</script>
 </body>
 </html>
