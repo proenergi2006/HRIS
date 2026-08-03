@@ -95,8 +95,8 @@
     </a>
   </li>
 
-  {{-- ── GA Module — admin_ga & admin ── --}}
-  @if($sidebarUser?->hasAnyRole(['admin_ga','admin']))
+  {{-- ── GA Module — admin_ga only ── --}}
+  @if($sidebarUser?->hasRole('admin_ga'))
   @php $gaActive = Request::is('admin/ga/*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $gaActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subGA">
@@ -159,10 +159,35 @@
   </li>
   @endif
 
+  {{-- ── Data Karyawan — admin only (Employees, Job Levels, Approval Flow) ── --}}
+  @if($sidebarUser?->hasRole('admin'))
+  @php $employeeDataActive = Request::is('appraisal/employees*') || Request::is('appraisal/levels*') || Request::is('appraisal/flow-configs*'); @endphp
+  <li class="side-nav-menu-item side-nav-has-menu {{ $employeeDataActive ? 'active' : '' }}">
+    <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subEmployeeData">
+      <span class="side-nav-menu-icon d-flex mr-3"><i class="gd-user"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Data Karyawan</span>
+      <span class="side-nav-control-icon d-flex"><i class="gd-angle-right side-nav-fadeout-on-closed"></i></span>
+      <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
+    </a>
+    <ul id="subEmployeeData" class="side-nav-menu side-nav-menu-second-level mb-0">
+      <li class="side-nav-menu-item {{ Request::is('appraisal/employees*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.employees.index') }}"><i class="gd-user mr-2"></i>{{ __('nav.employees') }}</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/levels*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.levels.index') }}"><i class="gd-layers mr-2"></i>{{ __('nav.job_levels') }}</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/flow-configs*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.flow-configs.index') }}"><i class="gd-share-alt mr-2"></i>{{ __('nav.approval_flow') }}</a>
+      </li>
+    </ul>
+  </li>
+  @endif
+
   {{-- ── Appraisal + Reimbursement — semua kecuali admin_ga ── --}}
   @if(! $sidebarUser?->hasRole('admin_ga'))
 
-  {{-- Penilaian Kinerja --}}
+  {{-- Penilaian Kinerja — bukan admin (admin punya menu Data Karyawan sendiri di atas) --}}
+  @if(! $sidebarUser?->hasRole('admin'))
   @php $appraisalActive = Request::is('appraisal/*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $appraisalActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subAppraisal">
@@ -183,23 +208,6 @@
       <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
     </a>
     <ul id="subAppraisal" class="side-nav-menu side-nav-menu-second-level mb-0">
-      @if(auth()->user()?->hasRole('admin'))
-      <li class="side-nav-menu-item {{ Request::is('appraisal/employees*') ? 'active' : '' }}">
-        <a class="side-nav-menu-link" href="{{ route('appraisal.employees.index') }}"><i class="gd-user mr-2"></i>{{ __('nav.employees') }}</a>
-      </li>
-      <li class="side-nav-menu-item {{ Request::is('appraisal/levels*') ? 'active' : '' }}">
-        <a class="side-nav-menu-link" href="{{ route('appraisal.levels.index') }}"><i class="gd-layers mr-2"></i>{{ __('nav.job_levels') }}</a>
-      </li>
-      <li class="side-nav-menu-item {{ Request::is('appraisal/templates*') ? 'active' : '' }}">
-        <a class="side-nav-menu-link" href="{{ route('appraisal.templates.index') }}"><i class="gd-files mr-2"></i>{{ __('nav.templates') }}</a>
-      </li>
-      <li class="side-nav-menu-item {{ Request::is('appraisal/flow-configs*') ? 'active' : '' }}">
-        <a class="side-nav-menu-link" href="{{ route('appraisal.flow-configs.index') }}"><i class="gd-share-alt mr-2"></i>{{ __('nav.approval_flow') }}</a>
-      </li>
-      <li class="side-nav-menu-item {{ Request::is('appraisal/periods*') ? 'active' : '' }}">
-        <a class="side-nav-menu-link" href="{{ route('appraisal.periods.index') }}"><i class="gd-calendar mr-2"></i>{{ __('nav.periods') }}</a>
-      </li>
-      @endif
       <li class="side-nav-menu-item {{ Request::is('appraisal/appraisals*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.appraisals.index') }}"><i class="gd-check-box mr-2"></i>{{ __('nav.appraisals') }}
           @if($pendingCount > 0)
@@ -212,6 +220,7 @@
       </li>
     </ul>
   </li>
+  @endif
 
   {{-- Reimbursement --}}
   @php
