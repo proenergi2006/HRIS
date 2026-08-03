@@ -1,59 +1,98 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIPRO
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SIPRO adalah aplikasi HRIS (Human Resource Information System) internal untuk **PT Pro Energi Group** (PT Pro Energi, PT Tridaya Selaras, PT Pinnafore Staraya), dibangun dengan Laravel. Aplikasi ini menggantikan beberapa proses manual/aplikasi terpisah (termasuk migrasi data karyawan dari Jayroll) menjadi satu sistem terpadu untuk kepegawaian, penilaian kinerja, keuangan karyawan, dan operasional General Affairs.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Database**: MySQL / MariaDB
+- **Frontend**: Blade + Bootstrap 4 (tema GrainDashboard), jQuery, DataTables
+- **Build tool**: Vite
+- **Package penting**:
+  - `spatie/laravel-permission` — role & permission
+  - `maatwebsite/excel` — export/import Excel
+  - `barryvdh/laravel-dompdf` — export PDF
+  - `simplesoftwareio/simple-qrcode` — QR code (barcode kendaraan/ruangan/dokumen brankas)
+  - `vinkla/hashids` — obfuscated ID di URL (route model binding)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Modul Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Modul | Deskripsi |
+|---|---|
+| **Data Karyawan** | Master data karyawan (profil, jabatan, departemen, dokumen), lengkap dengan import dari Excel |
+| **Penilaian Kinerja (Appraisal)** | Template penilaian, periode, alur persetujuan berjenjang per departemen, laporan & export |
+| **Reimbursement** | Pengajuan reimbursement medical, approval, saldo per karyawan |
+| **Perjalanan Dinas (Perdin)** | Pengajuan perjalanan dinas, approval berjenjang, laporan |
+| **General Affairs (GA)** | Kendaraan (check-in/out via QR), Ruang Meeting (checklist kebersihan via QR), Barcode Dokumen Brankas (pengambilan/pengembalian dokumen via QR) |
+| **HR** | Absensi (input manual & import log mesin fingerprint), Cuti (pengajuan & approval berjenjang), Penggajian (komponen gaji, slip gaji per periode) |
+| **Whistleblower** | Pengaduan publik (tanpa login) dengan tracking tiket |
+| **Laporan** | Rekap bulanan (PDF) dan export Excel lintas modul |
+| **Manajemen User & Role** | Admin, GA, HR Manager, CEO/CFO (approval), Karyawan |
 
-## Learning Laravel
+## Role & Middleware
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Role dikelola via `spatie/laravel-permission`. Role yang ada saat ini:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- `admin` — akses penuh
+- `admin_ga` — modul General Affairs
+- `hr_manager` — modul HR (absensi, cuti, payroll) & laporan
+- `ceo`, `cfo` — approval akhir penilaian kinerja
+- `karyawan` — akses standar (self-service: pengajuan, penilaian diri, dsb.)
 
-## Laravel Sponsors
+Rute admin dibatasi lewat middleware `role:...` di `routes/web.php`, sebagian besar dalam group `Route::middleware(['auth','role:...'])`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Instalasi & Setup Lokal
 
-### Premium Partners
+```bash
+git clone <repo-url> sipro-app
+cd sipro-app
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+composer install
+npm install
 
-## Contributing
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Isi kredensial database di `.env`, lalu:
 
-## Code of Conduct
+```bash
+php artisan migrate --seed   # jika ada seeder awal
+npm run build                # atau `npm run dev` untuk mode watch
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Aplikasi berjalan di `http://127.0.0.1:8000`.
 
-## Security Vulnerabilities
+### Catatan Storage
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Upload file (dokumen karyawan, foto profil, foto serah terima dokumen brankas, foto checklist kebersihan, dll) disimpan di disk `local` (`storage/app/private`) — **tidak** memakai `storage:link`/disk `public`. Setiap file selalu disajikan lewat route yang memvalidasi otorisasi terlebih dahulu (streaming via `Storage::disk('local')->response(...)`), bukan URL publik langsung.
 
-## License
+## Struktur Direktori Penting
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+app/Http/Controllers/
+  Appraisal/     -> Data Karyawan, Departemen, Jabatan, Penilaian Kinerja
+  GA/            -> Kendaraan, Ruang Meeting, Barcode Dokumen Brankas
+  HR/            -> Absensi, Cuti, Penggajian
+  Perdin/        -> Perjalanan Dinas
+  Reimbursement/ -> Reimbursement
+  Whistleblower/ -> Pengaduan
+
+app/Models/
+  Employee.php, Company.php, Department.php, Position.php, Level.php
+  GA/            -> Vehicle, MeetingRoom, VaultDocument, dst.
+  HR/            -> AttendanceRecord, LeaveRequest, SalaryComponent, dst.
+  Appraisal/     -> Appraisal, AppraisalTemplate, AppraisalFlowConfig, dst.
+
+resources/views/
+  layouts/grain.blade.php    -> layout utama area admin (login)
+  ga/public/                 -> halaman publik hasil scan QR (tanpa login)
+  components/sidebar.blade.php -> menu navigasi, dikelompokkan per modul & role
+```
+
+## Konvensi Kode
+
+- Route model binding memakai **Hashids** (trait `App\Traits\HasHashid`) untuk data yang bisa diakses lewat URL publik (Kendaraan, Ruang Meeting, Dokumen Brankas) — ID asli tidak pernah terekspos di URL.
+- Master data referensi (Kategori Dokumen, Departemen, Jabatan, dsb.) memakai pola CRUD ringan: satu halaman index dengan form tambah + baris yang bisa diedit/dihapus langsung.
+- Setiap fitur upload foto dari kamera (bukan pilih dari galeri) memakai `getUserMedia` + `canvas` langsung di halaman (bukan `<input type="file" capture>`), karena atribut `capture` tidak konsisten menyembunyikan opsi galeri di semua browser/HP.
