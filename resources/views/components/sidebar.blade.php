@@ -186,8 +186,9 @@
   {{-- ── Appraisal + Reimbursement — semua kecuali admin_ga ── --}}
   @if(! $sidebarUser?->hasRole('admin_ga'))
 
-  {{-- Penilaian Kinerja — bukan admin (menu sendiri di atas), disembunyikan sementara untuk karyawan --}}
-  @if(! $sidebarUser?->hasAnyRole(['admin', 'karyawan']))
+  {{-- Penilaian Kinerja — hanya role yang terlibat alur appraisal.
+       Whitelist (bukan blacklist) supaya user tanpa role sama sekali ikut ke-hide juga. --}}
+  @if($sidebarUser?->hasAnyRole(['evaluator', 'user_ii', 'cfo', 'ceo', 'hr_manager']))
   @php $appraisalActive = Request::is('appraisal/*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $appraisalActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subAppraisal">
@@ -266,8 +267,9 @@
     </ul>
   </li>
 
-  {{-- Perjalanan Dinas — disembunyikan sementara untuk admin & karyawan --}}
-  @if(! $sidebarUser?->hasAnyRole(['admin', 'karyawan']))
+  {{-- Perjalanan Dinas — whitelist role yang sama dengan Penilaian Kinerja
+       supaya user tanpa role sama sekali ikut ke-hide juga. --}}
+  @if($sidebarUser?->hasAnyRole(['evaluator', 'user_ii', 'cfo', 'ceo', 'hr_manager']))
   @php
     $perdinActive = Request::is('perdin*') || Request::is('admin/perdin*');
   @endphp
