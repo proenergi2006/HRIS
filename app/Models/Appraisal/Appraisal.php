@@ -134,12 +134,12 @@ class Appraisal extends Model
     public function getStatusLabelAttribute(): string
     {
         if ($this->status === self::STATUS_SUBMITTED) {
-            $cfg = AppraisalFlowConfig::forDepartment($this->employee->department ?? '', 1);
+            $cfg = AppraisalFlowConfig::forDepartment($this->employee->department?->name ?? '', 1);
             return 'Menunggu Persetujuan ' . ($cfg?->label ?? 'Atasan');
         }
 
         if ($this->status === self::STATUS_APPROVED_U2) {
-            $cfg = AppraisalFlowConfig::forDepartment($this->employee->department ?? '', 2);
+            $cfg = AppraisalFlowConfig::forDepartment($this->employee->department?->name ?? '', 2);
             return 'Menunggu Persetujuan ' . ($cfg?->label ?? 'Final');
         }
 

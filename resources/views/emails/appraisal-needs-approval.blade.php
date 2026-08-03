@@ -26,7 +26,7 @@
     </div>
     <div class="field">
       <div class="label">Jabatan / Departemen</div>
-      <div class="value">{{ $appraisal->employee?->position ?? '-' }} &nbsp;·&nbsp; {{ $appraisal->employee?->department ?? '-' }}</div>
+      <div class="value">{{ $appraisal->employee?->position?->name ?? '-' }} &nbsp;·&nbsp; {{ $appraisal->employee?->department?->name ?? '-' }}</div>
     </div>
     <div class="field">
       <div class="label">Periode</div>

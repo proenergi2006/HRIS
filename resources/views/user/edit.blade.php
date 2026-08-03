@@ -78,8 +78,8 @@
                             <option value="{{ $emp->id }}"
                                 {{ old('employee_id', $user->employee?->id) == $emp->id ? 'selected' : '' }}>
                                 {{ $emp->name }}
-                                @if($emp->department) — {{ $emp->department }}@endif
-                                @if($emp->position) ({{ $emp->position }})@endif
+                                @if($emp->department) — {{ $emp->department->name }}@endif
+                                @if($emp->position) ({{ $emp->position->name }})@endif
                             </option>
                         @endforeach
                     </select>

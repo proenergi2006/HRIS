@@ -42,7 +42,7 @@ class LaporanController extends Controller
     {
         $status = $request->get('status'); // 'active','inactive', or null = all
 
-        $employees = Employee::with(['level', 'manager'])
+        $employees = Employee::with(['level', 'manager', 'department', 'position'])
             ->when($status === 'active',   fn($q) => $q->where('is_active', true))
             ->when($status === 'inactive', fn($q) => $q->where('is_active', false))
             ->orderBy('name')

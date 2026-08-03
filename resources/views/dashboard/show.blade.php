@@ -176,7 +176,7 @@
                     <tr>
                         <td>
                             <div class="font-weight-bold" style="font-size:0.85rem;">{{ $a->employee?->name ?? '-' }}</div>
-                            <small class="text-muted">{{ $a->employee?->position ?? '-' }}</small>
+                            <small class="text-muted">{{ $a->employee?->position?->name ?? '-' }}</small>
                         </td>
                         <td><small>{{ $a->period?->name ?? '-' }}</small></td>
                         <td class="text-center">{{ $a->total_score ?: '-' }}</td>

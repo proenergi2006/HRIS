@@ -23,30 +23,31 @@ class ReportController extends Controller implements HasMiddleware
         $user    = auth()->user();
         $periods = AppraisalPeriod::orderByDesc('year')->orderByDesc('id')->get();
 
-        $query = Appraisal::with(['employee.level', 'period', 'template'])
+        $query = Appraisal::with(['employee.level', 'employee.department', 'employee.position', 'period', 'template'])
             ->when($request->period_id,  fn($q) => $q->where('appraisal_period_id', $request->period_id))
-            ->when($request->department, fn($q) => $q->whereHas('employee', fn($eq) => $eq->where('department', $request->department)))
+            ->when($request->department, fn($q) => $q->whereHas('employee.department', fn($dq) => $dq->where('name', $request->department)))
             ->when($request->status,     fn($q) => $q->where('status', $request->status))
             ->when($request->grade,      fn($q) => $q->where('grade', $request->grade));
 
         // Admin dan CEO lihat semua; user lain hanya departemen sendiri
         if (!$user->hasAnyRole(['admin', 'ceo']) && $user->department) {
-            $query->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $query->whereHas('employee.department', fn($dq) => $dq->where('name', $user->department));
         }
 
         $appraisals = $query->orderByDesc('id')->get();
 
         // Dropdown departemen: admin & CEO tampil semua, lainnya hanya dept sendiri
         $deptQuery = Appraisal::join('employees', 'appraisals.employee_id', '=', 'employees.id')
-            ->whereNotNull('employees.department')
+            ->join('departments', 'employees.department_id', '=', 'departments.id')
+            ->whereNotNull('departments.name')
             ->distinct()
-            ->orderBy('employees.department');
+            ->orderBy('departments.name');
 
         if (!$user->hasAnyRole(['admin', 'ceo']) && $user->department) {
-            $deptQuery->where('employees.department', $user->department);
+            $deptQuery->where('departments.name', $user->department);
         }
 
-        $departments = $deptQuery->pluck('employees.department');
+        $departments = $deptQuery->pluck('departments.name');
         $grades      = Appraisal::whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade');
 
         return view('appraisal.report.index', compact(
@@ -57,14 +58,14 @@ class ReportController extends Controller implements HasMiddleware
     public function export(Request $request)
     {
         $user  = auth()->user();
-        $query = Appraisal::with(['employee.level', 'period', 'template', 'evaluator'])
+        $query = Appraisal::with(['employee.level', 'employee.department', 'employee.position', 'period', 'template', 'evaluator'])
             ->when($request->period_id,  fn($q) => $q->where('appraisal_period_id', $request->period_id))
-            ->when($request->department, fn($q) => $q->whereHas('employee', fn($eq) => $eq->where('department', $request->department)))
+            ->when($request->department, fn($q) => $q->whereHas('employee.department', fn($dq) => $dq->where('name', $request->department)))
             ->when($request->status,     fn($q) => $q->where('status', $request->status))
             ->when($request->grade,      fn($q) => $q->where('grade', $request->grade));
 
         if (!$user->hasAnyRole(['admin', 'ceo']) && $user->department) {
-            $query->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $query->whereHas('employee.department', fn($dq) => $dq->where('name', $user->department));
         }
 
         $appraisals = $query->orderByDesc('id')->get();

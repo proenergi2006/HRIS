@@ -20,9 +20,9 @@
                 <div class="h3 mb-1">Penilaian Kinerja Karyawan</div>
                 <div class="text-muted">
                     <strong>{{ $appraisal->employee->name }}</strong>
-                    &nbsp;·&nbsp; {{ $appraisal->employee->position }}
+                    &nbsp;·&nbsp; {{ $appraisal->employee->position?->name }}
                     @if($appraisal->employee->department)
-                        &nbsp;·&nbsp; {{ $appraisal->employee->department }}
+                        &nbsp;·&nbsp; {{ $appraisal->employee->department->name }}
                     @endif
                 </div>
                 <div class="text-muted small mt-1">

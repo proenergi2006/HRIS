@@ -221,7 +221,7 @@
     <tr>
       <td class="label">Jabatan / Posisi</td>
       <td class="sep">:</td>
-      <td class="val">{{ $appraisal->employee->position ?? '-' }}</td>
+      <td class="val">{{ $appraisal->employee->position?->name ?? '-' }}</td>
       <td></td>
       <td class="label">Level Jabatan</td>
       <td class="sep">:</td>
@@ -230,7 +230,7 @@
     <tr>
       <td class="label">Departemen</td>
       <td class="sep">:</td>
-      <td class="val">{{ $appraisal->employee->department ?? '-' }}</td>
+      <td class="val">{{ $appraisal->employee->department?->name ?? '-' }}</td>
       <td></td>
       <td class="label">LOB</td>
       <td class="sep">:</td>
@@ -483,7 +483,7 @@
         <div style="font-size:7.5pt; color:#444; margin-bottom:2px;">Karyawan Yang Dinilai</div>
         <div class="sig-space"></div>
         <div class="sig-name">{{ $appraisal->employee->name }}</div>
-        <div class="sig-role">{{ $appraisal->employee->position ?? '' }}</div>
+        <div class="sig-role">{{ $appraisal->employee->position?->name ?? '' }}</div>
         <div class="sig-role">Tgl: .............</div>
       </td>
       <td style="width:33%;">

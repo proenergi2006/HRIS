@@ -14,7 +14,7 @@ Karyawan berikut kontraknya **sudah berakhir** namun masih berstatus aktif:
 | Nama Karyawan | NIK | Tanggal Berakhir | Divisi |
 |:---|:---|:---|:---|
 @foreach($expired as $e)
-| {{ $e->name }} | {{ $e->nip ?? '-' }} | {{ $e->contract_end_date->format('d M Y') }} | {{ $e->department ?? '-' }} |
+| {{ $e->name }} | {{ $e->nip ?? '-' }} | {{ $e->contract_end_date->format('d M Y') }} | {{ $e->department?->name ?? '-' }} |
 @endforeach
 </x-mail::table>
 
@@ -29,7 +29,7 @@ Karyawan berikut kontraknya akan berakhir dalam **60 hari ke depan**:
 | Nama Karyawan | NIK | Tanggal Berakhir | Sisa Hari | Divisi |
 |:---|:---|:---|:---|:---|
 @foreach($expiring as $e)
-| {{ $e->name }} | {{ $e->nip ?? '-' }} | {{ $e->contract_end_date->format('d M Y') }} | {{ now()->startOfDay()->diffInDays($e->contract_end_date->startOfDay()) }} hari | {{ $e->department ?? '-' }} |
+| {{ $e->name }} | {{ $e->nip ?? '-' }} | {{ $e->contract_end_date->format('d M Y') }} | {{ now()->startOfDay()->diffInDays($e->contract_end_date->startOfDay()) }} hari | {{ $e->department?->name ?? '-' }} |
 @endforeach
 </x-mail::table>
 

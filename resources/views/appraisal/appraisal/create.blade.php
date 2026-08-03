@@ -28,7 +28,7 @@
                         @php $myEmp = $employees->first(); @endphp
                         <input type="hidden" name="employee_id" value="{{ $myEmp->id }}">
                         <input type="text" class="form-control" readonly
-                               value="{{ $myEmp->name }}{{ $myEmp->nip ? ' ('.$myEmp->nip.')' : '' }} — {{ $myEmp->position }}">
+                               value="{{ $myEmp->name }}{{ $myEmp->nip ? ' ('.$myEmp->nip.')' : '' }} — {{ $myEmp->position?->name }}">
                         <small class="text-muted">Penilaian mandiri (self-assessment) untuk diri sendiri.</small>
                     @else
                         <select id="employee_id" name="employee_id"
@@ -40,7 +40,7 @@
                                         {{ old('employee_id') == $emp->id ? 'selected' : '' }}>
                                     {{ $emp->name }}
                                     @if($emp->nip) ({{ $emp->nip }}) @endif
-                                    — {{ $emp->position }}
+                                    — {{ $emp->position?->name }}
                                 </option>
                             @endforeach
                         </select>

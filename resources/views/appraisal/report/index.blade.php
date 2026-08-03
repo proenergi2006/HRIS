@@ -113,9 +113,9 @@
                 <td class="py-2">{{ $loop->iteration }}</td>
                 <td class="py-2">
                 <div class="font-weight-bold">{{ $a->employee->name }}</div>
-                <small class="text-muted">{{ $a->employee->nip }} · {{ $a->employee->position }}</small>
+                <small class="text-muted">{{ $a->employee->nip }} · {{ $a->employee->position?->name }}</small>
                 </td>
-                <td class="py-2">{{ $a->employee->department ?? '-' }}</td>
+                <td class="py-2">{{ $a->employee->department?->name ?? '-' }}</td>
                 <td class="py-2">{{ $a->employee->level?->name ?? '-' }}</td>
                 <td class="py-2">{{ $a->period->name }}</td>
                 <td class="py-2 text-center font-weight-bold">{{ $a->total_score ?: '-' }}</td>

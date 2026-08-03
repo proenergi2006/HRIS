@@ -575,8 +575,8 @@
                 <tr class="table-danger">
                     <td class="pl-3 font-weight-bold">{{ $emp->name }}</td>
                     <td>{{ $emp->nip ?? '—' }}</td>
-                    <td>{{ $emp->position ?? '—' }}</td>
-                    <td>{{ $emp->department ?? '—' }}</td>
+                    <td>{{ $emp->position?->name ?? '—' }}</td>
+                    <td>{{ $emp->department?->name ?? '—' }}</td>
                     <td class="text-center text-danger font-weight-bold">{{ $emp->contract_end_date->format('d/m/Y') }}</td>
                     <td class="text-center">
                         <span class="badge badge-danger">{{ now()->diffInDays($emp->contract_end_date) }} hari</span>
@@ -617,8 +617,8 @@
                 <tr class="{{ $sisa <= 14 ? 'table-danger' : 'table-warning' }}">
                     <td class="pl-3 font-weight-bold">{{ $emp->name }}</td>
                     <td>{{ $emp->nip ?? '—' }}</td>
-                    <td>{{ $emp->position ?? '—' }}</td>
-                    <td>{{ $emp->department ?? '—' }}</td>
+                    <td>{{ $emp->position?->name ?? '—' }}</td>
+                    <td>{{ $emp->department?->name ?? '—' }}</td>
                     <td class="text-center font-weight-bold">{{ $emp->contract_end_date->format('d/m/Y') }}</td>
                     <td class="text-center">
                         <span class="badge badge-{{ $sisa <= 14 ? 'danger' : 'warning' }}">{{ $sisa }} hari</span>

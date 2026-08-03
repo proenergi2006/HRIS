@@ -12,7 +12,7 @@ class ApprovalStateMachine
     public function stepConfig(Appraisal $appraisal, int $step): ?AppraisalFlowConfig
     {
         return AppraisalFlowConfig::forDepartment(
-            $appraisal->employee->department,
+            $appraisal->employee->department?->name,
             $step
         );
     }
@@ -28,7 +28,7 @@ class ApprovalStateMachine
     public function canApprove(Appraisal $appraisal, User $user): bool
     {
         // Jika user punya department, hanya bisa approve departemen yg sama
-        if ($user->department && $user->department !== ($appraisal->employee->department ?? '')) {
+        if ($user->department && $user->department !== ($appraisal->employee->department?->name ?? '')) {
             return false;
         }
 
@@ -55,7 +55,7 @@ class ApprovalStateMachine
     public function submit(Appraisal $appraisal, User $user): void
     {
         $before = $appraisal->status;
-        $dept   = $appraisal->employee->department;
+        $dept   = $appraisal->employee->department?->name;
 
         // Cek apakah dept punya step 1 explicit (bukan fallback default).
         // Jika TIDAK ada → single-step dept, langsung lompat ke approved_user2

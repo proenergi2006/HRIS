@@ -62,7 +62,7 @@ if ($authUser) {
                 'icon'  => 'gd-calendar',
                 'color' => now()->diffInDays($e->contract_end_date) <= 0 ? 'text-danger' : (now()->diffInDays($e->contract_end_date) <= 14 ? 'text-danger' : 'text-warning'),
                 'title' => now()->diffInDays($e->contract_end_date) <= 0 ? 'Kontrak Sudah Berakhir' : 'Kontrak Akan Berakhir',
-                'body'  => $e->name . ' — ' . ($e->position ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
+                'body'  => $e->name . ' — ' . ($e->position?->name ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
                 'url'   => route('appraisal.employees.edit', $e),
                 'time'  => now()->diffInDays($e->contract_end_date) <= 0
                     ? 'Berakhir ' . $e->contract_end_date->diffForHumans()
@@ -106,7 +106,7 @@ if ($authUser) {
                 'icon'  => 'gd-calendar',
                 'color' => now()->diffInDays($e->contract_end_date, false) <= 0 ? 'text-danger' : (now()->diffInDays($e->contract_end_date) <= 14 ? 'text-danger' : 'text-warning'),
                 'title' => now()->diffInDays($e->contract_end_date, false) <= 0 ? 'Kontrak Sudah Berakhir' : 'Kontrak Akan Berakhir',
-                'body'  => $e->name . ' — ' . ($e->position ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
+                'body'  => $e->name . ' — ' . ($e->position?->name ?? '-') . ' · ' . $e->contract_end_date->format('d/m/Y'),
                 'url'   => route('appraisal.employees.edit', $e),
                 'time'  => 'Berakhir ' . $e->contract_end_date->diffForHumans(),
             ]);

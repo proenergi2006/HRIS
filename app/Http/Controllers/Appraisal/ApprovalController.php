@@ -120,7 +120,7 @@ class ApprovalController extends Controller implements HasMiddleware
                 continue;
             }
             // Filter by department jika approver punya department
-            if ($approver->department && $approver->department !== ($appraisal->employee?->department ?? '')) {
+            if ($approver->department && $approver->department !== ($appraisal->employee?->department?->name ?? '')) {
                 continue;
             }
             Mail::to($approver->email)

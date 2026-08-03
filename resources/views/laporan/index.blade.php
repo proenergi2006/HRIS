@@ -180,7 +180,7 @@
         @foreach($stats['karyawan']['expired'] as $e)
         <tr class="table-danger">
           <td>{{ $e->name }}</td>
-          <td>{{ $e->department ?? '-' }}</td>
+          <td>{{ $e->department?->name ?? '-' }}</td>
           <td>{{ $e->contract_end_date->format('d M Y') }}</td>
           <td><span class="badge badge-danger">Sudah Berakhir</span></td>
         </tr>
@@ -188,7 +188,7 @@
         @foreach($stats['karyawan']['expiring'] as $e)
         <tr class="table-warning">
           <td>{{ $e->name }}</td>
-          <td>{{ $e->department ?? '-' }}</td>
+          <td>{{ $e->department?->name ?? '-' }}</td>
           <td>{{ $e->contract_end_date->format('d M Y') }}</td>
           <td><span class="badge badge-warning">{{ now()->diffInDays($e->contract_end_date) }} hari lagi</span></td>
         </tr>

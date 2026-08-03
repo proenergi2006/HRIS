@@ -41,14 +41,14 @@ class AppraisalController extends Controller implements HasMiddleware
         } elseif ($user->hasAnyRole(['user_ii', 'cfo', 'ceo'])) {
             // Approver: filter by department jika user punya department
             if ($user->department) {
-                $query->whereHas('employee', fn($q) => $q->where('department', $user->department));
+                $query->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
             }
         } else {
             // Evaluator: lihat yang dibuat sendiri + seluruh appraisal dept yang sama
             $query->where(function ($q) use ($user) {
                 $q->where('evaluator_id', $user->id);
                 if ($user->department) {
-                    $q->orWhereHas('employee', fn($q2) => $q2->where('department', $user->department));
+                    $q->orWhereHas('employee.department', fn($q2) => $q2->where('name', $user->department));
                 }
             });
         }
@@ -350,7 +350,7 @@ class AppraisalController extends Controller implements HasMiddleware
         if ($user->hasRole('karyawan') && $appraisal->employee->user_id === $user->id) return;
         // Evaluator boleh akses semua appraisal di departemen yang sama
         if ($user->hasRole('evaluator') && $user->department
-            && $appraisal->employee->department === $user->department) return;
+            && $appraisal->employee->department?->name === $user->department) return;
         abort(403, 'Anda tidak memiliki akses ke penilaian ini.');
     }
 

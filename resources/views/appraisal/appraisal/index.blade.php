@@ -64,7 +64,7 @@
 <td class="py-3">{{ $appraisals->firstItem() + $loop->index }}</td>
 <td class="py-3">
 <div class="font-weight-bold">{{ $appraisal->employee?->name ?? '-' }}</div>
-<small class="text-muted">{{ $appraisal->employee?->position ?? '' }}</small>
+<small class="text-muted">{{ $appraisal->employee?->position?->name ?? '' }}</small>
 </td>
 <td class="py-3">{{ $appraisal->period?->name ?? '-' }}</td>
 <td class="py-3">{{ $appraisal->template?->name ?? '-' }}</td>

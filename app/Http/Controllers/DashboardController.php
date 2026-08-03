@@ -80,12 +80,13 @@ class DashboardController extends Controller implements HasMiddleware
             ->pluck('total', 'status');
 
         $deptDistrib = Appraisal::join('employees', 'appraisals.employee_id', '=', 'employees.id')
-            ->whereNotNull('employees.department')
-            ->select('employees.department', DB::raw('count(*) as total'))
-            ->groupBy('employees.department')
+            ->join('departments', 'employees.department_id', '=', 'departments.id')
+            ->whereNotNull('departments.name')
+            ->select('departments.name', DB::raw('count(*) as total'))
+            ->groupBy('departments.name')
             ->orderByDesc('total')
             ->limit(8)
-            ->pluck('total', 'employees.department');
+            ->pluck('total', 'departments.name');
 
         $openPeriods = AppraisalPeriod::where('status', 'open')
             ->withCount('appraisals')
@@ -160,14 +161,14 @@ class DashboardController extends Controller implements HasMiddleware
             ->where('status', 'submitted');
 
         if ($user->department) {
-            $baseQuery->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $baseQuery->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
         }
 
         $pending = $baseQuery->orderByDesc('submitted_at')->get();
 
         $doneQuery = Appraisal::whereIn('status', ['approved_user2', 'approved_cfo']);
         if ($user->department) {
-            $doneQuery->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $doneQuery->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
         }
 
         $stats = [
@@ -191,14 +192,14 @@ class DashboardController extends Controller implements HasMiddleware
             ->where('status', 'approved_user2');
 
         if ($user->department) {
-            $baseQuery->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $baseQuery->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
         }
 
         $pending = $baseQuery->orderByDesc('updated_at')->get();
 
         $doneQuery = Appraisal::where('status', 'approved_cfo');
         if ($user->department) {
-            $doneQuery->whereHas('employee', fn($q) => $q->where('department', $user->department));
+            $doneQuery->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
         }
 
         $stats = [
