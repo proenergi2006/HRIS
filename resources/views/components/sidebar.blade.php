@@ -266,7 +266,8 @@
     </ul>
   </li>
 
-  {{-- Perjalanan Dinas --}}
+  {{-- Perjalanan Dinas — disembunyikan sementara untuk admin --}}
+  @if(! $sidebarUser?->hasRole('admin'))
   @php
     $perdinActive = Request::is('perdin*') || Request::is('admin/perdin*');
   @endphp
@@ -304,11 +305,12 @@
       @endif
     </ul>
   </li>
+  @endif {{-- end !admin (perjalanan dinas) --}}
 
   @endif {{-- end !admin_ga --}}
 
-  {{-- ── HR: Absensi, Cuti, Penggajian ── --}}
-  @if($sidebarUser?->hasAnyRole(['admin','hr_manager']))
+  {{-- ── HR: Absensi, Cuti, Penggajian — disembunyikan sementara untuk admin ── --}}
+  @if($sidebarUser?->hasRole('hr_manager'))
   @php $hrActive = Request::is('hr/*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $hrActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subHR">
@@ -341,8 +343,8 @@
   </li>
   @endif
 
-  {{-- ── Laporan — admin & hr_manager ── --}}
-  @if($sidebarUser?->hasAnyRole(['admin','hr_manager']))
+  {{-- ── Laporan — hr_manager (disembunyikan sementara untuk admin) ── --}}
+  @if($sidebarUser?->hasRole('hr_manager'))
   <li class="side-nav-menu-item {{ Request::is('admin/laporan*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('laporan.index') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-bar-chart"></i></span>
