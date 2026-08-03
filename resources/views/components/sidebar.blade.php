@@ -186,8 +186,8 @@
   {{-- ── Appraisal + Reimbursement — semua kecuali admin_ga ── --}}
   @if(! $sidebarUser?->hasRole('admin_ga'))
 
-  {{-- Penilaian Kinerja — bukan admin (admin punya menu Data Karyawan sendiri di atas) --}}
-  @if(! $sidebarUser?->hasRole('admin'))
+  {{-- Penilaian Kinerja — bukan admin (menu sendiri di atas), disembunyikan sementara untuk karyawan --}}
+  @if(! $sidebarUser?->hasAnyRole(['admin', 'karyawan']))
   @php $appraisalActive = Request::is('appraisal/*'); @endphp
   <li class="side-nav-menu-item side-nav-has-menu {{ $appraisalActive ? 'active' : '' }}">
     <a class="side-nav-menu-link media align-items-center" href="#" data-target="#subAppraisal">
@@ -266,8 +266,8 @@
     </ul>
   </li>
 
-  {{-- Perjalanan Dinas — disembunyikan sementara untuk admin --}}
-  @if(! $sidebarUser?->hasRole('admin'))
+  {{-- Perjalanan Dinas — disembunyikan sementara untuk admin & karyawan --}}
+  @if(! $sidebarUser?->hasAnyRole(['admin', 'karyawan']))
   @php
     $perdinActive = Request::is('perdin*') || Request::is('admin/perdin*');
   @endphp
