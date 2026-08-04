@@ -108,6 +108,44 @@
 <footer>SIPRO &mdash; PT. Pro Energi</footer>
 
 <script>
+// Resize + compress ke JPEG (maks sisi terpanjang 1280px, quality 0.8) sebelum
+// dipakai sebagai thumbnail atau diupload — foto kamera mentah bisa 3-8MB dan
+// kalau banyak foto sekaligus bikin browser lag serta gampang kena limit
+// upload di server. Fallback ke file asli kalau kompresi gagal/tidak didukung.
+function compressImage(file, callback) {
+  if (!window.createImageBitmap && !window.Image) { callback(file); return; }
+
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+
+  img.onload = function() {
+    URL.revokeObjectURL(url);
+
+    var MAX = 1280;
+    var w = img.naturalWidth, h = img.naturalHeight;
+    if (w > MAX || h > MAX) {
+      if (w >= h) { h = Math.round(h * (MAX / w)); w = MAX; }
+      else        { w = Math.round(w * (MAX / h)); h = MAX; }
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+    if (canvas.toBlob) {
+      canvas.toBlob(function(blob) { callback(blob || file); }, 'image/jpeg', 0.8);
+    } else {
+      callback(file);
+    }
+  };
+  img.onerror = function() {
+    URL.revokeObjectURL(url);
+    callback(file);
+  };
+  img.src = url;
+}
+
 document.querySelectorAll('.btn-camera').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var itemId = this.dataset.item;
@@ -122,20 +160,29 @@ document.querySelectorAll('.btn-camera').forEach(function(btn) {
     input.addEventListener('change', function() {
       var file = this.files[0];
       if (!file) return;
-
-      // move input into the form's hidden container so it submits
-      document.getElementById('inputs-' + itemId).appendChild(this);
-
-      // show thumbnail with remove button
-      var reader = new FileReader();
       var self = this;
-      reader.onload = function(e) {
+
+      compressImage(file, function(blob) {
+        // Ganti isi input dengan versi yang sudah dikompres, supaya yang
+        // terupload adalah file kecil, bukan foto kamera mentah.
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(new File([blob], 'foto.jpg', { type: 'image/jpeg' }));
+          self.files = dt.files;
+        } catch (e) {
+          // DataTransfer tidak didukung — biarkan file asli yang terkirim
+        }
+
+        // move input into the form's hidden container so it submits
+        document.getElementById('inputs-' + itemId).appendChild(self);
+
+        // show thumbnail with remove button (pakai object URL, bukan base64 penuh)
         var thumbsEl = document.getElementById('thumbs-' + itemId);
         var wrap = document.createElement('div');
         wrap.className = 'thumb-wrap';
 
         var img = document.createElement('img');
-        img.src = e.target.result;
+        img.src = URL.createObjectURL(blob);
 
         var rm = document.createElement('button');
         rm.type = 'button';
@@ -149,8 +196,7 @@ document.querySelectorAll('.btn-camera').forEach(function(btn) {
         wrap.appendChild(img);
         wrap.appendChild(rm);
         thumbsEl.appendChild(wrap);
-      };
-      reader.readAsDataURL(file);
+      });
     });
 
     document.body.appendChild(input);
