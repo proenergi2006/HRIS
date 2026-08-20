@@ -52,7 +52,7 @@
     <p style="color:#555;font-size:13px">Silakan hubungi HR atau atasan Anda untuk informasi lebih lanjut. Anda dapat mengajukan kembali setelah melengkapi persyaratan.</p>
     <a href="{{ route('reimbursement.show', $reimbursement) }}" class="btn">Lihat Detail Pengajuan</a>
   </div>
-  <div class="footer">SIPRO — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
+  <div class="footer">HRMS — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
 </div>
 </body>
 </html>

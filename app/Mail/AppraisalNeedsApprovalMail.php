@@ -21,7 +21,7 @@ class AppraisalNeedsApprovalMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[SIPRO] Penilaian Menunggu Persetujuan — ' . ($this->appraisal->employee?->name ?? '-'),
+            subject: '[HRMS] Penilaian Menunggu Persetujuan — ' . ($this->appraisal->employee?->name ?? '-'),
         );
     }
 

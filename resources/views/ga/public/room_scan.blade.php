@@ -105,7 +105,7 @@
   @endif
 </div>
 
-<footer>SIPRO &mdash; PT. Pro Energi</footer>
+<footer>HRMS &mdash; PT. Pro Energi</footer>
 
 <script>
 // Resize + compress ke JPEG (maks sisi terpanjang 1280px, quality 0.8) sebelum

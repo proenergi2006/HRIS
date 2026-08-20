@@ -126,7 +126,7 @@
   </div>
 
   <p style="font-size:8px;color:#adb5bd;text-align:center;margin-top:10px">
-    Dokumen ini digenerate oleh SIPRO. Apabila ada pertanyaan hubungi HRD.
+    Dokumen ini digenerate oleh HRMS. Apabila ada pertanyaan hubungi HRD.
   </p>
 </div>
 </body>

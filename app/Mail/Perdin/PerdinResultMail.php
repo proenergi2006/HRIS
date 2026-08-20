@@ -20,7 +20,7 @@ class PerdinResultMail extends Mailable
         $state = $this->approved ? 'Disetujui' : 'Ditolak';
 
         return new Envelope(
-            subject: '[SIPRO] Permohonan Perjalanan Dinas ' . $state . ' — ' . $this->perdin->no_advance,
+            subject: '[HRMS] Permohonan Perjalanan Dinas ' . $state . ' — ' . $this->perdin->no_advance,
         );
     }
 

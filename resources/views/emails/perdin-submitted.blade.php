@@ -41,7 +41,7 @@
     </div>
     <a href="{{ route('perdin.show', $perdin) }}" class="btn">Lihat &amp; Proses Permohonan</a>
   </div>
-  <div class="footer">SIPRO — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
+  <div class="footer">HRMS — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
 </div>
 </body>
 </html>

@@ -42,5 +42,5 @@ Kelola Data Karyawan
 </x-mail::button>
 
 Salam,
-**SIPRO — PT. Pro Energi**
+**HRMS — PT. Pro Energi**
 </x-mail::message>

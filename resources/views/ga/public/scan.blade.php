@@ -230,7 +230,7 @@ label{display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:5
   @endif
 
 </div>
-<div class="footer">SIPRO · PT Pro Energi &copy; {{ date('Y') }}</div>
+<div class="footer">HRMS · PT Pro Energi &copy; {{ date('Y') }}</div>
 
 <script>
 function previewPhoto(input, previewId, boxId) {

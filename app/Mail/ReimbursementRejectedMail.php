@@ -18,7 +18,7 @@ class ReimbursementRejectedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[SIPRO] Pengajuan Reimbursement Ditolak — ' . $this->reimbursement->request_number,
+            subject: '[HRMS] Pengajuan Reimbursement Ditolak — ' . $this->reimbursement->request_number,
         );
     }
 

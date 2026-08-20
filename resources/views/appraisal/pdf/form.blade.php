@@ -562,7 +562,7 @@
   @endif
 
   <div style="text-align:center; font-size:7pt; color:#888; margin-top:8px; border-top:1px solid #ddd; padding-top:4px;">
-    Dicetak melalui SIPRO — Sistem Informasi Pro Energi &nbsp;|&nbsp; {{ now()->format('d/m/Y H:i') }}
+    Dicetak melalui HRMS — Sistem Informasi Pro Energi &nbsp;|&nbsp; {{ now()->format('d/m/Y H:i') }}
   </div>
 
 </div>

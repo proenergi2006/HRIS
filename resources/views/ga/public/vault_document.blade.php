@@ -125,7 +125,7 @@
   </form>
 </div>
 
-<footer>SIPRO &mdash; PT. Pro Energi</footer>
+<footer>HRMS &mdash; PT. Pro Energi</footer>
 
 <script>
 (function() {

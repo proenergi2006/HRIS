@@ -245,7 +245,7 @@ $notifCount = $notifItems->count();
         <span class="side-nav-show-on-closed"
               style="font-size:1.4rem;font-weight:900;letter-spacing:3px;color:#e8a020;">SI</span>
         <span class="side-nav-hide-on-closed d-flex flex-column" style="line-height:1.2;">
-          <span style="font-size:1.6rem;font-weight:900;letter-spacing:4px;color:#e8a020;">SIPRO</span>
+          <span style="font-size:1.6rem;font-weight:900;letter-spacing:4px;color:#e8a020;">HRMS</span>
           <span style="font-size:0.65rem;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;">PT. Pro Energi</span>
         </span>
       </a>

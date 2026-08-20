@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SIPRO — Sistem Informasi HR & GA | PT. Pro Energi</title>
+    <title>HRMS — Sistem Informasi HR & GA | PT. Pro Energi</title>
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
     <style>
         :root {
@@ -218,7 +218,7 @@
 
     <!-- Navbar -->
     <div class="top-bar">
-        <div class="brand">PT. PRO ENERGI &nbsp;<span>|</span>&nbsp; SIPRO</div>
+        <div class="brand">PT. PRO ENERGI &nbsp;<span>|</span>&nbsp; HRMS</div>
         @auth
             <a href="{{ url('/dashboard') }}" class="nav-login">Dashboard &rarr;</a>
         @else
@@ -237,7 +237,7 @@
         @auth
             <a href="{{ url('/dashboard') }}" class="hero-btn">Buka Dashboard &rarr;</a>
         @else
-            <a href="{{ route('login') }}" class="hero-btn">Masuk ke SIPRO &rarr;</a>
+            <a href="{{ route('login') }}" class="hero-btn">Masuk ke HRMS &rarr;</a>
             <a href="{{ route('login') }}" class="hero-sub-link">Hubungi Admin HR & GA untuk akun</a>
         @endauth
     </div>
@@ -315,7 +315,7 @@
     <!-- Footer -->
     <div class="footer">
         &copy; {{ date('Y') }} <strong>PT. Pro Energi</strong> &nbsp;&mdash;&nbsp;
-        SIPRO v1.0 &nbsp;&mdash;&nbsp; Sistem Informasi HR & GA
+        HRMS v1.0 &nbsp;&mdash;&nbsp; Sistem Informasi HR & GA
     </div>
 
     <script src="{{ asset('graindashboard/js/graindashboard.vendor.js') }}"></script>

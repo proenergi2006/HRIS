@@ -164,6 +164,6 @@
 </table>
 @endif
 
-<div class="footer">SIPRO &mdash; PT. Pro Energi &mdash; Dokumen ini digenerate otomatis oleh sistem</div>
+<div class="footer">HRMS &mdash; PT. Pro Energi &mdash; Dokumen ini digenerate otomatis oleh sistem</div>
 </body>
 </html>

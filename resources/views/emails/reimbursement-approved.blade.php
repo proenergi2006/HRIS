@@ -45,7 +45,7 @@
     <p style="color:#555;font-size:13px">Pembayaran akan diproses sesuai jadwal penggajian perusahaan. Hubungi HR jika ada pertanyaan.</p>
     <a href="{{ route('reimbursement.show', $reimbursement) }}" class="btn">Lihat Detail Pengajuan</a>
   </div>
-  <div class="footer">SIPRO — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
+  <div class="footer">HRMS — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
 </div>
 </body>
 </html>

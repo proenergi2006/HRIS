@@ -19,7 +19,7 @@ class PerdinSubmittedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[SIPRO] Permohonan Perjalanan Dinas Menunggu Persetujuan — ' . $this->perdin->no_advance,
+            subject: '[HRMS] Permohonan Perjalanan Dinas Menunggu Persetujuan — ' . $this->perdin->no_advance,
         );
     }
 

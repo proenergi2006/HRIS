@@ -17,7 +17,7 @@ Terdapat laporan pengaduan baru yang diterima melalui **Whistleblower System** P
 
 {{ \Illuminate\Support\Str::limit($report->description, 300) }}
 
-Silakan login ke SIPRO untuk melihat detail lengkap dan menindaklanjuti laporan ini.
+Silakan login ke HRMS untuk melihat detail lengkap dan menindaklanjuti laporan ini.
 
 <x-mail::button :url="route('whistleblower.admin.show', $report)" color="primary">
 Lihat Detail Laporan
@@ -26,5 +26,5 @@ Lihat Detail Laporan
 Laporan ini bersifat **rahasia** dan hanya boleh diakses oleh personel yang berwenang.
 
 Salam,
-**SIPRO — PT. Pro Energi**
+**HRMS — PT. Pro Energi**
 </x-mail::message>

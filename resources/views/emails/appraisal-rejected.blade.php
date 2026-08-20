@@ -36,7 +36,7 @@
     @endif
     <a href="{{ route('appraisal.appraisals.edit', $appraisal) }}" class="btn">Perbaiki Penilaian</a>
   </div>
-  <div class="footer">SIPRO — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
+  <div class="footer">HRMS — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
 </div>
 </body>
 </html>

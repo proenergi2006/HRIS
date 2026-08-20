@@ -41,7 +41,7 @@
     </div>
     <a href="{{ route('appraisal.appraisals.show', $appraisal) }}" class="btn">Lihat & Proses Penilaian</a>
   </div>
-  <div class="footer">SIPRO — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
+  <div class="footer">HRMS — PT. Pro Energi &nbsp;|&nbsp; Pesan ini dikirim otomatis, jangan dibalas.</div>
 </div>
 </body>
 </html>

@@ -7,8 +7,8 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'SIPRO') }} - @yield('title')</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f2a4a'/><text x='50' y='70' font-family='Arial,sans-serif' font-size='46' font-weight='bold' text-anchor='middle' fill='white'>SP</text></svg>">
+    <title>{{ config('app.name', 'HRMS') }} - @yield('title')</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f2a4a'/><text x='50' y='70' font-family='Arial,sans-serif' font-size='46' font-weight='bold' text-anchor='middle' fill='white'>HR</text></svg>">
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">

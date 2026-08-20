@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'SIPRO') }} - @yield('title')</title>
+    <title>{{ config('app.name', 'HRMS') }} - @yield('title')</title>
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">

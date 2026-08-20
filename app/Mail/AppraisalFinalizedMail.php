@@ -18,7 +18,7 @@ class AppraisalFinalizedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[SIPRO] Penilaian Disetujui Final — ' . ($this->appraisal->employee?->name ?? '-'),
+            subject: '[HRMS] Penilaian Disetujui Final — ' . ($this->appraisal->employee?->name ?? '-'),
         );
     }
 

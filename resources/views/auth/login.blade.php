@@ -153,7 +153,7 @@
 
     <!-- Left branding panel -->
     <div class="login-left">
-        <div class="login-logo">SIPRO</div>
+        <div class="login-logo">HRMS</div>
         <div class="login-company">PT. Pro Energi</div>
         <div class="login-tagline">{{ __('common.login_tagline') }}</div>
         <p class="login-desc">{{ __('common.login_desc') }}</p>
@@ -215,7 +215,7 @@
         </form>
 
         <div class="login-footer">
-            &copy; {{ date('Y') }} PT. Pro Energi &nbsp;&mdash;&nbsp; SIPRO v1.0
+            &copy; {{ date('Y') }} PT. Pro Energi &nbsp;&mdash;&nbsp; HRMS v1.0
         </div>
     </div>
 
