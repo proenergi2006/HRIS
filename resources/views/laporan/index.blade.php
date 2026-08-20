@@ -167,6 +167,47 @@
   </div>
 </div>
 
+{{-- Reimbursement dibayarkan pada periode gaji ini --}}
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="font-weight-bold">Reimbursement Dibayarkan pada Periode Gaji {{ $periodLabel }}</span>
+    <a href="{{ route('laporan.export.reimb', ['by' => 'payment', 'month' => $bulan, 'year' => $tahun]) }}"
+       class="btn btn-xs btn-outline-success">
+      <i class="gd-download mr-1"></i> Excel
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <small class="text-muted d-block px-3 pt-3">
+      Klaim yang admin tetapkan periode pembayarannya (saat approve) ke bulan ini — dipakai untuk rekap payroll, terpisah dari tanggal pengajuan klaim.
+    </small>
+    @if($stats['reimb']['by_payment_period']['per_user']->isEmpty())
+      <p class="text-center text-muted py-4">Tidak ada klaim yang jatuh tempo dibayar pada periode ini.</p>
+    @else
+    <table class="table table-sm mb-0 mt-2">
+      <thead class="thead-light">
+        <tr><th>Karyawan</th><th class="text-center">Klaim</th><th class="text-right">Total Dibayarkan</th></tr>
+      </thead>
+      <tbody>
+        @foreach($stats['reimb']['by_payment_period']['per_user'] as $row)
+        <tr>
+          <td>{{ $row['name'] }}</td>
+          <td class="text-center">{{ $row['count'] }}</td>
+          <td class="text-right">Rp {{ number_format($row['total'],0,',','.') }}</td>
+        </tr>
+        @endforeach
+      </tbody>
+      <tfoot class="table-light font-weight-bold">
+        <tr>
+          <td>Total</td>
+          <td class="text-center">{{ $stats['reimb']['by_payment_period']['count'] }}</td>
+          <td class="text-right">Rp {{ number_format($stats['reimb']['by_payment_period']['amount'],0,',','.') }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    @endif
+  </div>
+</div>
+
 {{-- Kontrak karyawan --}}
 @if($stats['karyawan']['expired']->isNotEmpty() || $stats['karyawan']['expiring']->isNotEmpty())
 <div class="card mb-4">

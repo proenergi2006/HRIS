@@ -17,7 +17,7 @@ class ReimbursementRequest extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'total_claim', 'rejection_reason'])
+            ->logOnly(['status', 'total_claim', 'rejection_reason', 'payment_month', 'payment_year'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('reimbursement');
@@ -27,6 +27,7 @@ class ReimbursementRequest extends Model
         'user_id', 'request_number', 'request_date', 'medical_for',
         'marital_status', 'status', 'total_claim', 'notes',
         'rejection_reason', 'approved_by', 'approved_at',
+        'payment_month', 'payment_year',
     ];
 
     protected $casts = [
@@ -44,6 +45,12 @@ class ReimbursementRequest extends Model
     public function recalculateTotal(): void
     {
         $this->update(['total_claim' => $this->items()->sum('total_claim')]);
+    }
+
+    public function getPaymentPeriodLabelAttribute(): ?string
+    {
+        if (! $this->payment_month || ! $this->payment_year) return null;
+        return \Carbon\Carbon::create($this->payment_year, $this->payment_month)->translatedFormat('F Y');
     }
 
     public function isDraft(): bool      { return $this->status === 'draft'; }

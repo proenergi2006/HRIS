@@ -62,6 +62,12 @@
     </button>
   </div>
   <div class="card-body">
+    @if(count($patientOptions ?? []) <= 1)
+      <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:.85rem">
+        Data istri/anak Anda belum terdaftar di Data Karyawan, jadi "Nama Pasien" hanya bisa diisi atas nama Anda sendiri.
+        Hubungi HR untuk melengkapi data keluarga jika ingin mengajukan klaim untuk istri/anak.
+      </div>
+    @endif
     <div class="table-responsive">
       <table class="table table-bordered table-sm mb-0" id="items-table" style="min-width:1400px;font-size:.82rem">
         <thead class="thead-light">
@@ -176,3 +182,4 @@
   }
 @endphp
 <script>window.__existingItems = {!! $existingItemsJson !!};</script>
+<script>window.__patientOptions = @json($patientOptions ?? []);</script>

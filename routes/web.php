@@ -15,6 +15,7 @@ use App\Http\Controllers\Appraisal\ApprovalController;
 use App\Http\Controllers\Appraisal\FlowConfigController;
 use App\Http\Controllers\Appraisal\ReportController;
 use App\Http\Controllers\Appraisal\EmployeeDocumentController;
+use App\Http\Controllers\Appraisal\EmployeeFamilyMemberController;
 use App\Http\Controllers\Appraisal\EmployeeImportController;
 use App\Http\Controllers\Appraisal\DepartmentController;
 use App\Http\Controllers\Appraisal\PositionController;
@@ -156,6 +157,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/reimbursement')->name('
     Route::get('/balances',                                                  [ReimbursementBalanceController::class, 'index'])->name('balances');
     Route::post('/balances',                                                 [ReimbursementBalanceController::class, 'upsert'])->name('balances.upsert');
     Route::get('/{reimbursement}',                                           [ReimbursementAdminController::class, 'show'])->name('show');
+    Route::put('/{reimbursement}/items/{item}',                              [ReimbursementAdminController::class, 'updateItem'])->name('items.update');
+    Route::delete('/{reimbursement}/items/{item}',                           [ReimbursementAdminController::class, 'destroyItem'])->name('items.destroy');
     Route::post('/{reimbursement}/approve',                                  [ReimbursementAdminController::class, 'approve'])->name('approve');
     Route::post('/{reimbursement}/reject',                                   [ReimbursementAdminController::class, 'reject'])->name('reject');
     Route::get('/{reimbursement}/pdf',                                       [ReimbursementAdminController::class, 'pdf'])->name('pdf');
@@ -282,6 +285,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::resource('levels',       LevelController::class);
         Route::resource('employees',    EmployeeController::class);
         Route::get('employees/{employee}/photo', [EmployeeController::class, 'photo'])->name('employees.photo');
+
+        // Anggota Keluarga (istri/anak) — dipakai sbg pilihan Nama Pasien di Reimbursement
+        Route::post('employees/{employee}/family-members', [EmployeeFamilyMemberController::class, 'store'])->name('employees.family-members.store');
+        Route::delete('employees/{employee}/family-members/{familyMember}', [EmployeeFamilyMemberController::class, 'destroy'])->name('employees.family-members.destroy');
 
         // Import data karyawan (Excel)
         Route::get('employees-import/template', [EmployeeImportController::class, 'template'])->name('employees.import.template');

@@ -79,6 +79,9 @@
             <th class="text-right">{{ $lbl }}</th>
           @endforeach
           <th class="text-right">Total</th>
+          @if($reimbursement->isSubmitted())
+            <th class="text-center" style="width:90px">Aksi</th>
+          @endif
         </tr>
       </thead>
       <tbody>
@@ -92,6 +95,26 @@
             <td class="text-right">{{ $item->$field > 0 ? number_format($item->$field, 0, ',', '.') : '-' }}</td>
           @endforeach
           <td class="text-right font-weight-bold">{{ number_format($item->total_claim, 0, ',', '.') }}</td>
+          @if($reimbursement->isSubmitted())
+            <td class="text-center" style="white-space:nowrap">
+              <button type="button" class="btn btn-xs btn-outline-warning" title="Koreksi rincian"
+                      onclick="openSiproModal('edit-item-{{ $item->id }}')">
+                <i class="gd-pencil"></i>
+              </button>
+              <form method="POST" action="{{ route('reimbursement.admin.items.destroy', [$reimbursement, $item]) }}"
+                    id="form-delete-item-{{ $item->id }}" class="d-inline">
+                @csrf @method('DELETE')
+              </form>
+              <button type="button" class="btn btn-xs btn-outline-danger" title="Hapus item"
+                      data-confirm="Hapus item &quot;{{ $item->patient_name }}&quot; ({{ $item->institution }}, {{ $item->treatment_date->format('d/m/Y') }}) dari pengajuan ini? Total klaim akan dihitung ulang."
+                      data-confirm-title="Hapus Item Klaim?"
+                      data-confirm-type="danger"
+                      data-confirm-ok="Ya, Hapus"
+                      data-form="form-delete-item-{{ $item->id }}">
+                <i class="gd-trash"></i>
+              </button>
+            </td>
+          @endif
         </tr>
       @endforeach
       </tbody>
@@ -103,10 +126,16 @@
             <td class="text-right">{{ $s > 0 ? number_format($s, 0, ',', '.') : '-' }}</td>
           @endforeach
           <td class="text-right">Rp {{ number_format($reimbursement->total_claim, 0, ',', '.') }}</td>
+          @if($reimbursement->isSubmitted())<td></td>@endif
         </tr>
       </tfoot>
     </table>
     </div>
+    @if($reimbursement->isSubmitted())
+      <small class="text-muted d-block mt-2">
+        Gunakan <i class="gd-pencil"></i> untuk mengoreksi nominal item (mis. biaya obat yang tidak ditanggung), atau <i class="gd-trash"></i> untuk menghapus item yang tidak bisa diklaim sama sekali. Total klaim dihitung ulang otomatis.
+      </small>
+    @endif
   </div>
 </div>
 
@@ -186,11 +215,33 @@
 <div class="card border-warning">
   <div class="card-header font-weight-bold bg-warning text-dark">Tindakan Approval</div>
   <div class="card-body">
+    <form method="POST" action="{{ route('reimbursement.admin.approve', $reimbursement) }}" id="form-approve-reimb">
+      @csrf
+      <div class="form-group mb-3" style="max-width:320px">
+        <label class="font-weight-bold small">Periode Pembayaran (bulan gaji)</label>
+        <div class="form-row">
+          <div class="col-7">
+            <select name="payment_month" class="form-control form-control-sm" required>
+              @foreach(range(1,12) as $m)
+                <option value="{{ $m }}" {{ (int) old('payment_month', now()->month) === $m ? 'selected' : '' }}>
+                  {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-5">
+            <select name="payment_year" class="form-control form-control-sm" required>
+              @foreach(range(now()->year - 1, now()->year + 1) as $y)
+                <option value="{{ $y }}" {{ (int) old('payment_year', now()->year) === $y ? 'selected' : '' }}>{{ $y }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+        <small class="text-muted">Klaim ini akan masuk pembayaran gaji periode bulan tersebut.</small>
+      </div>
+    </form>
     <div class="row">
       <div class="col-md-6 mb-2 mb-md-0">
-        <form method="POST" action="{{ route('reimbursement.admin.approve', $reimbursement) }}" id="form-approve-reimb">
-          @csrf
-        </form>
         <button type="button" class="btn btn-success btn-block"
                 data-confirm="Setujui pengajuan {{ $reimbursement->request_number }}? Saldo karyawan {{ $reimbursement->user->name }} akan berkurang Rp {{ number_format($reimbursement->total_claim, 0, ',', '.') }}."
                 data-confirm-title="Setujui Pengajuan?"
@@ -212,6 +263,9 @@
 <div class="alert alert-success">
   Disetujui oleh <strong>{{ $reimbursement->approver?->name }}</strong>
   pada {{ $reimbursement->approved_at->format('d M Y, H:i') }}
+  @if($reimbursement->payment_period_label)
+    <br>Dibayarkan pada periode gaji <strong>{{ $reimbursement->payment_period_label }}</strong>.
+  @endif
 </div>
 @elseif($reimbursement->isRejected())
 <div class="alert alert-danger">
@@ -257,5 +311,58 @@
     </form>
   </div>
 </div>
+
+@foreach($reimbursement->items as $item)
+<div class="sipro-overlay" id="edit-item-{{ $item->id }}" role="dialog" aria-modal="true" aria-labelledby="edit-item-{{ $item->id }}-title">
+  <div class="sipro-backdrop" onclick="closeSiproModal('edit-item-{{ $item->id }}')"></div>
+  <div class="sipro-dialog" style="max-width:480px">
+    <div class="sipro-header">
+      <h5 id="edit-item-{{ $item->id }}-title" style="display:flex;align-items:center;gap:8px">
+        <i class="gd-pencil"></i> Koreksi Rincian — {{ $item->patient_name }}
+      </h5>
+      <button class="sipro-close" onclick="closeSiproModal('edit-item-{{ $item->id }}')" aria-label="Tutup">&times;</button>
+    </div>
+    <form method="POST" action="{{ route('reimbursement.admin.items.update', [$reimbursement, $item]) }}">
+      @csrf @method('PUT')
+      <div class="sipro-body">
+        <p class="text-muted mb-3" style="font-size:.85rem">
+          {{ $item->institution }} &middot; {{ $item->treatment_date->format('d M Y') }}.
+          Ubah nominal per kategori (mis. nolkan biaya obat yang tidak ditanggung), lalu simpan.
+        </p>
+        <div class="form-row">
+          @foreach(\App\Models\Reimbursement\ReimbursementItem::AMOUNT_FIELDS as $field => $lbl)
+          <div class="form-group col-6 mb-2">
+            <label class="small mb-1">{{ $lbl }}</label>
+            <input type="number" min="0" step="1" name="{{ $field }}"
+                   class="form-control form-control-sm reimb-amt-{{ $item->id }}"
+                   value="{{ $item->$field }}"
+                   oninput="reimbItemRecalc({{ $item->id }})">
+          </div>
+          @endforeach
+        </div>
+        <div class="text-right font-weight-bold pt-2" style="border-top:1px solid #e9ecef">
+          Total: Rp <span id="reimb-total-{{ $item->id }}">{{ number_format($item->total_claim, 0, ',', '.') }}</span>
+        </div>
+      </div>
+      <div class="sipro-footer">
+        <button type="button" class="btn btn-light btn-sm" onclick="closeSiproModal('edit-item-{{ $item->id }}')">Batal</button>
+        <button type="submit" class="btn btn-warning btn-sm">
+          <i class="gd-check mr-1"></i> Simpan Koreksi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+@endforeach
+
+<script>
+function reimbItemRecalc(itemId) {
+  var inputs = document.querySelectorAll('.reimb-amt-' + itemId);
+  var total = 0;
+  inputs.forEach(function(inp) { total += parseInt(inp.value || '0', 10) || 0; });
+  var el = document.getElementById('reimb-total-' + itemId);
+  if (el) el.textContent = total.toLocaleString('id-ID');
+}
+</script>
 @endpush
 @endif

@@ -57,8 +57,14 @@ class LaporanController extends Controller
         $query = ReimbursementRequest::with(['user', 'approver']);
 
         if ($request->status) $query->where('status', $request->status);
-        if ($request->year)   $query->whereYear('request_date', $request->year);
-        if ($request->month)  $query->whereMonth('request_date', $request->month);
+
+        if ($request->get('by') === 'payment') {
+            if ($request->year)  $query->where('payment_year', $request->year);
+            if ($request->month) $query->where('payment_month', $request->month);
+        } else {
+            if ($request->year)   $query->whereYear('request_date', $request->year);
+            if ($request->month)  $query->whereMonth('request_date', $request->month);
+        }
 
         $requests  = $query->latest('request_date')->get();
         $filename  = 'reimbursement-' . now()->format('Ymd') . '.xlsx';
@@ -112,8 +118,23 @@ class LaporanController extends Controller
             ->orderBy('contract_end_date')
             ->get();
 
-        // Reimbursement per karyawan (approved)
+        // Reimbursement per karyawan (approved, berdasar tanggal pengajuan)
         $reimbPerUser = $reimb->where('status', 'approved')
+            ->groupBy('user_id')
+            ->map(fn($g) => [
+                'name'  => $g->first()->user?->name ?? '-',
+                'count' => $g->count(),
+                'total' => $g->sum('total_claim'),
+            ])->sortByDesc('total')->values();
+
+        // Reimbursement yang akan dibayarkan pada periode gaji ini (berdasar payment_month/payment_year)
+        $reimbByPayment = ReimbursementRequest::where('status', 'approved')
+            ->where('payment_month', $bulan)
+            ->where('payment_year', $tahun)
+            ->with('user')
+            ->get();
+
+        $reimbByPaymentPerUser = $reimbByPayment
             ->groupBy('user_id')
             ->map(fn($g) => [
                 'name'  => $g->first()->user?->name ?? '-',
@@ -138,6 +159,11 @@ class LaporanController extends Controller
                 'rejected' => $reimb->where('status', 'rejected')->count(),
                 'amount'   => $reimb->where('status', 'approved')->sum('total_claim'),
                 'per_user' => $reimbPerUser,
+                'by_payment_period' => [
+                    'count'    => $reimbByPayment->count(),
+                    'amount'   => $reimbByPayment->sum('total_claim'),
+                    'per_user' => $reimbByPaymentPerUser,
+                ],
             ],
             'perdin' => [
                 'total'    => $perdin->count(),

@@ -7,6 +7,7 @@ use App\Mail\ReimbursementApprovedMail;
 use App\Mail\ReimbursementRejectedMail;
 use App\Models\Reimbursement\ReimbursementAttachment;
 use App\Models\Reimbursement\ReimbursementBalance;
+use App\Models\Reimbursement\ReimbursementItem;
 use App\Models\Reimbursement\ReimbursementRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -48,20 +49,61 @@ class ReimbursementAdminController extends Controller
         return view('admin.reimbursement.show', compact('reimbursement', 'balance'));
     }
 
-    public function approve(ReimbursementRequest $reimbursement)
+    public function updateItem(Request $request, ReimbursementRequest $reimbursement, ReimbursementItem $item)
     {
         abort_unless($reimbursement->isSubmitted(), 422);
+        abort_unless($item->reimbursement_request_id === $reimbursement->id, 404);
+
+        $rules = [];
+        foreach (array_keys(ReimbursementItem::AMOUNT_FIELDS) as $field) {
+            $rules[$field] = 'required|integer|min:0';
+        }
+        $data = $request->validate($rules);
+
+        $item->fill($data);
+        $item->total_claim = $item->calculateTotal();
+        $item->save();
+
+        $reimbursement->recalculateTotal();
+
+        return back()->with('status', 'Rincian biaya berhasil dikoreksi.');
+    }
+
+    public function destroyItem(ReimbursementRequest $reimbursement, ReimbursementItem $item)
+    {
+        abort_unless($reimbursement->isSubmitted(), 422);
+        abort_unless($item->reimbursement_request_id === $reimbursement->id, 404);
+
+        $item->delete();
+        $reimbursement->recalculateTotal();
+
+        return back()->with('status', 'Item klaim berhasil dihapus.');
+    }
+
+    public function approve(Request $request, ReimbursementRequest $reimbursement)
+    {
+        abort_unless($reimbursement->isSubmitted(), 422);
+
+        $data = $request->validate([
+            'payment_month' => 'required|integer|between:1,12',
+            'payment_year'  => 'required|integer|min:2020|max:2100',
+        ]);
 
         $balance = ReimbursementBalance::forUser($reimbursement->user_id, $reimbursement->request_date->year);
 
         if ($balance && $reimbursement->total_claim > $balance->remaining_balance) {
-            return back()->with('error', 'Saldo tidak mencukupi untuk menyetujui pengajuan ini.');
+            return back()->with('error',
+                'Saldo tidak mencukupi untuk menyetujui pengajuan ini. Sisa saldo Rp ' .
+                number_format($balance->remaining_balance, 0, ',', '.') .
+                ', silakan koreksi rincian biaya terlebih dahulu agar sesuai sisa saldo.');
         }
 
         $reimbursement->update([
-            'status'      => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'status'         => 'approved',
+            'approved_by'    => auth()->id(),
+            'approved_at'    => now(),
+            'payment_month'  => $data['payment_month'],
+            'payment_year'   => $data['payment_year'],
         ]);
 
         if ($balance) {

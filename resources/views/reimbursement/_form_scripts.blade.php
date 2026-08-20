@@ -3,6 +3,19 @@
   var idx       = 0;
   var amtFields = @json(array_keys(\App\Models\Reimbursement\ReimbursementItem::AMOUNT_FIELDS));
   var textFields = ['patient_name', 'treatment_date', 'institution', 'diagnose'];
+  var patientOptions = window.__patientOptions || [];
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function patientOptionsHtml() {
+    var h = '<option value="">-- Pilih --</option>';
+    patientOptions.forEach(function(o) {
+      h += '<option value="' + esc(o.name) + '">' + esc(o.label) + '</option>';
+    });
+    return h;
+  }
 
   function fmt(n) {
     return 'Rp ' + Number(n).toLocaleString('id-ID');
@@ -40,7 +53,7 @@
 
   function buildRow(rowIdx) {
     var h = '<tr data-idx="' + rowIdx + '">';
-    h += '<td><input type="text"   name="items[' + rowIdx + '][patient_name]"   data-col="patient_name"   class="form-control form-control-sm" required></td>';
+    h += '<td><select name="items[' + rowIdx + '][patient_name]" data-col="patient_name" class="form-control form-control-sm" required>' + patientOptionsHtml() + '</select></td>';
     h += '<td><input type="date"   name="items[' + rowIdx + '][treatment_date]" data-col="treatment_date" class="form-control form-control-sm" max="{{ now()->format('Y-m-d') }}" required></td>';
     h += '<td><input type="text"   name="items[' + rowIdx + '][institution]"    data-col="institution"    class="form-control form-control-sm" required></td>';
     h += '<td><input type="text"   name="items[' + rowIdx + '][diagnose]"       data-col="diagnose"       class="form-control form-control-sm"></td>';
@@ -63,6 +76,15 @@
         var inp = row.querySelector('[data-col="' + col + '"]');
         if (inp && data[col] !== undefined && data[col] !== null) {
           inp.value = data[col];
+          // Nama pasien lama yang sudah tidak ada di daftar keluarga saat ini
+          // (mis. diketik manual sebelum fitur ini ada) tetap ditampilkan sbg opsi tambahan.
+          if (col === 'patient_name' && inp.tagName === 'SELECT' && inp.value !== data[col] && data[col] !== '') {
+            var opt = document.createElement('option');
+            opt.value = data[col];
+            opt.textContent = data[col] + ' (nama lama)';
+            opt.selected = true;
+            inp.appendChild(opt);
+          }
         }
       });
     }

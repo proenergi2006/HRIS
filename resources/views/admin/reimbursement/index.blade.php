@@ -73,6 +73,7 @@
           <th>Untuk</th>
           <th class="text-right">Total Klaim</th>
           <th class="text-center">Status</th>
+          <th class="text-center">Periode Bayar</th>
           <th></th>
         </tr>
       </thead>
@@ -89,6 +90,7 @@
               {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$r->status] }}
             </span>
           </td>
+          <td class="text-center small">{{ $r->payment_period_label ?? '-' }}</td>
           <td class="text-right">
             <a href="{{ route('reimbursement.admin.show', $r) }}" class="btn btn-xs btn-outline-info">
               <i class="gd-eye icon-text"></i>
@@ -96,7 +98,7 @@
           </td>
         </tr>
       @empty
-        <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data.</td></tr>
       @endforelse
       </tbody>
     </table>

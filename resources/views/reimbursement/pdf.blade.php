@@ -63,6 +63,12 @@
       <div class="info-label" style="padding-left:20px">Status Pernikahan</div><div class="info-sep">:</div>
       <div class="info-value">{{ $reimbursement->marital_status === 'married' ? 'Menikah' : 'Lajang' }}</div>
     </div>
+    @if($reimbursement->payment_period_label)
+    <div class="info-row">
+      <div class="info-label">Periode Pembayaran</div><div class="info-sep">:</div>
+      <div class="info-value"><strong>{{ $reimbursement->payment_period_label }}</strong></div>
+    </div>
+    @endif
     @if($reimbursement->notes)
     <div class="info-row">
       <div class="info-label">Catatan</div><div class="info-sep">:</div>

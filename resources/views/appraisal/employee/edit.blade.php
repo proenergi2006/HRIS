@@ -444,6 +444,73 @@
                 </div>
             </div>
         </form>
+
+        @if($employee->id)
+        <hr class="my-4">
+        <div class="h5 mb-2">Anggota Keluarga (Istri &amp; Anak)</div>
+        <div class="alert alert-info py-2 px-3 mb-3" style="font-size:.85rem">
+            <i class="gd-info mr-1"></i> Perusahaan menanggung medical reimbursement untuk maksimal <strong>1 istri/suami</strong> dan <strong>2 anak</strong>. Data ini dipakai sebagai pilihan "Nama Pasien" saat karyawan mengajukan reimbursement — jadi tidak perlu diketik ulang setiap pengajuan.
+        </div>
+
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Nama</th>
+                        <th style="width:160px">Hubungan</th>
+                        <th style="width:140px">Tgl Lahir</th>
+                        <th style="width:70px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($employee->familyMembers as $fm)
+                    <tr>
+                        <td>{{ $fm->name }}</td>
+                        <td>{{ \App\Models\EmployeeFamilyMember::$relationLabels[$fm->relation] ?? $fm->relation }}</td>
+                        <td>{{ $fm->birth_date?->format('d/m/Y') ?? '-' }}</td>
+                        <td class="text-center">
+                            <form method="POST" action="{{ route('appraisal.employees.family-members.destroy', [$employee, $fm]) }}"
+                                  onsubmit="return confirm('Hapus {{ $fm->name }} dari anggota keluarga?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-xs btn-outline-danger"><i class="gd-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="text-center text-muted py-3">Belum ada data istri/anak.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <form method="POST" action="{{ route('appraisal.employees.family-members.store', $employee) }}" class="form-row align-items-end">
+            @csrf
+            <div class="form-group col-md-4 mb-2">
+                <label class="small font-weight-bold mb-1">Nama</label>
+                <input type="text" name="name" class="form-control form-control-sm @error('name') is-invalid @enderror"
+                       value="{{ old('name') }}" required maxlength="100" placeholder="Nama lengkap">
+                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="form-group col-md-3 mb-2">
+                <label class="small font-weight-bold mb-1">Hubungan</label>
+                <select name="relation" class="form-control form-control-sm @error('relation') is-invalid @enderror" required>
+                    @foreach(\App\Models\EmployeeFamilyMember::$relationLabels as $val => $label)
+                        <option value="{{ $val }}" {{ old('relation') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+                @error('relation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="form-group col-md-3 mb-2">
+                <label class="small font-weight-bold mb-1">Tgl Lahir <span class="text-muted font-weight-normal">(opsional)</span></label>
+                <input type="date" name="birth_date" class="form-control form-control-sm @error('birth_date') is-invalid @enderror"
+                       value="{{ old('birth_date') }}" max="{{ now()->format('Y-m-d') }}">
+                @error('birth_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="form-group col-md-2 mb-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary btn-block"><i class="gd-plus mr-1"></i>Tambah</button>
+            </div>
+        </form>
+        @endif
     </div>
 </div>
 @endsection

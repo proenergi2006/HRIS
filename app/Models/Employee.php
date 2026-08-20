@@ -122,6 +122,11 @@ class Employee extends Model
         return $this->hasMany(EmployeeDocument::class);
     }
 
+    public function familyMembers(): HasMany
+    {
+        return $this->hasMany(EmployeeFamilyMember::class);
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);

@@ -24,7 +24,7 @@ class ReimbursementExport implements FromCollection, WithHeadings, WithMapping, 
         return [
             '#', 'No. Pengajuan', 'Nama Karyawan', 'Tgl Pengajuan',
             'Pengobatan Untuk', 'Status Pernikahan',
-            'Total Klaim (Rp)', 'Status', 'Disetujui Oleh', 'Tgl Disetujui', 'Catatan',
+            'Total Klaim (Rp)', 'Status', 'Periode Pembayaran', 'Disetujui Oleh', 'Tgl Disetujui', 'Catatan',
         ];
     }
 
@@ -42,6 +42,7 @@ class ReimbursementExport implements FromCollection, WithHeadings, WithMapping, 
             $r->marital_status === 'married' ? 'Menikah' : 'Lajang',
             $r->total_claim ?? 0,
             $status,
+            $r->payment_period_label ?? '-',
             $r->approver?->name ?? '-',
             $r->approved_at?->format('d/m/Y H:i') ?? '-',
             $r->notes ?? '-',

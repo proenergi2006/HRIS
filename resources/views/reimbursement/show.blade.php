@@ -71,6 +71,9 @@
       <div class="alert alert-success mt-2 mb-0 py-2">
         Disetujui oleh <strong>{{ $reimbursement->approver?->name }}</strong>
         pada {{ $reimbursement->approved_at->format('d M Y, H:i') }}
+        @if($reimbursement->payment_period_label)
+          <br>Akan dibayarkan pada periode gaji <strong>{{ $reimbursement->payment_period_label }}</strong>.
+        @endif
       </div>
     @endif
   </div>

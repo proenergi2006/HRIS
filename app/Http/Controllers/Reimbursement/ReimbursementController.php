@@ -69,7 +69,8 @@ class ReimbursementController extends Controller
     public function create()
     {
         $balance = ReimbursementBalance::forUser(auth()->id());
-        return view('reimbursement.create', compact('balance'));
+        $patientOptions = $this->patientOptions();
+        return view('reimbursement.create', compact('balance', 'patientOptions'));
     }
 
     public function store(Request $request)
@@ -112,7 +113,30 @@ class ReimbursementController extends Controller
         abort_unless($reimbursement->isDraft(), 403);
         $reimbursement->load(['items', 'attachments']);
         $balance = ReimbursementBalance::forUser($reimbursement->user_id);
-        return view('reimbursement.edit', compact('reimbursement', 'balance'));
+        $patientOptions = $this->patientOptions();
+        return view('reimbursement.edit', compact('reimbursement', 'balance', 'patientOptions'));
+    }
+
+    /**
+     * Pilihan "Nama Pasien" untuk baris klaim: karyawan sendiri + anggota
+     * keluarga (istri/anak) yang terdaftar di Data Karyawan — bukan isian bebas,
+     * supaya nama selalu konsisten dengan data yang dikelola HR.
+     */
+    private function patientOptions(): array
+    {
+        $employee = auth()->user()->employee;
+        if (! $employee) {
+            return [['name' => auth()->user()->name, 'label' => auth()->user()->name . ' (Diri Sendiri)']];
+        }
+
+        $options = [['name' => $employee->name, 'label' => $employee->name . ' (Diri Sendiri)']];
+
+        foreach ($employee->familyMembers as $fm) {
+            $relLabel = \App\Models\EmployeeFamilyMember::$relationLabels[$fm->relation] ?? $fm->relation;
+            $options[] = ['name' => $fm->name, 'label' => $fm->name . ' (' . $relLabel . ')'];
+        }
+
+        return $options;
     }
 
     public function update(Request $request, ReimbursementRequest $reimbursement)
