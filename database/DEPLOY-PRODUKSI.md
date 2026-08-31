@@ -68,7 +68,7 @@ Urutan aman (dependency dari header tiap file sudah diperhatikan):
 
 | # | File | Catatan urutan |
 |---|------|----------------|
-| 7  | `payroll-pph21-manual.sql` | `ter_categories`, `ter_brackets`, komponen PPh21 TER. **Angka TER ilustratif — validasi vs jPayroll.** |
+| 7  | `payroll-pph21-manual.sql` | `ter_categories`, `ter_brackets`, komponen PPh21 TER. Angka sudah rekonstruksi Lampiran PMK 168/2023 (31 Agu 2026) — **masih WAJIB dicocokkan Finance/Tax ke dokumen resmi**, lihat banner di menu Master Data > Tarif PPh21 |
 | 8  | `kasbon-bonus-manual.sql` | setelah #7 (butuh `salary_components`). `employee_loans`, `loan_installments`, `companies.tax_signer_*`, `bonus_periods`, `bonus_payments` |
 | 9  | `thr-manual.sql` | setelah #2 & #7. `thr_periods` (+ pakai `payroll_slips`) |
 | 10 | `overtime-request-manual.sql` | setelah #5. `overtime_requests` |
@@ -77,6 +77,11 @@ Urutan aman (dependency dari header tiap file sudah diperhatikan):
 | 13 | `training-career-manual.sql` | setelah #6. `training_programs`, `training_participants`, `career_paths`, `career_path_steps`, `employees.career_path_id` |
 | 14 | `competency-manual.sql` | setelah #13. tabel competency framework |
 | 15 | `employee-administration-manual.sql` | setelah #5 & #6. `employee_data_change_requests`, `letter_templates`, `employee_letters` |
+
+> **Kalau server sudah lebih dulu menjalankan `payroll-pph21-manual.sql` versi lama** (kurva
+> ilustratif, sebelum 31 Agu 2026) — jalankan `database/pph21-ter-rate-correction-manual.sql`
+> setelah TAHAP 7 di atas untuk mengganti `ter_brackets` ke rekonstruksi resmi. Untuk deploy
+> baru (TAHAP 7 sudah pakai angka terbaru), file koreksi ini **tidak perlu** dijalankan.
 | 16 | `appraisal-kpi-manual.sql` | **DESTRUKTIF** — DROP 5 tabel appraisal lama (`appraisal_approvals`, `appraisal_items`, `appraisal_aspect_weights`, `appraisal_aspects`, `appraisal_flow_configs`) + buat model KPI/objective. Pastikan backup. |
 | 17 | `approval-audit-region-manual.sql` | `approval_workflow_change_logs`, `districts`, `villages`, FK `employees.district_id`/`village_id` |
 
@@ -205,3 +210,4 @@ Menjalankan (lihat `routes/console.php`):
 | `candidate-database-ats-manual.sql` | `2026_08_31_110000` |
 | `preemployment-manual.sql` | `2026_08_31_120000` |
 | `employee-document-management-manual.sql` | `2026_08_31_140000`, `2026_08_31_150000` |
+| `pph21-ter-rate-correction-manual.sql` | (koreksi data, bukan migration — lihat catatan di TAHAP 7) |

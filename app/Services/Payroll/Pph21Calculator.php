@@ -9,12 +9,16 @@ use App\Models\Payroll\TerCategory;
  * PPh21 bulanan metode TER (Tarif Efektif Rata-rata) — PP 58/2023 & PMK 168/2023.
  *
  * ‼️ Tabel tarif (`ter_brackets`, diedit lewat menu Master Data > Tarif PPh21) adalah
- * PERKIRAAN/ILUSTRATIF sampai divalidasi Finance paralel dengan jPayroll — lihat komentar
- * di migrasi 2026_08_28_100602_create_ter_brackets_table.php. Method ini cuma menghitung
- * PPh21 BULANAN (TER berlaku langsung ke gross bruto tanpa netto biaya jabatan/BPJS —
- * itu memang cara kerja TER, bukan penyederhanaan). Rekonsiliasi tahunan (metode
- * progresif pasal 17 di masa pajak terakhir/Desember) BELUM diimplementasikan — masih
- * perlu dikerjakan manual atau menyusul di iterasi berikutnya.
+ * rekonstruksi Lampiran PMK 168/2023 (31 Agu 2026) — jauh lebih dekat ke aturan resmi
+ * dibanding kurva ilustratif versi awal, tapi TETAP belum diverifikasi baris-per-baris
+ * ke dokumen PDF resmi (lihat banner di halaman Tarif PPh21 + catatan di
+ * database/pph21-ter-rate-correction-manual.sql). Kategori A lebih tinggi keyakinannya
+ * daripada B/C. WAJIB dicocokkan Finance/Tax sebelum dipakai penggajian sungguhan.
+ * Method ini cuma menghitung PPh21 BULANAN (TER berlaku langsung ke gross bruto tanpa
+ * netto biaya jabatan/BPJS — itu memang cara kerja TER, bukan penyederhanaan).
+ * Rekonsiliasi tahunan (metode progresif pasal 17 di masa pajak terakhir/Desember)
+ * BELUM diimplementasikan — masih perlu dikerjakan manual atau menyusul di iterasi
+ * berikutnya.
  */
 class Pph21Calculator
 {

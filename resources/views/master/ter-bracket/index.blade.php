@@ -7,9 +7,12 @@
 <div class="h3 mb-3">Tarif PPh21 — TER (Tarif Efektif Rata-rata)</div>
 
 <div class="alert alert-warning">
-  <strong>Perkiraan/ilustratif.</strong> Batas penghasilan &amp; persentase di bawah ini
-  BELUM disalin persis dari tabel resmi Lampiran PMK 168/2023 — validasi paralel dengan
-  jPayroll dulu sebelum dipakai untuk penggajian resmi, lalu sesuaikan angkanya di sini.
+  <strong>Belum diverifikasi resmi.</strong> Batas penghasilan &amp; persentase di bawah ini
+  sudah diperbarui mendekati tabel resmi Lampiran PMK 168/2023 (Kategori A lebih tinggi
+  keyakinannya; Kategori B &amp; C punya risiko selisih lebih besar) — tapi <strong>belum
+  dicocokkan baris-per-baris</strong> oleh Finance/Tax ke dokumen resmi atau kalkulator TER
+  DJP (pajak.go.id). Cek dulu sebelum dipakai penggajian sungguhan; kalau ada selisih,
+  tinggal ubah di tabel bawah ini — tidak perlu developer/migrasi ulang.
   Kategori TER (A/B/C) ditentukan otomatis dari status PTKP karyawan (status kawin + jumlah
   tanggungan anak, maks. 3).
 </div>
