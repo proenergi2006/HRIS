@@ -103,11 +103,12 @@
               <h6 class="modal-title">{{ $item->label }}</h6>
               <button type="button" class="close" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
             </div>
-            <div class="modal-body p-0" style="background:#525659">
+            <div class="modal-body p-0" style="background:#fff">
               @if($ext === 'mp4')
                 <video controls style="width:100%;height:100%;background:#000" src="{{ route('onboarding.material', $item) }}"></video>
               @else
-                <iframe src="{{ route('onboarding.material', $item) }}" style="width:100%;height:100%;border:0;background:#fff" title="{{ $item->label }}"></iframe>
+                {{-- #view=FitH: paksa PDF viewer bawaan browser tampil pas-lebar, bukan kecil di tengah kotak. --}}
+                <iframe src="{{ route('onboarding.material', $item) }}#view=FitH" style="width:100%;height:100%;border:0;background:#fff" title="{{ $item->label }}"></iframe>
               @endif
             </div>
             <div class="modal-footer py-2 justify-content-between" style="background:#fff;border-top:1px solid #e9ecef">
