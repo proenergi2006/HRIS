@@ -99,6 +99,27 @@ class ManpowerPlanController extends Controller
         return redirect()->route('manpower.plans.index')->with('success', 'Rencana manpower dihapus.');
     }
 
+    /**
+     * Revisi kuota headcount untuk rencana yang SUDAH disetujui — tidak lewat
+     * Approval Engine lagi (rencana lama sering ketinggalan dari kondisi riil,
+     * bikin Budget Control di Job Requisition salah blokir). Field lain (unit,
+     * periode) tetap tidak bisa diubah setelah disetujui — kalau itu yang salah,
+     * buat rencana baru. Perubahan tercatat di log aktivitas (LogsActivity).
+     */
+    public function reviseQuota(Request $request, ManpowerPlan $plan)
+    {
+        abort_unless($plan->isApproved(), 422, 'Revisi kuota hanya untuk rencana yang sudah disetujui.');
+
+        $data = $request->validate([
+            'planned_headcount' => 'required|integer|min:0',
+            'notes'             => 'nullable|string|max:1000',
+        ]);
+
+        $plan->update($data);
+
+        return back()->with('success', 'Kuota rencana manpower diperbarui jadi ' . $data['planned_headcount'] . ' orang.');
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([

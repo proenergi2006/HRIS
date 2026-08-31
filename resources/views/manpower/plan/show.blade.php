@@ -45,6 +45,34 @@
             <a href="{{ route('manpower.plans.edit', $plan) }}" class="btn btn-outline-secondary">Edit</a>
           </form>
         @endif
+
+        @can('manpower-plan.create')
+        @if($plan->isApproved())
+          <hr>
+          <div class="font-weight-bold small mb-2">Revisi Kuota</div>
+          <p class="small text-muted mb-2">
+            Rencana yang sudah disetujui tidak lewat approval lagi kalau angkanya perlu
+            diperbarui (mis. rencana lama ketinggalan dari kondisi riil). Unit/periode
+            tidak bisa diubah di sini — buat rencana baru kalau itu yang salah.
+          </p>
+          <form method="POST" action="{{ route('manpower.plans.revise', $plan) }}" class="form-row align-items-end">
+            @csrf @method('PUT')
+            <div class="form-group col-md-4">
+              <label class="small">Rencana Headcount Baru</label>
+              <input type="number" name="planned_headcount" min="0" class="form-control form-control-sm"
+                     value="{{ $plan->planned_headcount }}" required>
+            </div>
+            <div class="form-group col-md-5">
+              <label class="small">Catatan Revisi</label>
+              <input type="text" name="notes" class="form-control form-control-sm" value="{{ $plan->notes }}" placeholder="mis. disesuaikan dgn kondisi riil Agu 2026">
+            </div>
+            <div class="form-group col-md-3">
+              <button class="btn btn-sm btn-warning btn-block">Simpan Revisi</button>
+            </div>
+          </form>
+        @endif
+        @endcan
+
         @if(in_array($plan->status, ['draft','rejected','cancelled']))
           <form method="POST" action="{{ route('manpower.plans.destroy', $plan) }}" class="mt-2" onsubmit="return confirm('Hapus rencana ini?')">
             @csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger">Hapus</button>

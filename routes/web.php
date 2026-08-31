@@ -655,6 +655,7 @@ Route::middleware(['auth', 'permission:manpower-plan.view'])->prefix('manpower/p
     Route::get('/{plan}/edit', [ManpowerPlanController::class, 'edit'])->name('edit');
     Route::put('/{plan}',      [ManpowerPlanController::class, 'update'])->name('update');
     Route::post('/{plan}/submit', [ManpowerPlanController::class, 'submit'])->name('submit');
+    Route::put('/{plan}/revise',  [ManpowerPlanController::class, 'reviseQuota'])->name('revise');
     Route::delete('/{plan}',   [ManpowerPlanController::class, 'destroy'])->name('destroy');
 });
 
