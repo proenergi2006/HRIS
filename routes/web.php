@@ -67,6 +67,7 @@ use App\Http\Controllers\HR\AttendanceController;
 use App\Http\Controllers\HR\OvertimeController;
 use App\Http\Controllers\HR\OvertimeRequestController;
 use App\Http\Controllers\HR\LeaveController;
+use App\Http\Controllers\HR\CompensationController;
 use App\Http\Controllers\HR\PayrollController;
 use App\Http\Controllers\HR\ThrController;
 use App\Http\Controllers\HR\BonusController;
@@ -145,6 +146,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/',                       [PayrollController::class, 'mySlips'])->name('index');
         Route::get('/{slip}/pdf',             [PayrollController::class, 'mySlipPdf'])->name('pdf');
         Route::get('/bukti-potong/{year}/pdf', [BuktiPotongController::class, 'myPdf'])->name('bukti-potong-pdf');
+    });
+
+    // Total Rewards Statement — self-service ESS.
+    Route::prefix('my-total-rewards')->name('payroll.my.rewards.')->group(function () {
+        Route::get('/',    [CompensationController::class, 'myRewardsStatement'])->name('index');
+        Route::get('/pdf', [CompensationController::class, 'myRewardsStatementPdf'])->name('pdf');
     });
 
     // Onboarding Saya — ESS: materi induction + konfirmasi karyawan baru.
@@ -441,6 +448,15 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::post('/{period}/amounts',  [BonusController::class, 'updateAmounts'])->name('amounts');
         Route::post('/{period}/close',    [BonusController::class, 'close'])->name('close');
         Route::get('/{period}/payments/{payment}/pdf', [BonusController::class, 'pdf'])->name('pdf');
+    });
+
+    // Compensation — benchmark gaji pasar per Level + Total Rewards Statement
+    Route::middleware('permission:payroll.view')->prefix('compensation')->name('compensation.')->group(function () {
+        Route::get('/benchmarks',             [CompensationController::class, 'benchmarks'])->name('benchmarks');
+        Route::put('/benchmarks/{level}',     [CompensationController::class, 'updateBenchmark'])->name('benchmarks.update');
+        Route::get('/comparison',             [CompensationController::class, 'comparison'])->name('comparison');
+        Route::get('/rewards/{employee}',     [CompensationController::class, 'rewardsStatement'])->name('rewards');
+        Route::get('/rewards/{employee}/pdf', [CompensationController::class, 'rewardsStatementPdf'])->name('rewards.pdf');
     });
 
     // Shift & Roster

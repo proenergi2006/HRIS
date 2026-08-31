@@ -14,7 +14,7 @@ class Survey extends Model
     use HasHashid;
 
     protected $fillable = [
-        'company_id', 'title', 'description', 'is_anonymous',
+        'company_id', 'title', 'description', 'is_anonymous', 'type',
         'status', 'opens_at', 'closes_at', 'created_by_user_id',
     ];
 
@@ -22,6 +22,12 @@ class Survey extends Model
         'is_anonymous' => 'boolean',
         'opens_at'     => 'date',
         'closes_at'    => 'date',
+    ];
+
+    public static array $typeLabels = [
+        'standard' => 'Survey Standar',
+        'pulse'    => 'Pulse Survey',
+        'enps'     => 'eNPS',
     ];
 
     public function company(): BelongsTo    { return $this->belongsTo(Company::class); }

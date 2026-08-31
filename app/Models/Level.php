@@ -21,4 +21,9 @@ class Level extends Model
     {
         return $this->hasMany(Appraisal\AppraisalTemplate::class);
     }
+
+    public function benchmark(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\HR\SalaryBenchmark::class);
+    }
 }

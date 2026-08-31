@@ -170,6 +170,12 @@
       <span class="side-nav-fadeout-on-closed media-body">Slip Gaji Saya</span>
     </a>
   </li>
+  <li class="side-nav-menu-item {{ Request::is('my-total-rewards*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('payroll.my.rewards.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-bar-chart"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Total Rewards Saya</span>
+    </a>
+  </li>
   <li class="side-nav-menu-item {{ Request::is('hr/overtime-requests*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('hr.overtime-requests.index') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-alarm-clock"></i></span>
@@ -493,6 +499,11 @@
       <li class="side-nav-menu-item {{ Request::is('hr/thr*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('hr.thr.index') }}">
           <i class="gd-star mr-2"></i>THR
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/compensation*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.compensation.comparison') }}">
+          <i class="gd-bar-chart mr-2"></i>Kompensasi &amp; Benchmark
         </a>
       </li>
       @endcan

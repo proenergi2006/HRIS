@@ -12,13 +12,27 @@ class Position extends Model
         'company_id', 'department_id', 'section_id', 'branch_id', 'level_id', 'reports_to_position_id',
         'code', 'name', 'job_description',
         'tunjangan_jabatan', 'tunjangan_harian', 'tarif_lembur', 'is_active',
+        'is_critical_position', 'succession_risk', 'succession_notes',
     ];
 
     protected $casts = [
-        'is_active'         => 'boolean',
-        'tunjangan_jabatan' => 'integer',
-        'tunjangan_harian'  => 'integer',
-        'tarif_lembur'      => 'integer',
+        'is_active'             => 'boolean',
+        'tunjangan_jabatan'     => 'integer',
+        'tunjangan_harian'      => 'integer',
+        'tarif_lembur'          => 'integer',
+        'is_critical_position'  => 'boolean',
+    ];
+
+    public static array $successionRiskLabels = [
+        'low'    => 'Rendah',
+        'medium' => 'Sedang',
+        'high'   => 'Tinggi',
+    ];
+
+    public static array $successionRiskBadges = [
+        'low'    => 'success',
+        'medium' => 'warning',
+        'high'   => 'danger',
     ];
 
     public function company(): BelongsTo
@@ -64,5 +78,10 @@ class Position extends Model
     public function competencyRequirements(): HasMany
     {
         return $this->hasMany(\App\Models\Competency\PositionCompetency::class);
+    }
+
+    public function talentPool(): HasMany
+    {
+        return $this->hasMany(\App\Models\HR\TalentPoolMember::class);
     }
 }
