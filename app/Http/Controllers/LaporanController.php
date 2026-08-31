@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DynamicReportExport;
 use App\Exports\EmployeeExport;
 use App\Exports\PerdinExport;
 use App\Exports\ReimbursementExport;
@@ -12,6 +13,7 @@ use App\Models\Perdin\PerdinRequest;
 use App\Models\Reimbursement\ReimbursementRequest;
 use App\Models\WhistleblowerReport;
 use App\Services\HrReportBuilder;
+use App\Services\ReportBuilderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -182,6 +184,66 @@ class LaporanController extends Controller
         $pdf = Pdf::loadView('laporan.analytics-pdf', compact('company', 'year', 'data'))->setPaper('a4', 'portrait');
 
         return $pdf->download('laporan-analytics-' . $year . '.pdf');
+    }
+
+    // ── Report Builder — pilih dataset + kolom + filter, preview / export Excel ──
+
+    public function reportBuilder(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $periods   = PayrollPeriod::orderByDesc('year')->orderByDesc('month')->get();
+        $datasets  = ReportBuilderService::datasets();
+
+        $dataset = $request->get('dataset');
+        $rows = collect();
+        $selectedColumns = [];
+
+        if ($dataset && isset($datasets[$dataset])) {
+            [$rows, $selectedColumns] = $this->runReportBuilder($request, $dataset);
+        }
+
+        return view('laporan.report-builder', compact('datasets', 'companies', 'periods', 'dataset', 'rows', 'selectedColumns'));
+    }
+
+    public function reportBuilderExport(Request $request)
+    {
+        $dataset = $request->get('dataset');
+        $datasets = ReportBuilderService::datasets();
+        abort_unless($dataset && isset($datasets[$dataset]), 422, 'Pilih dataset terlebih dahulu.');
+
+        [$rows, $selectedColumns] = $this->runReportBuilder($request, $dataset, false);
+        abort_if($rows->isEmpty(), 422, 'Tidak ada data untuk diekspor dengan filter ini.');
+
+        $filename = 'report-' . $dataset . '-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new DynamicReportExport($rows, $selectedColumns), $filename);
+    }
+
+    /** @return array{0:\Illuminate\Support\Collection,1:array<string,string>} */
+    private function runReportBuilder(Request $request, string $dataset, bool $limitPreview = true): array
+    {
+        $def = ReportBuilderService::dataset($dataset);
+        $requestedColumns = array_values(array_intersect($request->input('columns', array_keys($def['columns'])), array_keys($def['columns'])));
+        if (empty($requestedColumns)) {
+            $requestedColumns = array_keys($def['columns']);
+        }
+        $selectedColumns = collect($def['columns'])->only($requestedColumns)->toArray();
+
+        $filters = [
+            'company_id'        => $request->filled('company_id') ? (int) $request->company_id : null,
+            'date_from'         => $request->get('date_from'),
+            'date_to'           => $request->get('date_to'),
+            'payroll_period_id' => $request->get('payroll_period_id'),
+        ];
+
+        $allRows = app(ReportBuilderService::class)->rows($dataset, $filters);
+        $rows = $allRows->map(fn ($r) => collect($r)->only($requestedColumns)->toArray());
+
+        if ($limitPreview) {
+            $rows = $rows->take(200);
+        }
+
+        return [$rows, $selectedColumns];
     }
 
     // ── Helpers laporan ────────────────────────────────────────────────────

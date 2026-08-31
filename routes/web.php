@@ -353,6 +353,8 @@ Route::middleware(['auth', 'permission:laporan.view'])->prefix('admin/laporan')-
     Route::get('/headcount/pdf',      [LaporanController::class, 'headcountPdf'])->name('headcount.pdf');
     Route::get('/analytics',          [LaporanController::class, 'analytics'])->name('analytics');
     Route::get('/analytics/pdf',      [LaporanController::class, 'analyticsPdf'])->name('analytics.pdf');
+    Route::get('/report-builder',      [LaporanController::class, 'reportBuilder'])->name('report-builder');
+    Route::get('/report-builder/export', [LaporanController::class, 'reportBuilderExport'])->name('report-builder.export');
     Route::get('/export/karyawan',     [LaporanController::class, 'exportEmployees'])->name('export.karyawan');
     Route::get('/export/reimbursement',[LaporanController::class, 'exportReimbursements'])->name('export.reimb');
     Route::get('/export/perdin',       [LaporanController::class, 'exportPerdin'])->name('export.perdin');

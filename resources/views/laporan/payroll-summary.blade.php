@@ -14,6 +14,7 @@
   <li class="nav-item"><a class="nav-link active" href="{{ route('laporan.payroll') }}">Payroll Summary</a></li>
   <li class="nav-item"><a class="nav-link" href="{{ route('laporan.headcount') }}">Headcount</a></li>
   <li class="nav-item"><a class="nav-link" href="{{ route('laporan.analytics') }}">HR Analytics</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ route('laporan.report-builder') }}">Report Builder</a></li>
 </ul>
 
 <div class="card mb-4">
