@@ -97,20 +97,20 @@
 
       @if($inlineable)
       <div class="modal fade" id="{{ $modalId }}" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width:900px">
-          <div class="modal-content" style="height:85vh">
-            <div class="modal-header py-2">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:96vw;width:96vw;margin:2vh auto">
+          <div class="modal-content" style="height:94vh;background:#fff;border-radius:.5rem;overflow:hidden">
+            <div class="modal-header py-2" style="background:#fff;border-bottom:1px solid #e9ecef">
               <h6 class="modal-title">{{ $item->label }}</h6>
               <button type="button" class="close" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
             </div>
-            <div class="modal-body p-0">
+            <div class="modal-body p-0" style="background:#525659">
               @if($ext === 'mp4')
                 <video controls style="width:100%;height:100%;background:#000" src="{{ route('onboarding.material', $item) }}"></video>
               @else
-                <iframe src="{{ route('onboarding.material', $item) }}" style="width:100%;height:100%;border:0" title="{{ $item->label }}"></iframe>
+                <iframe src="{{ route('onboarding.material', $item) }}" style="width:100%;height:100%;border:0;background:#fff" title="{{ $item->label }}"></iframe>
               @endif
             </div>
-            <div class="modal-footer py-2 justify-content-between">
+            <div class="modal-footer py-2 justify-content-between" style="background:#fff;border-top:1px solid #e9ecef">
               <small class="text-muted">Sudah selesai baca? Tutup jendela ini lalu centang konfirmasi di bawah.</small>
               <div>
                 <a href="{{ route('onboarding.material.download', $item) }}" class="btn btn-sm btn-outline-secondary"><i class="gd-download mr-1"></i>Unduh</a>
