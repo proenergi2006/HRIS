@@ -82,6 +82,23 @@
     <div id="nav-spinner"><span class="ring"></span> Memuat halaman…</div>
 	@include('components.header')
 
+    {{-- Backdrop di belakang sidebar mobile (off-canvas). Tema sudah punya toggle
+         body.side-nav-hidden (dilepas saat sidebar dibuka di layar <992px) dan
+         atribut data-close-invoker="#sidebarClose" di tombol hamburger, tapi elemen
+         #sidebarClose-nya sendiri tidak pernah dibuat — jadi menu tidak bisa ditutup
+         dengan tap di luar, dan konten di belakangnya tetap kelihatan terang & bisa
+         dipencet tembus. id="sidebarClose" dipertahankan (dipakai tema), class kita
+         sendiri yang atur tampilan gelapnya. --}}
+    <div id="sidebarClose" class="mobile-nav-backdrop" onclick="document.querySelector('.js-side-nav')?.click()"></div>
+    <style>
+      .mobile-nav-backdrop{display:none}
+      @media (max-width:991.98px){
+        body:not(.side-nav-hidden) .mobile-nav-backdrop{
+          display:block;position:fixed;inset:0;background:rgba(20,24,40,.45);z-index:98;
+        }
+      }
+    </style>
+
     <main class="main">
 	  @include('components.sidebar')
 
