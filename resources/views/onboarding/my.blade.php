@@ -30,7 +30,13 @@
   <div class="card-header font-weight-bold">Materi Orientasi &amp; Induction</div>
   <div class="card-body">
     @forelse($indTasks->sortBy('item.sort_order') as $task)
-      @php $item = $task->item; $fakta = \Illuminate\Support\Str::contains(strtolower($item->label), 'integritas'); @endphp
+      @php
+        $item = $task->item;
+        $fakta = \Illuminate\Support\Str::contains(strtolower($item->label), 'integritas');
+        $ext = strtolower(pathinfo($item->material_original_name ?: $item->material_path ?: '', PATHINFO_EXTENSION));
+        $inlineable = $item->material_path && in_array($ext, ['pdf', 'mp4']);
+        $modalId = 'materi-' . $task->id;
+      @endphp
       <div class="border rounded p-3 mb-3 {{ $task->is_done ? 'bg-light' : '' }}">
         <div class="d-flex justify-content-between align-items-start">
           <div>
@@ -39,10 +45,15 @@
             @if($task->is_done)<span class="badge badge-success ml-1"><i class="gd-check"></i> dipahami</span>@endif
           </div>
           @if($item->hasMaterial())
-            <a href="{{ $item->material_url ?: route('onboarding.material', $item) }}"
-               target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary">
-              <i class="gd-file mr-1"></i> Buka Materi
-            </a>
+            @if($inlineable)
+              <button type="button" class="btn btn-xs btn-outline-primary" data-toggle="modal" data-target="#{{ $modalId }}">
+                <i class="gd-file mr-1"></i> Baca Materi
+              </button>
+            @else
+              <a href="{{ $item->material_url ?: route('onboarding.material', $item) }}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary">
+                <i class="gd-file mr-1"></i> Buka Materi
+              </a>
+            @endif
           @endif
         </div>
         @if($item->description)<p class="small text-muted mt-2 mb-2">{!! nl2br(e($item->description)) !!}</p>@endif
@@ -83,6 +94,33 @@
           </form>
         @endif
       </div>
+
+      @if($inlineable)
+      <div class="modal fade" id="{{ $modalId }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width:900px">
+          <div class="modal-content" style="height:85vh">
+            <div class="modal-header py-2">
+              <h6 class="modal-title">{{ $item->label }}</h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body p-0">
+              @if($ext === 'mp4')
+                <video controls style="width:100%;height:100%;background:#000" src="{{ route('onboarding.material', $item) }}"></video>
+              @else
+                <iframe src="{{ route('onboarding.material', $item) }}" style="width:100%;height:100%;border:0" title="{{ $item->label }}"></iframe>
+              @endif
+            </div>
+            <div class="modal-footer py-2 justify-content-between">
+              <small class="text-muted">Sudah selesai baca? Tutup jendela ini lalu centang konfirmasi di bawah.</small>
+              <div>
+                <a href="{{ route('onboarding.material.download', $item) }}" class="btn btn-sm btn-outline-secondary"><i class="gd-download mr-1"></i>Unduh</a>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      @endif
     @empty
       <p class="text-muted small mb-0">Belum ada materi induction. Hubungi HR.</p>
     @endforelse

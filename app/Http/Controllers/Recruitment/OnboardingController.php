@@ -51,7 +51,18 @@ class OnboardingController extends Controller
         return back()->with('status', 'Item checklist dihapus.');
     }
 
-    /** Unduh materi induction (HR & karyawan yang punya task-nya). */
+    /** Baca materi induction langsung di sistem — inline (PDF/video tampil di browser, bukan diunduh). */
+    public function viewMaterial(OnboardingChecklistItem $item)
+    {
+        abort_unless($item->material_path && Storage::disk('public')->exists($item->material_path), 404);
+
+        return Storage::disk('public')->response(
+            $item->material_path,
+            $item->material_original_name ?: basename($item->material_path)
+        );
+    }
+
+    /** Unduh materi induction sebagai file (attachment). */
     public function downloadMaterial(OnboardingChecklistItem $item)
     {
         abort_unless($item->material_path && Storage::disk('public')->exists($item->material_path), 404);
