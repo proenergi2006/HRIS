@@ -6,18 +6,22 @@
 
 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
   <div class="h3 mb-0">Kelola Survey</div>
-  <a href="{{ route('surveys.manage.create') }}" class="btn btn-primary btn-sm"><i class="gd-plus mr-1"></i> Survey Baru</a>
+  <div style="gap:.5rem" class="d-flex">
+    <a href="{{ route('surveys.manage.enps-trend') }}" class="btn btn-outline-primary btn-sm"><i class="gd-bar-chart mr-1"></i> Tren eNPS</a>
+    <a href="{{ route('surveys.manage.create') }}" class="btn btn-primary btn-sm"><i class="gd-plus mr-1"></i> Survey Baru</a>
+  </div>
 </div>
 
 <div class="card">
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-sm mb-0">
-        <thead class="thead-light"><tr><th>Judul</th><th>Perusahaan</th><th class="text-center">Anonim</th><th class="text-center">Responden</th><th>Status</th><th></th></tr></thead>
+        <thead class="thead-light"><tr><th>Judul</th><th>Tipe</th><th>Perusahaan</th><th class="text-center">Anonim</th><th class="text-center">Responden</th><th>Status</th><th></th></tr></thead>
         <tbody>
         @forelse($surveys as $s)
           <tr>
             <td>{{ $s->title }}</td>
+            <td class="small"><span class="badge badge-{{ $s->type === 'enps' ? 'info' : ($s->type === 'pulse' ? 'primary' : 'light') }}">{{ \App\Models\Survey\Survey::$typeLabels[$s->type] ?? $s->type }}</span></td>
             <td class="small">{{ $s->company?->short_name ?? 'Semua PT' }}</td>
             <td class="text-center">{{ $s->is_anonymous ? 'Ya' : 'Tidak' }}</td>
             <td class="text-center">{{ $s->responses_count }}</td>
@@ -40,6 +44,12 @@
                   <button class="btn btn-xs btn-outline-secondary">Tutup</button>
                 </form>
               @endif
+              @if(in_array($s->type, ['pulse', 'enps']))
+                <form method="POST" action="{{ route('surveys.manage.duplicate', $s) }}" class="d-inline" onsubmit="return confirm('Duplikat survey ini sebagai draft baru (putaran berikutnya)?')">
+                  @csrf
+                  <button class="btn btn-xs btn-outline-primary" title="Duplikat untuk putaran berikutnya"><i class="gd-loop"></i></button>
+                </form>
+              @endif
               <form method="POST" action="{{ route('surveys.manage.destroy', $s) }}" class="d-inline" onsubmit="return confirm('Hapus survey {{ $s->title }}?')">
                 @csrf @method('DELETE')
                 <button class="btn btn-xs btn-outline-danger"><i class="gd-trash"></i></button>
@@ -47,7 +57,7 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="6" class="text-center text-muted py-3">Belum ada survey.</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-3">Belum ada survey.</td></tr>
         @endforelse
         </tbody>
       </table>

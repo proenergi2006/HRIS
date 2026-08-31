@@ -8,6 +8,32 @@
 <div class="h3 mb-1">{{ $survey->title }}</div>
 <p class="text-muted small mb-4">{{ $respondentCount }} responden @if($survey->is_anonymous) (anonim) @endif</p>
 
+@if($survey->type === 'enps')
+  @if($enps && $enps['total'] > 0)
+    <div class="card mb-4 border-primary">
+      <div class="card-header font-weight-bold">Skor eNPS</div>
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-3 text-center">
+            <div class="h1 mb-0" style="color:{{ $enps['score'] >= 0 ? '#0F2A4A' : '#c0392b' }}">{{ $enps['score'] }}</div>
+            <div class="text-muted small">Skor eNPS ({{ $enps['total'] }} responden)</div>
+          </div>
+          <div class="col-md-9">
+            <div class="d-flex justify-content-between small mb-1"><span>Promoter (9-10)</span><span>{{ $enps['promoters'] }} ({{ round($enps['promoters']/$enps['total']*100) }}%)</span></div>
+            <div class="progress mb-2" style="height:8px"><div class="progress-bar bg-success" style="width:{{ round($enps['promoters']/$enps['total']*100) }}%"></div></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Passive (7-8)</span><span>{{ $enps['passives'] }} ({{ round($enps['passives']/$enps['total']*100) }}%)</span></div>
+            <div class="progress mb-2" style="height:8px"><div class="progress-bar bg-warning" style="width:{{ round($enps['passives']/$enps['total']*100) }}%"></div></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Detraktor (0-6)</span><span>{{ $enps['detractors'] }} ({{ round($enps['detractors']/$enps['total']*100) }}%)</span></div>
+            <div class="progress" style="height:8px"><div class="progress-bar bg-danger" style="width:{{ round($enps['detractors']/$enps['total']*100) }}%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  @else
+    <div class="alert alert-secondary small">Belum ada jawaban untuk dihitung skor eNPS.</div>
+  @endif
+@endif
+
 @foreach($data as $qid => $d)
   <div class="card mb-3">
     <div class="card-header font-weight-bold">{{ $d['question']->text }}</div>

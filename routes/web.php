@@ -242,11 +242,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/',                    [SurveyController::class, 'manage'])->name('index');
         Route::get('/create',              [SurveyController::class, 'create'])->name('create');
         Route::post('/',                   [SurveyController::class, 'store'])->name('store');
+        Route::get('/enps-trend',          [SurveyController::class, 'enpsTrend'])->name('enps-trend');
         Route::get('/{survey}/edit',       [SurveyController::class, 'edit'])->name('edit');
         Route::put('/{survey}',            [SurveyController::class, 'update'])->name('update');
         Route::delete('/{survey}',         [SurveyController::class, 'destroy'])->name('destroy');
         Route::post('/{survey}/open',      [SurveyController::class, 'open'])->name('open');
         Route::post('/{survey}/close',     [SurveyController::class, 'close'])->name('close');
+        Route::post('/{survey}/duplicate', [SurveyController::class, 'duplicate'])->name('duplicate');
         Route::get('/{survey}/results',    [SurveyController::class, 'results'])->name('results');
     });
 });

@@ -19,18 +19,26 @@
       @if($survey->exists) @method('PUT') @endif
 
       <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-5">
           <label>Judul <span class="text-danger">*</span></label>
           <input type="text" name="title" class="form-control" value="{{ old('title', $survey->title) }}" required>
         </div>
         <div class="form-group col-md-3">
+          <label>Tipe</label>
+          <select name="type" class="form-control">
+            @foreach(\App\Models\Survey\Survey::$typeLabels as $k => $lbl)
+              <option value="{{ $k }}" @selected(old('type', $survey->type ?? 'standard') === $k)>{{ $lbl }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="form-group col-md-2">
           <label>Perusahaan</label>
           <select name="company_id" class="form-control">
             <option value="">Semua PT</option>
             @foreach($companies as $c)<option value="{{ $c->id }}" @selected(old('company_id', $survey->company_id) == $c->id)>{{ $c->short_name ?? $c->name }}</option>@endforeach
           </select>
         </div>
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-2">
           <label class="d-block">&nbsp;</label>
           <div class="custom-control custom-checkbox mt-2">
             <input type="checkbox" class="custom-control-input" id="anon" name="is_anonymous" value="1" @checked(old('is_anonymous', $survey->is_anonymous ?? true))>
@@ -38,6 +46,21 @@
           </div>
         </div>
       </div>
+      <div class="alert alert-secondary small py-2 px-3 mb-3" id="type-hint"></div>
+      <script>
+        (function () {
+          var hints = {
+            standard: 'Survey satu-kali biasa — bebas jenis pertanyaan.',
+            pulse: 'Survey ringkas berkala (mis. bulanan/kuartalan) — sebaiknya 3-5 pertanyaan singkat. Setelah dibuka & ditutup, gunakan tombol "Duplikat" untuk membuat putaran berikutnya.',
+            enps: 'eNPS — tambahkan TEPAT 1 pertanyaan bertipe "Skala 0-10" berbunyi seperti "Seberapa besar kemungkinan Anda merekomendasikan tempat kerja ini ke teman/kolega?". Skor eNPS dihitung otomatis (%Promoter 9-10 dikurangi %Detraktor 0-6) dan bisa dilihat trennya di menu Tren eNPS.',
+          };
+          var sel = document.querySelector('select[name="type"]');
+          var hint = document.getElementById('type-hint');
+          function update() { hint.textContent = hints[sel.value] || ''; }
+          sel.addEventListener('change', update);
+          update();
+        })();
+      </script>
       <div class="form-group">
         <label>Deskripsi</label>
         <textarea name="description" rows="2" class="form-control">{{ old('description', $survey->description) }}</textarea>

@@ -149,9 +149,84 @@ class SurveyController extends Controller
         return back()->with('status', 'Survey ditutup.');
     }
 
+    public function duplicate(Survey $survey)
+    {
+        $clone = $survey->replicate(['status', 'opens_at', 'closes_at']);
+        $clone->title = $survey->title . ' — ' . now()->translatedFormat('F Y');
+        $clone->status = 'draft';
+        $clone->created_by_user_id = auth()->id();
+        $clone->save();
+
+        foreach ($survey->questions as $q) {
+            $clone->questions()->create([
+                'text' => $q->text, 'type' => $q->type, 'options' => $q->options,
+                'is_required' => $q->is_required, 'sort_order' => $q->sort_order,
+            ]);
+        }
+
+        return redirect()->route('surveys.manage.edit', $clone)
+            ->with('status', 'Survey diduplikat sebagai draft baru — sesuaikan tanggal lalu buka.');
+    }
+
+    /** Tren skor eNPS (%Promoter - %Detraktor) dari seluruh survey bertipe eNPS. */
+    public function enpsTrend()
+    {
+        $surveys = Survey::where('type', 'enps')
+            ->whereIn('status', ['open', 'closed'])
+            ->with('questions')
+            ->orderBy('opens_at')->get();
+
+        $points = $surveys->map(function ($s) {
+            $question = $s->questions->firstWhere('type', 'scale');
+            if (! $question) {
+                return null;
+            }
+            $enps = $this->computeEnps($question->id);
+
+            return [
+                'survey'    => $s,
+                'label'     => $s->title,
+                'date'      => $s->opens_at,
+                'score'     => $enps['score'],
+                'promoters' => $enps['promoters'],
+                'passives'  => $enps['passives'],
+                'detractors' => $enps['detractors'],
+                'total'     => $enps['total'],
+            ];
+        })->filter()->values();
+
+        return view('surveys.manage.enps-trend', compact('points'));
+    }
+
+    private function computeEnps(int $questionId): array
+    {
+        $values = SurveyAnswer::where('survey_question_id', $questionId)
+            ->whereNotNull('value')->pluck('value')->map(fn ($v) => (int) $v);
+
+        $total = $values->count();
+        if ($total === 0) {
+            return ['score' => null, 'promoters' => 0, 'passives' => 0, 'detractors' => 0, 'total' => 0];
+        }
+
+        $promoters  = $values->filter(fn ($v) => $v >= 9)->count();
+        $detractors = $values->filter(fn ($v) => $v <= 6)->count();
+        $passives   = $total - $promoters - $detractors;
+        $score      = round(($promoters / $total - $detractors / $total) * 100);
+
+        return compact('score', 'promoters', 'passives', 'detractors', 'total');
+    }
+
     public function results(Survey $survey)
     {
         $survey->load('questions');
+
+        $enps = null;
+        if ($survey->type === 'enps') {
+            $scaleQuestion = $survey->questions->firstWhere('type', 'scale');
+            if ($scaleQuestion) {
+                $enps = $this->computeEnps($scaleQuestion->id);
+            }
+        }
 
         $data = [];
         foreach ($survey->questions as $q) {
@@ -181,7 +256,7 @@ class SurveyController extends Controller
 
         $respondentCount = SurveyResponse::where('survey_id', $survey->id)->count();
 
-        return view('surveys.manage.results', compact('survey', 'data', 'respondentCount'));
+        return view('surveys.manage.results', compact('survey', 'data', 'respondentCount', 'enps'));
     }
 
     private function validatedSurvey(Request $request): array
@@ -191,6 +266,7 @@ class SurveyController extends Controller
             'title'          => 'required|string|max:200',
             'description'    => 'nullable|string',
             'is_anonymous'   => 'boolean',
+            'type'           => 'required|in:standard,pulse,enps',
             'opens_at'       => 'nullable|date',
             'closes_at'      => 'nullable|date',
         ]);
