@@ -23,6 +23,12 @@
           <dt class="col-sm-4 text-muted">Jabatan</dt><dd class="col-sm-8">{{ $plan->position?->name ?? '—' }}</dd>
           <dt class="col-sm-4 text-muted">Rencana Headcount</dt><dd class="col-sm-8">{{ $plan->planned_headcount }}</dd>
           <dt class="col-sm-4 text-muted">Aktual Sekarang</dt><dd class="col-sm-8">{{ $plan->actualHeadcount() }}</dd>
+          @if($plan->isApproved())
+            @php $committed = $plan->committedHeadcount(); $remaining = $plan->planned_headcount - $plan->actualHeadcount() - $committed; @endphp
+            <dt class="col-sm-4 text-muted">Sedang Direkrut</dt><dd class="col-sm-8">{{ $committed }} <span class="small text-muted">(requisition tambahan/posisi baru aktif)</span></dd>
+            <dt class="col-sm-4 text-muted">Sisa Kuota</dt>
+            <dd class="col-sm-8 {{ $remaining < 0 ? 'text-danger font-weight-bold' : ($remaining === 0 ? 'text-warning' : 'text-success') }}">{{ $remaining }}</dd>
+          @endif
           <dt class="col-sm-4 text-muted">Diajukan Oleh</dt><dd class="col-sm-8">{{ $plan->requestedBy?->name ?? '—' }}</dd>
           @if($plan->notes)
             <dt class="col-sm-4 text-muted">Catatan</dt><dd class="col-sm-8">{{ $plan->notes }}</dd>
@@ -46,6 +52,29 @@
         @endif
       </div>
     </div>
+
+    @if($plan->requisitions->isNotEmpty())
+    <div class="card mb-4">
+      <div class="card-header font-weight-bold">Job Requisition Tertaut</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="thead-light"><tr><th class="pl-3">Judul</th><th>Tipe</th><th class="text-center">Headcount</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+          @php $tt = ['replacement' => 'Pengganti', 'additional' => 'Tambahan', 'new_position' => 'Posisi Baru']; @endphp
+          @foreach($plan->requisitions as $r)
+            <tr>
+              <td class="pl-3">{{ $r->title }}</td>
+              <td class="small">{{ $tt[$r->request_type] ?? $r->request_type }}</td>
+              <td class="text-center">{{ $r->headcount_requested }}</td>
+              <td><span class="badge badge-{{ \App\Models\JobRequisition::$statusBadges[$r->status] ?? 'secondary' }}">{{ \App\Models\JobRequisition::$statusLabels[$r->status] ?? $r->status }}</span></td>
+              <td class="pr-3 text-right"><a href="{{ route('recruitment.requisitions.show', $r) }}" class="btn btn-xs btn-outline-secondary">Detail</a></td>
+            </tr>
+          @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+    @endif
   </div>
 
   <div class="col-lg-5">

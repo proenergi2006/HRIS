@@ -19,6 +19,22 @@
         <dl class="row mb-3">
           <dt class="col-sm-4 text-muted">Perusahaan</dt><dd class="col-sm-8">{{ $requisition->company?->short_name ?? $requisition->company?->name }}</dd>
           <dt class="col-sm-4 text-muted">Unit</dt><dd class="col-sm-8">{{ $requisition->scopeLabel() }}</dd>
+          <dt class="col-sm-4 text-muted">Tipe Permintaan</dt>
+          <dd class="col-sm-8">{{ \App\Models\JobRequisition::$typeLabels[$requisition->request_type] ?? $requisition->request_type }}</dd>
+          @if($requisition->request_type === 'replacement' && $requisition->replacesEmployee)
+            <dt class="col-sm-4 text-muted">Menggantikan</dt><dd class="col-sm-8">{{ $requisition->replacesEmployee->name }}</dd>
+          @endif
+          @if($requisition->manpowerPlan)
+            @php $mp = $requisition->manpowerPlan; @endphp
+            <dt class="col-sm-4 text-muted">Rencana Manpower</dt>
+            <dd class="col-sm-8">
+              <a href="{{ route('manpower.plans.show', $mp) }}">{{ $mp->scopeLabel() }} · {{ $mp->periodLabel() }}</a>
+              <div class="small text-muted">
+                rencana {{ $mp->planned_headcount }} · aktual {{ $mp->actualHeadcount() }} ·
+                sedang direkrut {{ $mp->committedHeadcount() }} · sisa kuota {{ $mp->remainingBudget() }}
+              </div>
+            </dd>
+          @endif
           <dt class="col-sm-4 text-muted">Headcount Diminta</dt><dd class="col-sm-8">{{ $requisition->headcount_requested }}</dd>
           <dt class="col-sm-4 text-muted">Tipe Karyawan</dt><dd class="col-sm-8">{{ $requisition->employmentType?->name ?? '—' }}</dd>
           <dt class="col-sm-4 text-muted">Target Bergabung</dt><dd class="col-sm-8">{{ optional($requisition->target_join_date)->format('d/m/Y') ?? '—' }}</dd>
@@ -33,8 +49,16 @@
 
         @if($requisition->isDraft())
           <hr>
+          @php $violation = $requisition->budgetViolation(); @endphp
+          @if($violation)
+            <div class="alert alert-warning py-2 px-3 small">
+              <i class="gd-alert mr-1"></i><strong>Budget Control:</strong> {{ $violation }}
+              <div class="mt-1">Perbaiki lewat <a href="{{ route('recruitment.requisitions.edit', $requisition) }}">Edit</a>
+                (ganti tipe/rencana/jumlah) atau tambah kuota di Manpower Planning.</div>
+            </div>
+          @endif
           <form method="POST" action="{{ route('recruitment.requisitions.submit', $requisition) }}">@csrf
-            <button class="btn btn-success">Ajukan untuk Persetujuan</button>
+            <button class="btn btn-success" @disabled($violation)>Ajukan untuk Persetujuan</button>
             <a href="{{ route('recruitment.requisitions.edit', $requisition) }}" class="btn btn-outline-secondary">Edit</a>
           </form>
         @endif

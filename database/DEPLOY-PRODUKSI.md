@@ -108,6 +108,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 21 | `shift-leave-policy-manual.sql` | setelah `hr-module` baseline. `shifts`, `roster_entries`, `leave_policies` |
 | 22 | `offboarding-letter-request-manual.sql` | setelah #18 (butuh `employee_facilities`, `termination_requests`). `offboarding_checklist_items`, `employee_offboarding_tasks`, `letter_requests` |
 | 23 | `engagement-analytics-manual.sql` | setelah #2 & #12. `announcements*`, `surveys*`, `recruitment_costs` |
+| 24 | `job-requisition-budget-control-manual.sql` | setelah #12 & #11. `job_requisitions` + `request_type`/`manpower_plan_id`/`replaces_employee_id` (Budget Control di kode) |
 
 ---
 
@@ -190,3 +191,4 @@ Menjalankan (lihat `routes/console.php`):
 | `shift-leave-policy-manual.sql` | `2026_08_29_180000`, `180100` |
 | `offboarding-letter-request-manual.sql` | `2026_08_29_180200`, `180300` |
 | `engagement-analytics-manual.sql` | `2026_08_29_180400`, `180500`, `180600` |
+| `job-requisition-budget-control-manual.sql` | `2026_08_31_100000` |

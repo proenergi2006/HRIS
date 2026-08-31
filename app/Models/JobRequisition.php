@@ -26,11 +26,26 @@ class JobRequisition extends Model implements Approvable
 
     protected $fillable = [
         'company_id', 'department_id', 'section_id', 'position_id',
-        'title', 'reason', 'headcount_requested', 'employment_type_id', 'target_join_date',
+        'title', 'request_type', 'manpower_plan_id', 'replaces_employee_id',
+        'reason', 'headcount_requested', 'employment_type_id', 'target_join_date',
         'status', 'requested_by_user_id', 'notes_rejection',
     ];
 
     protected $casts = ['target_join_date' => 'date'];
+
+    public static array $typeLabels = [
+        'replacement'  => 'Pengganti (Replacement)',
+        'additional'   => 'Tambahan (Additional)',
+        'new_position' => 'Posisi Baru (New Position)',
+    ];
+
+    /** Tipe yang menambah headcount di luar kondisi sekarang -> wajib ada kuota MPP. */
+    public const BUDGETED_TYPES = ['additional', 'new_position'];
+
+    public function needsBudget(): bool
+    {
+        return in_array($this->request_type, self::BUDGETED_TYPES, true);
+    }
 
     public static array $statusLabels = [
         'draft'     => 'Draft',
@@ -56,11 +71,46 @@ class JobRequisition extends Model implements Approvable
     public function position(): BelongsTo    { return $this->belongsTo(Position::class); }
     public function employmentType(): BelongsTo { return $this->belongsTo(\App\Models\Master\EmployeeType::class, 'employment_type_id'); }
     public function requestedBy(): BelongsTo { return $this->belongsTo(User::class, 'requested_by_user_id'); }
+    public function manpowerPlan(): BelongsTo { return $this->belongsTo(ManpowerPlan::class); }
+    public function replacesEmployee(): BelongsTo { return $this->belongsTo(Employee::class, 'replaces_employee_id'); }
     public function candidates(): HasMany    { return $this->hasMany(Candidate::class); }
 
     public function isDraft(): bool    { return $this->status === 'draft'; }
     public function isEditable(): bool { return in_array($this->status, ['draft', 'rejected']); }
     public function isOpen(): bool     { return $this->status === 'approved'; }
+
+    /**
+     * Budget Control — cek apakah permintaan ini masih muat di kuota Manpower Plan.
+     * Return null bila lolos (atau tidak perlu budget), string alasan bila ditolak.
+     */
+    public function budgetViolation(): ?string
+    {
+        if (! $this->needsBudget()) {
+            return null;
+        }
+
+        $plan = $this->manpowerPlan;
+
+        if (! $plan) {
+            return 'Permintaan tipe "' . (self::$typeLabels[$this->request_type] ?? $this->request_type)
+                . '" wajib ditautkan ke Rencana Manpower (MPP) yang sudah disetujui.';
+        }
+
+        if (! $plan->isApproved()) {
+            return 'Rencana Manpower yang dipilih belum berstatus "Disetujui".';
+        }
+
+        $remaining = $plan->remainingBudget($this->id);
+
+        if ($this->headcount_requested > $remaining) {
+            return 'Kuota Rencana Manpower tidak cukup. Sisa kuota: ' . $remaining
+                . ' orang (rencana ' . $plan->planned_headcount . ' − aktual ' . $plan->actualHeadcount()
+                . ' − sedang direkrut ' . $plan->committedHeadcount($this->id)
+                . '), permintaan ' . $this->headcount_requested . ' orang.';
+        }
+
+        return null;
+    }
 
     public function scopeLabel(): string
     {

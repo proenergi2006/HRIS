@@ -82,7 +82,11 @@ class ManpowerPlanController extends Controller
 
     public function show(ManpowerPlan $plan)
     {
-        $plan->load(['company', 'department', 'section', 'position', 'requestedBy', 'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy']);
+        $plan->load([
+            'company', 'department', 'section', 'position', 'requestedBy',
+            'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy',
+            'requisitions' => fn ($q) => $q->with('requestedBy')->orderByDesc('id'),
+        ]);
 
         return view('manpower.plan.show', compact('plan'));
     }

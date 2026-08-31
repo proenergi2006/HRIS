@@ -23,6 +23,7 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | `leave_requests` | `status` enum → varchar(30) |
 | `perdin_requests` | `status` enum → varchar(30) |
 | `reimbursement_requests` | (nilai `status` saja) |
+| `job_requisitions` | + `request_type`, `manpower_plan_id` (FK), `replaces_employee_id` (FK) |
 
 
 ## Master Data referensi
@@ -1110,6 +1111,17 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 - `rejection_note` — varchar(255) DEFAULT NULL
 - `created_at` — timestamp NULL DEFAULT NULL
 - `updated_at` — timestamp NULL DEFAULT NULL
+
+
+## Job Requisition — tipe + Budget Control — `job-requisition-budget-control-manual.sql`
+
+`job_requisitions` (tabel lama):
+- ➕ `request_type` varchar(20) NOT NULL DEFAULT 'replacement'  (replacement / additional / new_position)
+- ➕ `manpower_plan_id` bigint unsigned NULL → FK `manpower_plans` (ON DELETE SET NULL)
+- ➕ `replaces_employee_id` bigint unsigned NULL → FK `employees` (ON DELETE SET NULL)
+
+Budget Control ada di kode: requisition `additional`/`new_position` hanya bisa diajukan
+bila `planned_headcount` MPP (disetujui) − aktual − sedang direkrut ≥ headcount diminta.
 
 
 ## Pengumuman + Survey + HR Analytics

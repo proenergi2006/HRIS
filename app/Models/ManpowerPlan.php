@@ -7,6 +7,7 @@ use App\Traits\HasApprovalWorkflow;
 use App\Traits\HasHashid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -50,9 +51,11 @@ class ManpowerPlan extends Model implements Approvable
     public function section(): BelongsTo      { return $this->belongsTo(Section::class); }
     public function position(): BelongsTo     { return $this->belongsTo(Position::class); }
     public function requestedBy(): BelongsTo  { return $this->belongsTo(User::class, 'requested_by_user_id'); }
+    public function requisitions(): HasMany   { return $this->hasMany(JobRequisition::class); }
 
     public function isDraft(): bool     { return $this->status === 'draft'; }
     public function isPending(): bool   { return $this->status === 'pending'; }
+    public function isApproved(): bool  { return $this->status === 'approved'; }
     public function isEditable(): bool  { return in_array($this->status, ['draft', 'rejected']); }
 
     /** Nama unit target rencana ini (paling spesifik yang terisi). */
@@ -91,6 +94,26 @@ class ManpowerPlan extends Model implements Approvable
         }
 
         return $query->count();
+    }
+
+    /**
+     * Headcount yang sedang "dipesan" lewat Job Requisition penambahan
+     * (additional/new_position) yang masih berjalan — belum jadi karyawan aktif.
+     * Requisition 'closed' (terisi) tidak dihitung: sudah masuk actualHeadcount().
+     */
+    public function committedHeadcount(?int $excludeRequisitionId = null): int
+    {
+        return (int) $this->requisitions()
+            ->whereIn('request_type', ['additional', 'new_position'])
+            ->whereIn('status', ['draft', 'pending', 'approved'])
+            ->when($excludeRequisitionId, fn ($q, $id) => $q->where('id', '!=', $id))
+            ->sum('headcount_requested');
+    }
+
+    /** Sisa kuota headcount rencana ini (bisa negatif = over-budget). */
+    public function remainingBudget(?int $excludeRequisitionId = null): int
+    {
+        return $this->planned_headcount - $this->actualHeadcount() - $this->committedHeadcount($excludeRequisitionId);
     }
 
     // ── Approval Engine ─────────────────────────────────────────────────

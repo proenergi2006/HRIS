@@ -37,6 +37,48 @@
       </div>
 
       <div class="form-row">
+        <div class="form-group col-md-4">
+          <label>Tipe Permintaan <span class="text-danger">*</span></label>
+          <select name="request_type" id="req-type" class="form-control @error('request_type') is-invalid @enderror" required>
+            @foreach(\App\Models\JobRequisition::$typeLabels as $val => $lbl)
+              <option value="{{ $val }}" @selected(old('request_type', $requisition->request_type ?? 'replacement') === $val)>{{ $lbl }}</option>
+            @endforeach
+          </select>
+          @error('request_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          <small class="form-text text-muted">
+            <strong>Pengganti</strong>: isi kekosongan karena karyawan keluar (tidak menambah headcount).
+            <strong>Tambahan / Posisi Baru</strong>: menambah headcount — wajib ada kuota Rencana Manpower.
+          </small>
+        </div>
+        <div class="form-group col-md-5" data-when="additional new_position">
+          <label>Rencana Manpower (MPP) <span class="text-danger">*</span></label>
+          <select name="manpower_plan_id" id="req-mpp" class="form-control @error('manpower_plan_id') is-invalid @enderror">
+            <option value="">-- Pilih rencana yang disetujui --</option>
+            @foreach($manpowerPlans as $mp)
+              @php $sisa = $mp->remainingBudget(); @endphp
+              <option value="{{ $mp->id }}" data-company="{{ $mp->company_id }}" data-sisa="{{ $sisa }}"
+                      @selected(old('manpower_plan_id', $requisition->manpower_plan_id) == $mp->id)>
+                {{ $mp->company?->short_name ?? $mp->company?->name }} · {{ $mp->scopeLabel() }} · {{ $mp->periodLabel() }}
+                — rencana {{ $mp->planned_headcount }}, sisa kuota {{ $sisa }}
+              </option>
+            @endforeach
+          </select>
+          @error('manpower_plan_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          <small class="form-text text-muted" id="req-mpp-hint">Hanya rencana berstatus <em>Disetujui</em> untuk perusahaan yang dipilih.</small>
+        </div>
+        <div class="form-group col-md-5" data-when="replacement">
+          <label>Karyawan yang Digantikan</label>
+          <select name="replaces_employee_id" id="req-replaces" class="form-control">
+            <option value="">-- Pilih (opsional) --</option>
+            @foreach($replaceableEmployees as $emp)
+              <option value="{{ $emp->id }}" @selected(old('replaces_employee_id', $requisition->replaces_employee_id) == $emp->id)>{{ $emp->name }}</option>
+            @endforeach
+          </select>
+          <small class="form-text text-muted">Karyawan resign/pindah yang posisinya diisi ulang.</small>
+        </div>
+      </div>
+
+      <div class="form-row">
         <div class="form-group col-md-3">
           <label>Departemen</label>
           <select name="department_id" class="form-control req-department">
@@ -97,6 +139,41 @@
 </div>
 
 <script>
+(function () {
+  // ── Toggle field per tipe permintaan + filter MPP per company ──────────
+  var typeSel = document.getElementById('req-type');
+  var mppSel  = document.getElementById('req-mpp');
+  var compSel = document.querySelector('select[name="company_id"]');
+
+  function applyType() {
+    var t = typeSel.value;
+    document.querySelectorAll('[data-when]').forEach(function (el) {
+      var show = el.getAttribute('data-when').split(' ').indexOf(t) !== -1;
+      el.style.display = show ? '' : 'none';
+      el.querySelectorAll('select, input').forEach(function (f) { f.disabled = !show; });
+    });
+    if (mppSel) mppSel.required = (t === 'additional' || t === 'new_position');
+  }
+
+  function filterMpp() {
+    if (!mppSel || !compSel) return;
+    var cid = compSel.value, cur = mppSel.value, ok = false;
+    Array.from(mppSel.options).forEach(function (opt) {
+      if (!opt.value) return;
+      var vis = opt.dataset.company === cid;
+      opt.hidden = !vis;
+      if (opt.value === cur && vis) ok = true;
+    });
+    if (!ok) mppSel.value = '';
+  }
+
+  if (typeSel) {
+    applyType(); filterMpp();
+    typeSel.addEventListener('change', applyType);
+    if (compSel) compSel.addEventListener('change', filterMpp);
+  }
+})();
+
 (function () {
   var deptSelect = document.querySelector('.req-department');
   var secSelect  = document.querySelector('.req-section');

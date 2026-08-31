@@ -547,6 +547,9 @@
     @if(session('status'))
     <script>document.addEventListener('DOMContentLoaded',function(){siproToast(@json(session('status')),'success');});</script>
     @endif
+    @if(session('success'))
+    <script>document.addEventListener('DOMContentLoaded',function(){siproToast(@json(session('success')),'success');});</script>
+    @endif
     @if(session('error'))
     <script>document.addEventListener('DOMContentLoaded',function(){siproToast(@json(session('error')),'error');});</script>
     @endif

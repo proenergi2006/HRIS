@@ -57,12 +57,18 @@
             <tr>
               <th>Unit / Jabatan</th><th>Periode</th><th class="text-center">Rencana</th>
               <th class="text-center">Aktual</th><th class="text-center">Selisih</th>
+              <th class="text-center">Direkrut</th><th class="text-center">Sisa Kuota</th>
               <th>Status</th><th>Diajukan Oleh</th><th></th>
             </tr>
           </thead>
           <tbody>
           @foreach($plans as $p)
-            @php $actual = $p->actualHeadcount(); $variance = $actual - $p->planned_headcount; @endphp
+            @php
+              $actual = $p->actualHeadcount();
+              $variance = $actual - $p->planned_headcount;
+              $committed = $p->isApproved() ? $p->committedHeadcount() : 0;
+              $remaining = $p->isApproved() ? $p->planned_headcount - $actual - $committed : null;
+            @endphp
             <tr>
               <td>{{ $p->scopeLabel() }}</td>
               <td>{{ $p->periodLabel() }}</td>
@@ -70,6 +76,10 @@
               <td class="text-center">{{ $actual }}</td>
               <td class="text-center {{ $variance < 0 ? 'text-danger' : ($variance > 0 ? 'text-warning' : 'text-success') }}">
                 {{ $variance > 0 ? '+' : '' }}{{ $variance }}
+              </td>
+              <td class="text-center text-muted">{{ $p->isApproved() ? $committed : '—' }}</td>
+              <td class="text-center {{ $remaining === null ? 'text-muted' : ($remaining < 0 ? 'text-danger font-weight-bold' : ($remaining === 0 ? 'text-warning' : 'text-success')) }}">
+                {{ $remaining === null ? '—' : $remaining }}
               </td>
               <td><span class="badge badge-{{ \App\Models\ManpowerPlan::$statusBadges[$p->status] ?? 'secondary' }}">{{ \App\Models\ManpowerPlan::$statusLabels[$p->status] ?? $p->status }}</span></td>
               <td class="small text-muted">{{ $p->requestedBy?->name ?? '—' }}</td>

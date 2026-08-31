@@ -36,13 +36,18 @@
       <div class="table-responsive">
         <table class="table table-sm mb-0">
           <thead class="thead-light">
-            <tr><th>Judul</th><th>Unit</th><th class="text-center">Headcount</th><th class="text-center">Kandidat</th><th>Status</th><th>Diajukan Oleh</th><th></th></tr>
+            <tr><th>Judul</th><th>Tipe</th><th>Unit</th><th>MPP</th><th class="text-center">Headcount</th><th class="text-center">Kandidat</th><th>Status</th><th>Diajukan Oleh</th><th></th></tr>
           </thead>
           <tbody>
           @foreach($requisitions as $r)
             <tr>
               <td>{{ $r->title }}</td>
+              <td class="small">
+                @php $tt = ['replacement' => 'Pengganti', 'additional' => 'Tambahan', 'new_position' => 'Posisi Baru']; @endphp
+                <span class="badge badge-{{ $r->request_type === 'replacement' ? 'light' : 'info' }}">{{ $tt[$r->request_type] ?? $r->request_type }}</span>
+              </td>
               <td>{{ $r->scopeLabel() }}</td>
+              <td class="small text-muted">{{ $r->manpowerPlan ? $r->manpowerPlan->periodLabel() : '—' }}</td>
               <td class="text-center">{{ $r->headcount_requested }}</td>
               <td class="text-center">
                 <a href="{{ route('recruitment.candidates.index', ['job_requisition_id' => $r->id]) }}">{{ $r->candidates_count }}</a>
