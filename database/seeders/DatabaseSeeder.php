@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             AppraisalTemplateSeeder::class,
             CompetencySeeder::class,
             LeavePolicySeeder::class,
+            OnboardingChecklistItemSeeder::class,
             OffboardingChecklistItemSeeder::class,
             PreEmploymentChecklistItemSeeder::class,
             ITDemoSeeder::class,

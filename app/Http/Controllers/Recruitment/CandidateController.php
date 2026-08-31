@@ -22,7 +22,7 @@ class CandidateController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Candidate::with(['jobRequisition.company'])->latest();
+        $query = Candidate::with(['jobRequisition.company', 'preEmploymentTasks'])->latest();
 
         if ($request->filled('job_requisition_id')) {
             $query->where('job_requisition_id', $request->job_requisition_id);
@@ -135,22 +135,33 @@ class CandidateController extends Controller
         }
 
         $data = $request->validate([
-            'company_id'    => 'required|exists:companies,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'section_id'    => 'nullable|exists:sections,id',
-            'position_id'   => 'nullable|exists:positions,id',
-            'level_id'      => 'nullable|exists:levels,id',
-            'start_date'    => 'required|date',
-            'employee_type' => 'required|in:local,expat',
+            'company_id'      => 'required|exists:companies,id',
+            'department_id'   => 'nullable|exists:departments,id',
+            'section_id'      => 'nullable|exists:sections,id',
+            'position_id'     => 'nullable|exists:positions,id',
+            'level_id'        => 'nullable|exists:levels,id',
+            'start_date'      => 'required|date',
+            'employee_type'   => 'required|in:local,expat',
+            'contract_type'   => 'required|in:pkwt,pkwtt,probation,magang',
+            'probation_months'=> 'nullable|integer|min:1|max:24',
+            'create_account'  => 'nullable|boolean',
         ]);
 
-        $pe = $candidate->preEmployment;
+        $company = Company::find($data['company_id']);
+        $pe      = $candidate->preEmployment;
 
-        $employee = Employee::create($data + [
+        $employee = Employee::create(collect($data)->only([
+            'company_id', 'department_id', 'section_id', 'position_id', 'level_id', 'start_date', 'employee_type',
+        ])->all() + [
             'name'              => $candidate->name,
             'email'             => $candidate->email,
             'phone'             => $candidate->phone,
-            'employment_status' => 'probation',
+            'nip'               => $this->generateNip($company, $data['start_date']),
+            'employment_status' => match ($data['contract_type']) {
+                'pkwtt' => 'permanent',
+                'pkwt'  => 'contract',
+                default => 'probation',
+            },
             'is_active'         => true,
         ] + ($pe ? array_filter([
             'gender'                     => $pe->gender,
@@ -179,11 +190,89 @@ class CandidateController extends Controller
         $this->carryOverProfile($candidate, $employee);
         $this->carryOverPreEmployment($pe, $employee);
 
+        // Perjanjian kerja awal — dibuat otomatis dari pilihan konversi.
+        $months  = (int) ($data['probation_months'] ?? 3);
+        $endDate = in_array($data['contract_type'], ['pkwt', 'probation', 'magang'])
+            ? \Carbon\Carbon::parse($data['start_date'])->addMonths($months)->toDateString()
+            : null;
+
+        $employee->contracts()->create([
+            'contract_type' => $data['contract_type'],
+            'number'        => $employee->nip . '/HR/' . now()->format('Y'),
+            'start_date'    => $data['start_date'],
+            'end_date'      => $endDate,
+            'status'        => 'active',
+            'notes'         => 'Dibuat otomatis saat konversi kandidat.',
+        ]);
+        if ($endDate) {
+            $employee->update(['contract_end_date' => $endDate]);
+        }
+
+        // Akun login (opsional).
+        $account = null;
+        $accountNote = null;
+        if ($request->boolean('create_account') && $employee->email) {
+            if (\App\Models\User::where('email', $employee->email)->exists()) {
+                $accountNote = 'Akun login TIDAK dibuat — email ' . $employee->email . ' sudah dipakai user lain.';
+            } else {
+                $account = $this->createUserAccount($employee);
+            }
+        }
+
         // Auto-generate task onboarding dari template checklist (global + company terkait).
         OnboardingController::materialize($employee);
+        $this->autoCompleteOnboarding($employee, (bool) $account);
 
-        return redirect()->route('recruitment.onboarding.show', $employee)
-            ->with('success', $candidate->name . ' berhasil dikonversi jadi karyawan. Lanjutkan checklist onboarding.');
+        $msg = $candidate->name . ' berhasil dikonversi jadi karyawan (NIP ' . $employee->nip . '). Lanjutkan checklist onboarding.';
+        if ($account) {
+            $msg .= ' Akun login dibuat — email: ' . $account['email'] . ', password sementara: ' . $account['password'];
+        } elseif ($accountNote) {
+            $msg .= ' ' . $accountNote;
+        }
+
+        return redirect()->route('recruitment.onboarding.show', $employee)->with('success', $msg);
+    }
+
+    /** NIP unik: 3 huruf kode PT + tahun + urutan 4 digit. */
+    private function generateNip(?Company $company, string $startDate): string
+    {
+        $prefix = strtoupper(substr($company?->code ?? 'EMP', 0, 3));
+        $year   = \Carbon\Carbon::parse($startDate)->format('Y');
+        $seq    = Employee::where('company_id', $company?->id)
+            ->whereYear('start_date', $year)->count() + 1;
+
+        do {
+            $nip = sprintf('%s-%s-%04d', $prefix, $year, $seq++);
+        } while (Employee::where('nip', $nip)->exists());
+
+        return $nip;
+    }
+
+    private function createUserAccount(Employee $employee): array
+    {
+        $password = \Illuminate\Support\Str::password(12, symbols: false);
+
+        $user = \App\Models\User::create([
+            'name'     => $employee->name,
+            'email'    => $employee->email,
+            'password' => bcrypt($password),
+        ]);
+        $user->assignRole('karyawan');
+        $employee->update(['user_id' => $user->id]);
+
+        return ['email' => $employee->email, 'password' => $password];
+    }
+
+    /** Tandai selesai item onboarding yang sudah otomatis beres saat konversi. */
+    private function autoCompleteOnboarding(Employee $employee, bool $accountCreated): void
+    {
+        $done = ['Nomor Induk Karyawan (NIP) diterbitkan', 'Perjanjian kerja ditandatangani'];
+        if ($accountCreated) {
+            $done[] = 'Email & akun sistem dibuat';
+        }
+
+        $employee->onboardingTasks()->whereHas('item', fn ($q) => $q->whereIn('label', $done))
+            ->update(['is_done' => true, 'done_at' => now(), 'done_by_user_id' => auth()->id()]);
     }
 
     /** Salin pendidikan / pengalaman / skill kandidat ke record karyawan barunya. */

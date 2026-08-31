@@ -1515,12 +1515,29 @@ CREATE TABLE `employee_onboarding_tasks` (
   CONSTRAINT `employee_onboarding_tasks_onboarding_checklist_item_id_foreign` FOREIGN KEY (`onboarding_checklist_item_id`) REFERENCES `onboarding_checklist_items` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ── Item checklist onboarding default (global) ───────────────────────────────
+-- Setara OnboardingChecklistItemSeeder. Bisa ditambah/nonaktifkan per PT lewat
+-- menu Rekrutmen > Onboarding > Template Checklist. Kategori: dokumen/akun/aset/induction.
+-- Saat konversi kandidat, item "NIP diterbitkan" + "Perjanjian kerja ditandatangani"
+-- (+ "Email & akun sistem" bila buat akun) otomatis ditandai selesai.
+INSERT INTO `onboarding_checklist_items` (`company_id`,`label`,`category`,`is_required`,`sort_order`,`is_active`,`created_at`,`updated_at`) VALUES
+(NULL,'Background check / verifikasi latar belakang','dokumen',1,10,1,NOW(),NOW()),
+(NULL,'Perjanjian kerja ditandatangani','dokumen',1,20,1,NOW(),NOW()),
+(NULL,'Nomor Induk Karyawan (NIP) diterbitkan','akun',1,30,1,NOW(),NOW()),
+(NULL,'Email & akun sistem dibuat','akun',1,40,1,NOW(),NOW()),
+(NULL,'Kartu akses / kartu absensi','aset',1,50,1,NOW(),NOW()),
+(NULL,'Laptop / perangkat kerja','aset',1,60,1,NOW(),NOW()),
+(NULL,'Meja kerja / workstation','aset',1,70,1,NOW(),NOW()),
+(NULL,'Seragam / APD','aset',0,80,1,NOW(),NOW()),
+(NULL,'Induction / orientasi perusahaan','induction',1,90,1,NOW(),NOW()),
+(NULL,'Pengenalan tim & atasan langsung','induction',0,100,1,NOW(),NOW()),
+(NULL,'Serah terima SOP & uraian jabatan','induction',0,110,1,NOW(),NOW());
+
 -- ============================================================================
 -- Setelah tabel dibuat, WAJIB jalankan ulang seeder berikut (idempoten):
 --   php artisan db:seed --class=PermissionCatalogSeeder   (permission recruitment.*)
 --   php artisan db:seed --class=ApprovalWorkflowSeeder    (workflow job_requisition per company)
--- Lalu isi template checklist onboarding lewat menu Rekrutmen > Onboarding > Template Checklist
--- (tidak ada seed default — beda-beda tiap perusahaan).
+--   php artisan db:seed --class=OnboardingChecklistItemSeeder  (kalau tidak pakai INSERT di atas)
 --
 -- Opsional daftarkan ke migrations (cek: SELECT MAX(batch) FROM migrations;):
 -- INSERT INTO `migrations` (`migration`,`batch`) VALUES
@@ -2778,8 +2795,9 @@ INSERT INTO `preemployment_checklist_items` (`company_id`,`label`,`category`,`is
 -- >>>   php artisan db:seed --class=ApprovalWorkflowSeeder
 -- >>>   php artisan db:seed --class=CompetencySeeder
 -- >>>   php artisan db:seed --class=LeavePolicySeeder
+-- >>>   php artisan db:seed --class=OnboardingChecklistItemSeeder    (skip kalau TAHAP 12 sudah insert)
 -- >>>   php artisan db:seed --class=OffboardingChecklistItemSeeder
--- >>>   php artisan db:seed --class=PreEmploymentChecklistItemSeeder   (skip kalau TAHAP 25 sudah insert)
+-- >>>   php artisan db:seed --class=PreEmploymentChecklistItemSeeder  (skip kalau TAHAP 25 sudah insert)
 -- >>>   php artisan db:seed --class=PermissionCatalogSeeder   (TERAKHIR)
 -- >>> Lalu: cron `* * * * * php artisan schedule:run`, `php artisan up`.
 -- ###########################################################################

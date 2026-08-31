@@ -45,7 +45,7 @@
     @else
       <div class="table-responsive">
         <table class="table table-sm mb-0">
-          <thead class="thead-light"><tr><th>Nama</th><th>Requisition</th><th>Sumber</th><th class="text-right">Ekspektasi</th><th class="text-center">Assessment</th><th>Status</th><th></th></tr></thead>
+          <thead class="thead-light"><tr><th>Nama</th><th>Requisition</th><th>Sumber</th><th class="text-right">Ekspektasi</th><th class="text-center">Assessment</th><th>Tahap</th><th>Status</th><th></th></tr></thead>
           <tbody>
           @foreach($candidates as $c)
             <tr>
@@ -59,6 +59,7 @@
                     {{ \App\Models\Candidate::$assessmentLabels[$c->assessment_result] ?? $c->assessment_result }}</span>
                 @else <span class="text-muted">—</span> @endif
               </td>
+              <td>@php $st = $c->stage(); @endphp<span class="badge badge-{{ $st['badge'] }}">{{ $st['label'] }}</span></td>
               <td><span class="badge badge-{{ \App\Models\Candidate::$statusBadges[$c->status] ?? 'secondary' }}">{{ \App\Models\Candidate::$statusLabels[$c->status] ?? $c->status }}</span></td>
               <td><a href="{{ route('recruitment.candidates.show', $c) }}" class="btn btn-xs btn-outline-secondary">Detail</a></td>
             </tr>

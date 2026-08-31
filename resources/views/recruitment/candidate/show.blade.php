@@ -10,11 +10,28 @@
   <div class="col-lg-7">
 
     <div class="card mb-4">
-      <div class="card-header font-weight-bold d-flex justify-content-between">
+      <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
         <span>{{ $candidate->name }}</span>
-        <span class="badge badge-{{ \App\Models\Candidate::$statusBadges[$candidate->status] ?? 'secondary' }}">
-          {{ \App\Models\Candidate::$statusLabels[$candidate->status] ?? $candidate->status }}
+        @php $stg = $candidate->stage(); @endphp
+        <span>
+          <span class="badge badge-{{ $stg['badge'] }}">{{ $stg['label'] }}</span>
+          <span class="badge badge-light border text-muted">{{ \App\Models\Candidate::$statusLabels[$candidate->status] ?? $candidate->status }}</span>
         </span>
+      </div>
+      <div class="px-3 pt-2">
+        @php $stages = ['candidate' => 'Kandidat', 'hired' => 'Hired', 'preemp' => 'Pre-Employment', 'joined' => 'Joined'];
+             $curKey = in_array($stg['key'], ['preemp_done']) ? 'preemp' : $stg['key'];
+             $order = array_keys($stages); $curIdx = array_search($curKey, $order); @endphp
+        <div class="d-flex text-center small">
+          @foreach($stages as $k => $lbl)
+            @php $i = array_search($k, $order); $state = $curIdx === false ? 'muted' : ($i < $curIdx ? 'done' : ($i === $curIdx ? 'cur' : 'todo')); @endphp
+            <div class="flex-fill">
+              <div class="mx-auto rounded-circle {{ $state === 'done' ? 'bg-success' : ($state === 'cur' ? 'bg-primary' : 'bg-light border') }}"
+                   style="width:14px;height:14px"></div>
+              <div class="{{ $state === 'todo' || $state === 'muted' ? 'text-muted' : 'font-weight-bold' }}">{{ $lbl }}</div>
+            </div>
+          @endforeach
+        </div>
       </div>
       <div class="card-body">
         <dl class="row mb-3">
@@ -144,10 +161,35 @@
                   <option value="expat">Expat</option>
                 </select>
               </div>
-              <div class="form-group col-md-4 d-flex align-items-end">
+              <div class="form-group col-md-4">
+                <label class="small">Jenis Perjanjian Kerja <span class="text-danger">*</span></label>
+                <select name="contract_type" class="form-control form-control-sm" required>
+                  <option value="probation">Probation</option>
+                  <option value="pkwt">PKWT (Kontrak)</option>
+                  <option value="pkwtt">PKWTT (Tetap)</option>
+                  <option value="magang">Magang</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row align-items-end">
+              <div class="form-group col-md-3">
+                <label class="small">Durasi Probation/Kontrak (bln)</label>
+                <input type="number" name="probation_months" class="form-control form-control-sm" value="3" min="1" max="24">
+                <small class="form-text text-muted">Diabaikan untuk PKWTT.</small>
+              </div>
+              <div class="form-group col-md-4">
+                <div class="custom-control custom-checkbox mb-2">
+                  <input type="checkbox" class="custom-control-input" id="create_account" name="create_account" value="1"
+                         {{ $candidate->email ? '' : 'disabled' }}>
+                  <label class="custom-control-label small" for="create_account">
+                    Buatkan akun login (role karyawan){{ $candidate->email ? '' : ' — email kandidat kosong' }}
+                  </label>
+                </div>
+              </div>
+              <div class="form-group col-md-5">
                 <button type="submit" class="btn btn-sm btn-success btn-block" @disabled($peMissing->isNotEmpty())
-                        onclick="return confirm('Konversi kandidat ini jadi karyawan?')">
-                  <i class="gd-check mr-1"></i> Konversi jadi Karyawan
+                        onclick="return confirm('Konversi kandidat ini jadi karyawan? NIP & perjanjian kerja dibuat otomatis.')">
+                  <i class="gd-check mr-1"></i> Konversi jadi Karyawan (Joined)
                 </button>
               </div>
             </div>

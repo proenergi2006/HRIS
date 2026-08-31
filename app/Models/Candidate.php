@@ -34,11 +34,37 @@ class Candidate extends Model
         'screening' => 'Screening',
         'interview' => 'Interview',
         'offer'     => 'Penawaran',
-        'accepted'  => 'Diterima',
+        'accepted'  => 'Hired (Offer Diterima)',
         'rejected'  => 'Ditolak',
         'withdrawn' => 'Mengundurkan Diri',
-        'converted' => 'Sudah Jadi Karyawan',
+        'converted' => 'Joined (Sudah Bergabung)',
     ];
+
+    /**
+     * Tahap lifecycle ringkas (Candidate → Hired → Pre-Employment → Joined)
+     * — turunan dari status + progres checklist pre-employment.
+     */
+    public function stage(): array
+    {
+        if ($this->status === 'converted') {
+            return ['key' => 'joined', 'label' => 'Joined', 'badge' => 'primary'];
+        }
+        if (in_array($this->status, ['rejected', 'withdrawn'])) {
+            return ['key' => $this->status, 'label' => self::$statusLabels[$this->status], 'badge' => 'danger'];
+        }
+        if ($this->status === 'accepted') {
+            $prog = $this->preEmploymentProgress();
+            if ($prog['total'] === 0 || $prog['done'] === 0) {
+                return ['key' => 'hired', 'label' => 'Hired', 'badge' => 'success'];
+            }
+
+            return $this->preEmploymentComplete()
+                ? ['key' => 'preemp_done', 'label' => 'Pre-Employment ✓', 'badge' => 'success']
+                : ['key' => 'preemp', 'label' => 'Pre-Employment', 'badge' => 'warning'];
+        }
+
+        return ['key' => 'candidate', 'label' => 'Kandidat', 'badge' => 'info'];
+    }
 
     public static array $statusBadges = [
         'applied'   => 'secondary',

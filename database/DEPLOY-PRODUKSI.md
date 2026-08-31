@@ -124,6 +124,7 @@ php artisan db:seed --class=RegionDistrictSeeder    # kecamatan + kelurahan
 php artisan db:seed --class=ApprovalWorkflowSeeder  # workflow default per PT (semua transaction_type)
 php artisan db:seed --class=CompetencySeeder        # ~10 kompetensi default
 php artisan db:seed --class=LeavePolicySeeder       # kebijakan cuti default per PT
+php artisan db:seed --class=OnboardingChecklistItemSeeder     # 11 item onboarding (skip kalau recruitment-manual.sql sudah insert)
 php artisan db:seed --class=OffboardingChecklistItemSeeder
 php artisan db:seed --class=PreEmploymentChecklistItemSeeder  # 13 item checklist pre-employment (bisa di-skip kalau preemployment-manual.sql sudah insert)
 php artisan db:seed --class=PermissionCatalogSeeder # TERAKHIR — permission semua modul + backfill role_company_assignments
@@ -131,6 +132,11 @@ php artisan db:seed --class=PermissionCatalogSeeder # TERAKHIR — permission se
 
 Opsional (contoh data, **jangan** di server kalau data organisasi sudah diisi manual):
 `BranchDireksiSeeder`. **Jangan** jalankan `ITDemoSeeder` / `*SampleData*` / `AllMenuSampleDataSeeder` di produksi.
+
+> Konversi kandidat → karyawan sekarang otomatis: generate NIP (`{PT}-{tahun}-{urут}`),
+> buat perjanjian kerja awal (`employee_contracts`), opsional buat akun login
+> (role `karyawan`, password sementara ditampilkan sekali), dan tandai selesai item
+> onboarding NIP / perjanjian kerja / akun. Tidak butuh langkah deploy tambahan.
 
 > Tanpa akses artisan: `ApprovalWorkflowSeeder` & `PermissionCatalogSeeder` sulit
 > direplikasi manual (logika kompleks per-PT). Minimal jalankan keduanya lewat
