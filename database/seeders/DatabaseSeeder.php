@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CompetencySeeder::class,
             LeavePolicySeeder::class,
             OffboardingChecklistItemSeeder::class,
+            PreEmploymentChecklistItemSeeder::class,
             ITDemoSeeder::class,
             // Terakhir — perlu semua role sudah dibuat & di-assign ke user dulu
             // (backfill role_company_assignments baca model_has_roles saat ini).

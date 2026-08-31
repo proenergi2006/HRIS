@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 81 tabel baru + 13 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 84 tabel baru + 13 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -25,6 +25,7 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | `reimbursement_requests` | (nilai `status` saja) |
 | `job_requisitions` | + `request_type`, `manpower_plan_id` (FK), `replaces_employee_id` (FK) |
 | `candidates` | + `expected_salary`, `assessment_result`, `assessment_score`, `assessment_notes` |
+| _(candidates)_ | Pre-Employment: relasi 1:1 `candidate_preemployment` + `candidate_preemployment_tasks` (tabel baru, bukan kolom) |
 
 
 ## Master Data referensi
@@ -1129,6 +1130,16 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 
 Saat kandidat dikonversi jadi karyawan, `educations`/`experiences`/`skills` disalin ke
 `employee_educations` / `employee_work_experiences` / `employee_skills` (di kode).
+
+
+## Pre-Employment — `preemployment-manual.sql`
+
+🆕 `candidate_preemployment` (1:1 `candidates`) — gender (L/P), birth_place, birth_date, marital_status_id, religion_id, blood_type_id, ktp_number (enkripsi), npwp_number (enkripsi), ktp_address, ktp_city, domicile_address, domicile_city, bank_id, bank_account_number (enkripsi), bank_account_holder, bpjs_health_number, bpjs_health_date, bpjs_employment_number, bpjs_employment_date, emergency_contact_name/relation/phone, notes
+🆕 `preemployment_checklist_items` — company_id (null=global), label varchar(200), category varchar(20) (dokumen/data/verifikasi), is_required, sort_order, is_active. +13 item default (Offer, Data pribadi, KTP, NPWP, KK, Rekening, BPJS ×2, Ijazah, SKCK, Paklaring, MCU, Pas foto)
+🆕 `candidate_preemployment_tasks` — candidate_id, preemployment_checklist_item_id, is_done, done_at, done_by_user_id, notes (unique candidate+item)
+
+Konversi kandidat → karyawan diblok sampai semua item `is_required` selesai. Data
+pindah ke `employees` + `employee_bank_accounts` + `employee_nssf` (di kode).
 
 
 ## Job Requisition — tipe + Budget Control — `job-requisition-budget-control-manual.sql`

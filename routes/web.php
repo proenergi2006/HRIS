@@ -86,6 +86,7 @@ use App\Http\Controllers\Recruitment\CandidateInterviewController;
 use App\Http\Controllers\Recruitment\CandidateOfferController;
 use App\Http\Controllers\Recruitment\CandidateDocumentController;
 use App\Http\Controllers\Recruitment\CandidateProfileController;
+use App\Http\Controllers\Recruitment\CandidatePreEmploymentController;
 use App\Http\Controllers\Recruitment\OnboardingController;
 use App\Http\Controllers\Training\TrainingProgramController;
 use App\Http\Controllers\Competency\CompetencyController;
@@ -688,6 +689,10 @@ Route::middleware(['auth', 'permission:recruitment.view'])->prefix('recruitment'
     Route::post('candidates/{candidate}/profile/{type}',           [CandidateProfileController::class, 'store'])->name('candidates.profile.store');
     Route::put('candidates/{candidate}/profile/{type}/{id}',       [CandidateProfileController::class, 'update'])->name('candidates.profile.update');
     Route::delete('candidates/{candidate}/profile/{type}/{id}',    [CandidateProfileController::class, 'destroy'])->name('candidates.profile.destroy');
+
+    // Pre-Employment — data terstruktur + checklist wajib sebelum konversi
+    Route::put('candidates/{candidate}/preemployment',                    [CandidatePreEmploymentController::class, 'update'])->name('candidates.preemployment.update');
+    Route::post('candidates/{candidate}/preemployment/tasks/{task}',      [CandidatePreEmploymentController::class, 'toggleTask'])->name('candidates.preemployment.toggle');
 
     // Statis dulu sebelum {employee} supaya 'templates' tidak ketangkep jadi hashid employee.
     Route::get('onboarding/templates',              [OnboardingController::class, 'templates'])->name('onboarding.templates');

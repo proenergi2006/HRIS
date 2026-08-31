@@ -6,6 +6,7 @@ use App\Traits\HasHashid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Candidate extends Model
 {
@@ -62,7 +63,31 @@ class Candidate extends Model
     public function experiences(): HasMany { return $this->hasMany(CandidateExperience::class)->orderByDesc('start_date'); }
     public function skills(): HasMany { return $this->hasMany(CandidateSkill::class); }
     public function certifications(): HasMany { return $this->hasMany(CandidateCertification::class); }
+    public function preEmployment(): HasOne { return $this->hasOne(CandidatePreEmployment::class); }
+    public function preEmploymentTasks(): HasMany { return $this->hasMany(CandidatePreEmploymentTask::class); }
 
     public function isConverted(): bool { return $this->status === 'converted'; }
     public function isAccepted(): bool  { return $this->status === 'accepted'; }
+
+    /** Item checklist Pre-Employment wajib yang belum diselesaikan. */
+    public function preEmploymentMissing(): \Illuminate\Support\Collection
+    {
+        return $this->preEmploymentTasks
+            ->filter(fn ($t) => $t->item?->is_required && ! $t->is_done)
+            ->map(fn ($t) => $t->item->label)
+            ->values();
+    }
+
+    public function preEmploymentComplete(): bool
+    {
+        return $this->preEmploymentTasks->isNotEmpty() && $this->preEmploymentMissing()->isEmpty();
+    }
+
+    public function preEmploymentProgress(): array
+    {
+        $total = $this->preEmploymentTasks->count();
+        $done  = $this->preEmploymentTasks->where('is_done', true)->count();
+
+        return ['done' => $done, 'total' => $total, 'pct' => $total ? (int) round($done / $total * 100) : 0];
+    }
 }

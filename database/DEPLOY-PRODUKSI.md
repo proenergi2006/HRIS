@@ -110,6 +110,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 23 | `engagement-analytics-manual.sql` | setelah #2 & #12. `announcements*`, `surveys*`, `recruitment_costs` |
 | 24 | `job-requisition-budget-control-manual.sql` | setelah #12 & #11. `job_requisitions` + `request_type`/`manpower_plan_id`/`replaces_employee_id` (Budget Control di kode) |
 | 25 | `candidate-database-ats-manual.sql` | setelah #12. `candidates` + `expected_salary`/`assessment_*` + `candidate_educations`/`_experiences`/`_skills`/`_certifications` |
+| 26 | `preemployment-manual.sql` | setelah #25 & #1. `candidate_preemployment`, `preemployment_checklist_items` (+13 item default), `candidate_preemployment_tasks` |
 
 ---
 
@@ -124,6 +125,7 @@ php artisan db:seed --class=ApprovalWorkflowSeeder  # workflow default per PT (s
 php artisan db:seed --class=CompetencySeeder        # ~10 kompetensi default
 php artisan db:seed --class=LeavePolicySeeder       # kebijakan cuti default per PT
 php artisan db:seed --class=OffboardingChecklistItemSeeder
+php artisan db:seed --class=PreEmploymentChecklistItemSeeder  # 13 item checklist pre-employment (bisa di-skip kalau preemployment-manual.sql sudah insert)
 php artisan db:seed --class=PermissionCatalogSeeder # TERAKHIR — permission semua modul + backfill role_company_assignments
 ```
 
@@ -194,3 +196,4 @@ Menjalankan (lihat `routes/console.php`):
 | `engagement-analytics-manual.sql` | `2026_08_29_180400`, `180500`, `180600` |
 | `job-requisition-budget-control-manual.sql` | `2026_08_31_100000` |
 | `candidate-database-ats-manual.sql` | `2026_08_31_110000` |
+| `preemployment-manual.sql` | `2026_08_31_120000` |

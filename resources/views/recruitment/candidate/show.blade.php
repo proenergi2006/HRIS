@@ -94,6 +94,14 @@
         @if($candidate->isAccepted())
           <hr>
           <div class="font-weight-bold small mb-2">Konversi jadi Karyawan (Pre-Employment → Employee)</div>
+          @php $peMissing = $candidate->preEmploymentMissing(); @endphp
+          @if($peMissing->isNotEmpty())
+            <div class="alert alert-warning py-2 px-3 small">
+              <i class="gd-alert mr-1"></i><strong>Pre-Employment belum lengkap.</strong>
+              Item wajib belum selesai: {{ $peMissing->implode(', ') }}.
+              Lengkapi di panel <strong>Pre-Employment</strong> di bawah.
+            </div>
+          @endif
           <form method="POST" action="{{ route('recruitment.candidates.convert', $candidate) }}">
             @csrf
             <div class="form-row">
@@ -137,7 +145,8 @@
                 </select>
               </div>
               <div class="form-group col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-sm btn-success btn-block" onclick="return confirm('Konversi kandidat ini jadi karyawan?')">
+                <button type="submit" class="btn btn-sm btn-success btn-block" @disabled($peMissing->isNotEmpty())
+                        onclick="return confirm('Konversi kandidat ini jadi karyawan?')">
                   <i class="gd-check mr-1"></i> Konversi jadi Karyawan
                 </button>
               </div>
@@ -154,6 +163,172 @@
     </div>
 
     @php $lockProfile = $candidate->isConverted(); @endphp
+
+    {{-- Pre-Employment --}}
+    @php $pe = $candidate->preEmployment; $peProg = $candidate->preEmploymentProgress(); @endphp
+    <div class="card mb-4 border-primary">
+      <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
+        <span>Pre-Employment Checklist</span>
+        <span class="small">{{ $peProg['done'] }}/{{ $peProg['total'] }} selesai</span>
+      </div>
+      <div class="card-body">
+        <div class="progress mb-3" style="height:8px">
+          <div class="progress-bar {{ $peProg['pct'] == 100 ? 'bg-success' : 'bg-warning' }}" style="width:{{ $peProg['pct'] }}%"></div>
+        </div>
+
+        <ul class="list-unstyled mb-0">
+          @foreach($candidate->preEmploymentTasks->sortBy('item.sort_order') as $task)
+            <li class="d-flex align-items-center border-bottom py-2">
+              <form method="POST" action="{{ route('recruitment.candidates.preemployment.toggle', [$candidate, $task]) }}" class="mr-2">
+                @csrf
+                <button type="submit" class="btn btn-xs {{ $task->is_done ? 'btn-success' : 'btn-outline-secondary' }}" @disabled($lockProfile)>
+                  <i class="gd-check"></i>
+                </button>
+              </form>
+              <div class="flex-grow-1">
+                <span class="{{ $task->is_done ? 'text-muted' : 'font-weight-bold' }} small">{{ $task->item?->label }}</span>
+                @if($task->item?->is_required)<span class="badge badge-light border ml-1">wajib</span>@endif
+                <span class="badge badge-light text-muted ml-1">{{ \App\Models\PreEmploymentChecklistItem::$categoryLabels[$task->item?->category] ?? $task->item?->category }}</span>
+                @if($task->is_done && $task->done_at)<div class="small text-muted">Selesai {{ $task->done_at->format('d/m/Y') }} · {{ $task->doneBy?->name }}</div>@endif
+              </div>
+            </li>
+          @endforeach
+        </ul>
+
+        {{-- Data terstruktur --}}
+        <hr>
+        <form method="POST" action="{{ route('recruitment.candidates.preemployment.update', $candidate) }}">
+          @csrf @method('PUT')
+          <div class="font-weight-bold small text-muted mb-2">DATA PRIBADI</div>
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small">Jenis Kelamin</label>
+              <select name="gender" class="form-control form-control-sm" @disabled($lockProfile)>
+                <option value="">—</option>
+                <option value="L" @selected($pe?->gender === 'L')>Laki-laki</option>
+                <option value="P" @selected($pe?->gender === 'P')>Perempuan</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Tempat Lahir</label>
+              <input name="birth_place" class="form-control form-control-sm" value="{{ $pe?->birth_place }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Tanggal Lahir</label>
+              <input type="date" name="birth_date" class="form-control form-control-sm" value="{{ optional($pe?->birth_date)->format('Y-m-d') }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Status Kawin</label>
+              <select name="marital_status_id" class="form-control form-control-sm" @disabled($lockProfile)>
+                <option value="">—</option>
+                @foreach($maritalStatuses as $ms)<option value="{{ $ms->id }}" @selected($pe?->marital_status_id == $ms->id)>{{ $ms->name }}</option>@endforeach
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Agama</label>
+              <select name="religion_id" class="form-control form-control-sm" @disabled($lockProfile)>
+                <option value="">—</option>
+                @foreach($religions as $rl)<option value="{{ $rl->id }}" @selected($pe?->religion_id == $rl->id)>{{ $rl->name }}</option>@endforeach
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Golongan Darah</label>
+              <select name="blood_type_id" class="form-control form-control-sm" @disabled($lockProfile)>
+                <option value="">—</option>
+                @foreach($bloodTypes as $bt)<option value="{{ $bt->id }}" @selected($pe?->blood_type_id == $bt->id)>{{ $bt->name }}</option>@endforeach
+              </select>
+            </div>
+          </div>
+
+          <div class="font-weight-bold small text-muted mb-2 mt-2">IDENTITAS</div>
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small">No. KTP</label>
+              <input name="ktp_number" class="form-control form-control-sm" value="{{ $pe?->ktp_number }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">No. NPWP</label>
+              <input name="npwp_number" class="form-control form-control-sm" value="{{ $pe?->npwp_number }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-6">
+              <label class="small">Alamat KTP</label>
+              <input name="ktp_address" class="form-control form-control-sm" value="{{ $pe?->ktp_address }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Kota KTP</label>
+              <input name="ktp_city" class="form-control form-control-sm" value="{{ $pe?->ktp_city }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-6">
+              <label class="small">Alamat Domisili</label>
+              <input name="domicile_address" class="form-control form-control-sm" value="{{ $pe?->domicile_address }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Kota Domisili</label>
+              <input name="domicile_city" class="form-control form-control-sm" value="{{ $pe?->domicile_city }}" @disabled($lockProfile)>
+            </div>
+          </div>
+
+          <div class="font-weight-bold small text-muted mb-2 mt-2">REKENING BANK</div>
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label class="small">Bank</label>
+              <select name="bank_id" class="form-control form-control-sm" @disabled($lockProfile)>
+                <option value="">—</option>
+                @foreach($banks as $bk)<option value="{{ $bk->id }}" @selected($pe?->bank_id == $bk->id)>{{ $bk->name }}</option>@endforeach
+              </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="small">No. Rekening</label>
+              <input name="bank_account_number" class="form-control form-control-sm" value="{{ $pe?->bank_account_number }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="small">Atas Nama</label>
+              <input name="bank_account_holder" class="form-control form-control-sm" value="{{ $pe?->bank_account_holder }}" @disabled($lockProfile)>
+            </div>
+          </div>
+
+          <div class="font-weight-bold small text-muted mb-2 mt-2">BPJS</div>
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small">BPJS Kesehatan — No.</label>
+              <input name="bpjs_health_number" class="form-control form-control-sm" value="{{ $pe?->bpjs_health_number }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Tgl Daftar Kesehatan</label>
+              <input type="date" name="bpjs_health_date" class="form-control form-control-sm" value="{{ optional($pe?->bpjs_health_date)->format('Y-m-d') }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">BPJS TK — No.</label>
+              <input name="bpjs_employment_number" class="form-control form-control-sm" value="{{ $pe?->bpjs_employment_number }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small">Tgl Daftar TK</label>
+              <input type="date" name="bpjs_employment_date" class="form-control form-control-sm" value="{{ optional($pe?->bpjs_employment_date)->format('Y-m-d') }}" @disabled($lockProfile)>
+            </div>
+          </div>
+
+          <div class="font-weight-bold small text-muted mb-2 mt-2">KONTAK DARURAT</div>
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label class="small">Nama</label>
+              <input name="emergency_contact_name" class="form-control form-control-sm" value="{{ $pe?->emergency_contact_name }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="small">Hubungan</label>
+              <input name="emergency_contact_relation" class="form-control form-control-sm" value="{{ $pe?->emergency_contact_relation }}" @disabled($lockProfile)>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="small">Telepon</label>
+              <input name="emergency_contact_phone" class="form-control form-control-sm" value="{{ $pe?->emergency_contact_phone }}" @disabled($lockProfile)>
+            </div>
+          </div>
+
+          @unless($lockProfile)
+          <button class="btn btn-sm btn-primary mt-2">Simpan Data Pre-Employment</button>
+          @endunless
+        </form>
+      </div>
+    </div>
 
     {{-- Pendidikan --}}
     <div class="card mb-4">
