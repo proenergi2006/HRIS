@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 84 tabel baru + 15 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 84 tabel baru + 17 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -28,6 +28,8 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | _(candidates)_ | Pre-Employment: relasi 1:1 `candidate_preemployment` + `candidate_preemployment_tasks` (tabel baru, bukan kolom) |
 | `onboarding_checklist_items` | + `description`, `material_path`, `material_original_name`, `material_url`, `requires_acknowledgement` |
 | `employee_onboarding_tasks` | + `acknowledged_at`, `acknowledgement_note` |
+| `employee_documents` | + `group` (folder Personal/Employment/Movement/Development/Exit) |
+| `termination_requests` | + `exit_interview_date/notes/by_user_id`, `final_settlement_amount/date/notes` |
 
 
 ## Master Data referensi
@@ -1142,6 +1144,24 @@ Saat kandidat dikonversi jadi karyawan, `educations`/`experiences`/`skills` disa
 
 Konversi kandidat → karyawan diblok sampai semua item `is_required` selesai. Data
 pindah ke `employees` + `employee_bank_accounts` + `employee_nssf` (di kode).
+
+
+## Employee Document Management + Exit Process — `employee-document-management-manual.sql`
+
+`employee_documents` (tabel lama): ➕ `group` varchar(20) default 'lainnya' — folder Personal/
+Employment/Movement/Development/Exit/Lainnya (backfill dari doc_type lama). Katalog `doc_type`
+diperluas di kode (`EmployeeDocument::$docTypes`/`$docGroups`) — bukan tabel referensi, tidak
+perlu migrasi tambahan: KK, Bank Rekening, Job Description, Amandemen Kontrak, Surat Promosi,
+Surat Mutasi, Surat Peringatan, Sertifikat Training, Sertifikat Kompetensi, Hasil Assessment,
+Surat Pengunduran Diri, Berita Acara Clearance, Final Settlement.
+
+`termination_requests` (tabel lama): ➕ `exit_interview_date`, `exit_interview_notes`,
+`exit_interview_by_user_id` (FK users), `final_settlement_amount`, `final_settlement_date`,
+`final_settlement_notes`.
+
+Folder Movement di halaman Dokumen Karyawan juga menautkan (bukan menduplikasi) surat
+Promosi/Mutasi/Peringatan yang sudah digenerate lewat Manajemen Surat (`employee_letters`).
+Document expiry alert (`documents:remind`) sudah ada sejak sebelumnya — tidak berubah.
 
 
 ## Job Requisition — tipe + Budget Control — `job-requisition-budget-control-manual.sql`

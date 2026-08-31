@@ -9,6 +9,7 @@ use App\Models\EmployeeFacility;
 use App\Models\EmployeeOffboardingTask;
 use App\Models\HR\EmployeeLoan;
 use App\Models\OffboardingChecklistItem;
+use App\Models\TerminationRequest;
 use Illuminate\Http\Request;
 
 /**
@@ -68,8 +69,34 @@ class OffboardingController extends Controller
     {
         $tasks           = $employee->offboardingTasks()->with('item')->get()->sortBy('item.sort_order');
         $outstandingLoans = EmployeeLoan::where('employee_id', $employee->id)->where('status', 'active')->get();
+        $termination     = TerminationRequest::where('employee_id', $employee->id)->latest('id')->first();
 
-        return view('hr.offboarding.show', compact('employee', 'tasks', 'outstandingLoans'));
+        return view('hr.offboarding.show', compact('employee', 'tasks', 'outstandingLoans', 'termination'));
+    }
+
+    /** Exit Interview & Final Settlement — dicatat di TerminationRequest terkait. */
+    public function updateExit(Request $request, Employee $employee)
+    {
+        $termination = TerminationRequest::where('employee_id', $employee->id)->latest('id')->firstOrFail();
+
+        $data = $request->validate([
+            'exit_interview_date'    => 'nullable|date',
+            'exit_interview_notes'   => 'nullable|string|max:2000',
+            'final_settlement_amount'=> 'nullable|string',
+            'final_settlement_date'  => 'nullable|date',
+            'final_settlement_notes' => 'nullable|string|max:2000',
+        ]);
+
+        if (! empty($data['final_settlement_amount'])) {
+            $data['final_settlement_amount'] = (int) preg_replace('/\D/', '', $data['final_settlement_amount']);
+        }
+        if (! empty($data['exit_interview_date']) && empty($data['exit_interview_by_user_id'] ?? null)) {
+            $data['exit_interview_by_user_id'] = auth()->id();
+        }
+
+        $termination->update($data);
+
+        return back()->with('status', 'Data Exit Interview / Final Settlement disimpan.');
     }
 
     public function toggleTask(Request $request, Employee $employee, EmployeeOffboardingTask $task)

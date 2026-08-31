@@ -25,8 +25,13 @@
         <label class="font-weight-bold">Jenis Dokumen <span class="text-danger">*</span></label>
         <select name="doc_type" class="form-control @error('doc_type') is-invalid @enderror" required>
           <option value="">-- Pilih jenis --</option>
-          @foreach($docTypes as $key => $label)
-            <option value="{{ $key }}" {{ old('doc_type') == $key ? 'selected' : '' }}>{{ $label }}</option>
+          @foreach(\App\Models\EmployeeDocument::$groupLabels as $groupKey => $groupLabel)
+            <optgroup label="{{ $groupLabel }}">
+              @foreach($docTypes as $key => $label)
+                @continue((\App\Models\EmployeeDocument::$docGroups[$key] ?? 'lainnya') !== $groupKey)
+                <option value="{{ $key }}" {{ old('doc_type') == $key ? 'selected' : '' }}>{{ $label }}</option>
+              @endforeach
+            </optgroup>
           @endforeach
         </select>
         @error('doc_type')<div class="invalid-feedback">{{ $message }}</div>@enderror

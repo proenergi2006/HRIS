@@ -13,7 +13,14 @@ class EmployeeDocumentController extends Controller
     public function index(Employee $employee)
     {
         $documents = $employee->documents()->orderBy('doc_type')->orderBy('created_at', 'desc')->get();
-        return view('appraisal.employee.documents.index', compact('employee', 'documents'));
+
+        // Movement — tautkan (bukan duplikasi) surat Promosi/Mutasi/Peringatan yang sudah
+        // digenerate lewat Manajemen Surat, supaya folder ini utuh tanpa unggah ulang.
+        $movementLetters = \App\Models\EmployeeLetter::where('employee_id', $employee->id)
+            ->whereIn('category', ['mutasi', 'peringatan'])
+            ->latest('issued_date')->get();
+
+        return view('appraisal.employee.documents.index', compact('employee', 'documents', 'movementLetters'));
     }
 
     public function create(Employee $employee)
@@ -38,6 +45,7 @@ class EmployeeDocumentController extends Controller
 
         $employee->documents()->create([
             'doc_type'      => $data['doc_type'],
+            'group'         => EmployeeDocument::$docGroups[$data['doc_type']] ?? 'lainnya',
             'title'         => $data['title'],
             'file_path'     => $path,
             'original_name' => $originalName,

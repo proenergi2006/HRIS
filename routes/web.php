@@ -451,6 +451,7 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::post('/{employee}/start',          [OffboardingController::class, 'start'])->name('start');
         Route::get('/{employee}',                 [OffboardingController::class, 'show'])->name('show');
         Route::post('/{employee}/tasks/{task}/toggle', [OffboardingController::class, 'toggleTask'])->name('tasks.toggle');
+        Route::put('/{employee}/exit',            [OffboardingController::class, 'updateExit'])->name('exit.update');
     });
 
     // Kebijakan cuti (carry-forward / kuota per golongan)

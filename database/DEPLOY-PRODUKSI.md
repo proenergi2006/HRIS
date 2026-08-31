@@ -111,6 +111,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 24 | `job-requisition-budget-control-manual.sql` | setelah #12 & #11. `job_requisitions` + `request_type`/`manpower_plan_id`/`replaces_employee_id` (Budget Control di kode) |
 | 25 | `candidate-database-ats-manual.sql` | setelah #12. `candidates` + `expected_salary`/`assessment_*` + `candidate_educations`/`_experiences`/`_skills`/`_certifications` |
 | 26 | `preemployment-manual.sql` | setelah #25 & #1. `candidate_preemployment`, `preemployment_checklist_items` (+13 item default), `candidate_preemployment_tasks` |
+| 27 | `employee-document-management-manual.sql` | setelah `employee_documents` (baseline) & `termination_requests` (#5). Folder Employee Digital File (`employee_documents.group`) + Exit Interview/Final Settlement (`termination_requests`) |
 
 ---
 
@@ -203,3 +204,4 @@ Menjalankan (lihat `routes/console.php`):
 | `job-requisition-budget-control-manual.sql` | `2026_08_31_100000` |
 | `candidate-database-ats-manual.sql` | `2026_08_31_110000` |
 | `preemployment-manual.sql` | `2026_08_31_120000` |
+| `employee-document-management-manual.sql` | `2026_08_31_140000`, `2026_08_31_150000` |

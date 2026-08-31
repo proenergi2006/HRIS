@@ -16,6 +16,60 @@
   </div>
 @endif
 
+@if($termination)
+<div class="card mb-3 border-primary">
+  <div class="card-header font-weight-bold">Exit Interview &amp; Final Settlement</div>
+  <div class="card-body">
+    <div class="small text-muted mb-3">
+      Proses keluar: <strong>{{ \App\Models\TerminationRequest::$typeLabels[$termination->termination_type] ?? $termination->termination_type }}</strong>
+      @if($termination->effective_date) · efektif {{ $termination->effective_date->format('d/m/Y') }}@endif
+      @if($termination->reason) — "{{ $termination->reason }}"@endif
+    </div>
+    <form method="POST" action="{{ route('hr.offboarding.exit.update', $employee) }}">
+      @csrf @method('PUT')
+      <div class="row">
+        <div class="col-md-6">
+          <div class="font-weight-bold small text-muted mb-2">EXIT INTERVIEW</div>
+          <div class="form-group">
+            <label class="small">Tanggal</label>
+            <input type="date" name="exit_interview_date" class="form-control form-control-sm"
+                   value="{{ optional($termination->exit_interview_date)->format('Y-m-d') }}">
+          </div>
+          <div class="form-group">
+            <label class="small">Catatan / Ringkasan Wawancara</label>
+            <textarea name="exit_interview_notes" rows="4" class="form-control form-control-sm">{{ $termination->exit_interview_notes }}</textarea>
+          </div>
+          @if($termination->hasExitInterview())
+            <div class="small text-success"><i class="gd-check"></i> Tercatat oleh {{ $termination->exitInterviewBy?->name ?? '—' }}</div>
+          @endif
+        </div>
+        <div class="col-md-6">
+          <div class="font-weight-bold small text-muted mb-2">FINAL SETTLEMENT</div>
+          <div class="form-group">
+            <label class="small">Tanggal Pembayaran</label>
+            <input type="date" name="final_settlement_date" class="form-control form-control-sm"
+                   value="{{ optional($termination->final_settlement_date)->format('Y-m-d') }}">
+          </div>
+          <div class="form-group">
+            <label class="small">Nominal (Rp)</label>
+            <input type="text" data-rupiah name="final_settlement_amount" class="form-control form-control-sm"
+                   value="{{ $termination->final_settlement_amount }}" placeholder="mis. sisa gaji, pesangon, uang cuti">
+          </div>
+          <div class="form-group">
+            <label class="small">Rincian / Catatan</label>
+            <textarea name="final_settlement_notes" rows="2" class="form-control form-control-sm">{{ $termination->final_settlement_notes }}</textarea>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary">Simpan</button>
+      <a href="{{ route('appraisal.employees.documents.index', $employee) }}" class="btn btn-sm btn-outline-secondary">
+        + Unggah Resignation Letter / Berita Acara Clearance
+      </a>
+    </form>
+  </div>
+</div>
+@endif
+
 @foreach(\App\Models\OffboardingChecklistItem::$categoryLabels as $catKey => $catLabel)
   @php $catTasks = $tasks->filter(fn($t) => $t->item->category === $catKey); @endphp
   @continue($catTasks->isEmpty())

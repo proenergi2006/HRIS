@@ -26,12 +26,25 @@ class TerminationRequest extends Model implements Approvable
     protected $fillable = [
         'employee_id', 'company_id', 'requested_by_user_id', 'termination_type',
         'reason', 'last_working_date', 'effective_date', 'status', 'notes',
+        'exit_interview_date', 'exit_interview_notes', 'exit_interview_by_user_id',
+        'final_settlement_amount', 'final_settlement_date', 'final_settlement_notes',
     ];
 
     protected $casts = [
-        'last_working_date' => 'date',
-        'effective_date'    => 'date',
+        'last_working_date'       => 'date',
+        'effective_date'          => 'date',
+        'exit_interview_date'     => 'date',
+        'final_settlement_date'   => 'date',
+        'final_settlement_amount' => 'integer',
     ];
+
+    public function exitInterviewBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'exit_interview_by_user_id');
+    }
+
+    public function hasExitInterview(): bool { return (bool) $this->exit_interview_date; }
+    public function hasFinalSettlement(): bool { return (bool) $this->final_settlement_date; }
 
     public static array $typeLabels = [
         'resign'     => 'Mengundurkan Diri',
