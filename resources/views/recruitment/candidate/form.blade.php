@@ -41,10 +41,16 @@
             @endforeach
           </select>
         </div>
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-3">
           <label>Sumber</label>
-          <input type="text" name="source" class="form-control" placeholder="mis. Referral, Job Portal, Walk-in"
+          <input type="text" name="source" class="form-control" placeholder="mis. Referral, Job Portal"
                  value="{{ old('source', $candidate->source) }}">
+        </div>
+        <div class="form-group col-md-3">
+          <label>Ekspektasi Gaji</label>
+          <input type="text" data-rupiah name="expected_salary" class="form-control @error('expected_salary') is-invalid @enderror"
+                 value="{{ old('expected_salary', $candidate->expected_salary) }}" placeholder="Rp">
+          @error('expected_salary')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
       </div>
 

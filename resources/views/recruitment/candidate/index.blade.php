@@ -45,13 +45,20 @@
     @else
       <div class="table-responsive">
         <table class="table table-sm mb-0">
-          <thead class="thead-light"><tr><th>Nama</th><th>Requisition</th><th>Sumber</th><th>Status</th><th></th></tr></thead>
+          <thead class="thead-light"><tr><th>Nama</th><th>Requisition</th><th>Sumber</th><th class="text-right">Ekspektasi</th><th class="text-center">Assessment</th><th>Status</th><th></th></tr></thead>
           <tbody>
           @foreach($candidates as $c)
             <tr>
               <td>{{ $c->name }}<div class="small text-muted">{{ $c->email }} {{ $c->phone ? '· '.$c->phone : '' }}</div></td>
               <td>{{ $c->jobRequisition?->title ?? '—' }}</td>
               <td>{{ $c->source ?? '—' }}</td>
+              <td class="text-right">{{ $c->expected_salary ? number_format($c->expected_salary, 0, ',', '.') : '—' }}</td>
+              <td class="text-center">
+                @if($c->assessment_result)
+                  <span class="badge badge-{{ $c->assessment_result === 'pass' ? 'success' : ($c->assessment_result === 'fail' ? 'danger' : 'warning') }}">
+                    {{ \App\Models\Candidate::$assessmentLabels[$c->assessment_result] ?? $c->assessment_result }}</span>
+                @else <span class="text-muted">—</span> @endif
+              </td>
               <td><span class="badge badge-{{ \App\Models\Candidate::$statusBadges[$c->status] ?? 'secondary' }}">{{ \App\Models\Candidate::$statusLabels[$c->status] ?? $c->status }}</span></td>
               <td><a href="{{ route('recruitment.candidates.show', $c) }}" class="btn btn-xs btn-outline-secondary">Detail</a></td>
             </tr>

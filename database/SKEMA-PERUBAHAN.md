@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 77 tabel baru + 12 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 81 tabel baru + 13 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -24,6 +24,7 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | `perdin_requests` | `status` enum → varchar(30) |
 | `reimbursement_requests` | (nilai `status` saja) |
 | `job_requisitions` | + `request_type`, `manpower_plan_id` (FK), `replaces_employee_id` (FK) |
+| `candidates` | + `expected_salary`, `assessment_result`, `assessment_score`, `assessment_notes` |
 
 
 ## Master Data referensi
@@ -1111,6 +1112,23 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 - `rejection_note` — varchar(255) DEFAULT NULL
 - `created_at` — timestamp NULL DEFAULT NULL
 - `updated_at` — timestamp NULL DEFAULT NULL
+
+
+## Candidate Database (ATS) — `candidate-database-ats-manual.sql`
+
+`candidates` (tabel lama):
+- ➕ `expected_salary` bigint(20) NULL
+- ➕ `assessment_result` varchar(20) NULL  (pass / hold / fail)
+- ➕ `assessment_score` decimal(5,2) NULL
+- ➕ `assessment_notes` text NULL
+
+🆕 `candidate_educations` — candidate_id, education_level varchar(50), major varchar(150), institution varchar(200), graduation_year year, gpa decimal(4,2), notes varchar(255)
+🆕 `candidate_experiences` — candidate_id, company_name varchar(200), job_title varchar(150), company_city varchar(100), start_date, end_date, last_salary bigint, job_description text, notes varchar(255)
+🆕 `candidate_skills` — candidate_id, name varchar(150), proficiency enum(basic/intermediate/advanced/expert), notes varchar(255)
+🆕 `candidate_certifications` — candidate_id, name varchar(200), issuer varchar(150), issued_date, expires_date, credential_id varchar(100), notes varchar(255)
+
+Saat kandidat dikonversi jadi karyawan, `educations`/`experiences`/`skills` disalin ke
+`employee_educations` / `employee_work_experiences` / `employee_skills` (di kode).
 
 
 ## Job Requisition — tipe + Budget Control — `job-requisition-budget-control-manual.sql`
