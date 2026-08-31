@@ -18,7 +18,7 @@ class ReimbursementSubmittedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[HRMS] Pengajuan Reimbursement Baru — ' . $this->reimbursement->request_number,
+            subject: '[ProPeople] Pengajuan Reimbursement Baru — ' . $this->reimbursement->request_number,
         );
     }
 

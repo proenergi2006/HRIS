@@ -24,6 +24,35 @@ return [
     'appraisals'             => 'Data Penilaian',
     'reports'                => 'Laporan',
 
+    // Struktur Organisasi
+    'organization'           => 'Struktur Organisasi',
+    'divisions'              => 'Divisi',
+    'departments'            => 'Departemen',
+    'sections'               => 'Section',
+    'positions'              => 'Jabatan',
+    'org_chart'              => 'Bagan Organisasi',
+    'org_history'            => 'Riwayat Perubahan',
+
+    // Approval Engine
+    'approval'               => 'Persetujuan',
+    'approval_inbox'         => 'Kotak Persetujuan',
+    'approval_setting'       => 'Pengaturan Alur',
+    'reward'                 => 'Reward',
+    'punishment'             => 'Punishment',
+    'promotion_rotation'     => 'Promosi & Rotasi',
+    'termination'            => 'Pemutusan Kerja',
+
+    // Master Data
+    'm_religion'             => 'Agama',
+    'm_edu_level'            => 'Jenjang Pendidikan',
+    'm_edu_major'            => 'Jurusan Pendidikan',
+    'm_marital'              => 'Status Pernikahan',
+    'm_blood'                => 'Golongan Darah',
+    'm_emp_type'             => 'Tipe Karyawan',
+    'm_bank'                 => 'Bank',
+    'm_company_bank'         => 'Rekening Perusahaan',
+    'm_region'               => 'Wilayah',
+
     // Reimbursement
     'reimbursement'          => 'Reimbursement',
     'medical_reimbursement'  => 'Medical',

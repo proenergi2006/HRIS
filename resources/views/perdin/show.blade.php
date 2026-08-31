@@ -7,6 +7,7 @@
   $cats    = \App\Models\Perdin\PerdinRequest::$categoryLabels;
   $roleLbl = \App\Models\Perdin\PerdinApproval::$roleLabels;
   $isOwner = $perdin->user_id === auth()->id();
+  $ar      = $perdin->approvalRequest;
 @endphp
 
 @section('content')
@@ -61,7 +62,7 @@
       </div>
       <div class="col-sm-2">
         <div class="text-muted small">Status</div>
-        <span class="badge badge-{{ $badges[$perdin->status] }}">{{ $labels[$perdin->status] }}</span>
+        <span class="badge badge-{{ $badges[$perdin->status] ?? 'secondary' }}">{{ $labels[$perdin->status] ?? ucfirst($perdin->status) }}</span>
       </div>
       <div class="col-sm-2 text-right">
         <div class="text-muted small">Total Anggaran</div>
@@ -88,39 +89,16 @@
   </div>
 </div>
 
-{{-- Approval action (for current approver) --}}
-@if($canApprove)
-<div class="card mb-3 border-primary">
-  <div class="card-header bg-primary text-white font-weight-bold">
-    Tindakan Persetujuan — {{ $roleLbl[$perdin->nextApprovalRole()] ?? '' }}
-  </div>
-  <div class="card-body">
-    <div class="form-row">
-      <div class="col-md-8 mb-2">
-        <form method="POST" action="{{ route('perdin.approve', $perdin) }}" id="form-approve">
-          @csrf
-          <input type="hidden" name="notes" id="approve-notes-hidden">
-        </form>
-        <form method="POST" action="{{ route('perdin.reject', $perdin) }}" id="form-reject">
-          @csrf
-          <label class="font-weight-bold small">Catatan</label>
-          <textarea name="notes" id="reject-notes" class="form-control" rows="2"
-                    placeholder="Catatan (wajib jika menolak)"></textarea>
-        </form>
-      </div>
-      <div class="col-md-4 d-flex align-items-end mb-2">
-        <button type="button" class="btn btn-success mr-2" onclick="
-          document.getElementById('approve-notes-hidden').value = document.getElementById('reject-notes').value;
-          document.getElementById('form-approve').submit();">
-          <i class="gd-check mr-1"></i> Setujui
-        </button>
-        <button type="submit" form="form-reject" class="btn btn-outline-danger"
-          onclick="if(!document.getElementById('reject-notes').value.trim()){alert('Catatan wajib diisi untuk menolak.');return false;}">
-          <i class="gd-ban mr-1"></i> Tolak
-        </button>
-      </div>
-    </div>
-  </div>
+{{-- Persetujuan lewat Kotak Persetujuan terpadu --}}
+@if($perdin->isPending())
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+  <span><i class="gd-info mr-1"></i> Menunggu persetujuan. Approver menindak lewat <a href="{{ route('approval.inbox.index') }}">Kotak Persetujuan</a>.</span>
+  @if($isOwner || auth()->user()->hasRole('admin'))
+    <form method="POST" action="{{ route('perdin.cancel', $perdin) }}" onsubmit="return confirm('Batalkan permohonan ini?')">
+      @csrf
+      <button class="btn btn-sm btn-outline-danger">Batalkan</button>
+    </form>
+  @endif
 </div>
 @endif
 
@@ -198,26 +176,43 @@
 </div>
 @endif
 
-{{-- Approval timeline --}}
+{{-- Alur Persetujuan (Approval Engine) --}}
 <div class="card">
-  <div class="card-header font-weight-bold">Riwayat Persetujuan</div>
+  <div class="card-header font-weight-bold">Alur Persetujuan</div>
   <div class="card-body">
-    @forelse($perdin->approvals as $ap)
-      <div class="d-flex mb-2">
-        <div class="mr-2">
-          <span class="badge badge-{{ $ap->action === 'approve' ? 'success' : 'danger' }}">
-            {{ $ap->action === 'approve' ? 'Disetujui' : 'Ditolak' }}
-          </span>
+    @if($ar)
+      <ol class="list-unstyled mb-0">
+        @foreach($ar->steps as $s)
+          <li class="d-flex mb-3">
+            <span class="mr-3" style="width:24px">
+              @if($s->status === 'approved')<i class="gd-check text-success" style="font-size:1.1rem"></i>
+              @elseif($s->status === 'rejected')<i class="gd-close text-danger" style="font-size:1.1rem"></i>
+              @elseif($s->status === 'skipped')<i class="gd-minus text-muted" style="font-size:1.1rem"></i>
+              @else<i class="gd-time text-warning" style="font-size:1.1rem"></i>@endif
+            </span>
+            <div>
+              <div class="font-weight-bold small">Step {{ $s->step_order }} — {{ $s->approver_label }}</div>
+              <small class="text-muted">
+                {{ $s->approver?->name ?? ($s->approver_type === 'specific_role' ? 'berbasis role' : '—') }}
+                @if($s->acted_at) · {{ ucfirst($s->status) }} oleh {{ $s->actedBy?->name }} {{ $s->acted_at->format('d/m/Y H:i') }}@endif
+              </small>
+              @if($s->notes)<br><small class="font-italic">"{{ $s->notes }}"</small>@endif
+            </div>
+          </li>
+        @endforeach
+      </ol>
+    @elseif($perdin->approvals->isNotEmpty())
+      {{-- pengajuan lama sebelum migrasi ke engine --}}
+      @foreach($perdin->approvals as $ap)
+        <div class="d-flex mb-2">
+          <span class="badge badge-{{ $ap->action === 'approve' ? 'success' : 'danger' }} mr-2">{{ $ap->action === 'approve' ? 'Disetujui' : 'Ditolak' }}</span>
+          <div><strong>{{ $roleLbl[$ap->role] ?? $ap->role }}</strong> — {{ $ap->approver?->name ?? '-' }}
+            <span class="text-muted small">{{ $ap->acted_at?->format('d M Y, H:i') }}</span></div>
         </div>
-        <div>
-          <strong>{{ $roleLbl[$ap->role] ?? $ap->role }}</strong> — {{ $ap->approver?->name ?? '-' }}
-          <span class="text-muted small">{{ $ap->acted_at?->format('d M Y, H:i') }}</span>
-          @if($ap->notes)<div class="small text-muted">“{{ $ap->notes }}”</div>@endif
-        </div>
-      </div>
-    @empty
-      <div class="text-muted text-center py-2">Belum ada tindakan persetujuan.</div>
-    @endforelse
+      @endforeach
+    @else
+      <div class="text-muted text-center py-2">Belum diajukan.</div>
+    @endif
   </div>
 </div>
 @endsection

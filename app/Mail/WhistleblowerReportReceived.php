@@ -18,7 +18,7 @@ class WhistleblowerReportReceived extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[HRMS] Laporan Pengaduan Baru — ' . $this->report->ticket_number,
+            subject: '[ProPeople] Laporan Pengaduan Baru — ' . $this->report->ticket_number,
         );
     }
 

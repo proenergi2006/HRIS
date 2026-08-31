@@ -51,61 +51,55 @@
         </div>
     </div>
 
-    {{-- Aspek & Bobot --}}
+    {{-- KPI Starter --}}
     <div class="card mb-3">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Aspek Penilaian & Bobot</h5>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="add-aspect-btn">
-                    + Tambah Aspek
+                <h5 class="mb-0">KPI / Objective Starter</h5>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="add-objective-btn">
+                    + Tambah KPI
                 </button>
             </div>
+            <p class="text-muted small mb-2">
+                Daftar KPI ini otomatis disalin ke tiap penilaian baru yang dibuat dari template ini (bobot%
+                cuma starter — tetap bisa diedit per penilaian). Boleh dikosongkan kalau template ini cuma
+                dipakai sebagai starting point kosong.
+            </p>
 
             <div class="table-responsive">
-                <table class="table table-bordered mb-0" id="aspects-table">
+                <table class="table table-bordered mb-0" id="objectives-table">
                     <thead class="thead-light">
                         <tr>
                             <th style="width:40px">#</th>
-                            <th>Nama Aspek</th>
-                            <th class="text-center" style="width:90px">BS</th>
-                            <th class="text-center" style="width:90px">B</th>
-                            <th class="text-center" style="width:90px">C</th>
-                            <th class="text-center" style="width:90px">K</th>
+                            <th>KPI / Objective</th>
+                            <th style="width:150px">Kategori</th>
+                            <th style="width:90px">Bobot %</th>
                             <th style="width:50px"></th>
                         </tr>
                     </thead>
-                    <tbody id="aspects-body">
-                    @php $aspects = old('aspects', $template->aspects->toArray()); @endphp
-                    @foreach($aspects as $i => $aspect)
-                        @php
-                            $weights = [];
-                            if (isset($aspect['weights']) && is_array($aspect['weights'])) {
-                                // Dari old() sudah berupa array rating=>score
-                                $weights = $aspect['weights'];
-                            } elseif (isset($aspect['weights'])) {
-                                // Dari model: collection
-                                foreach (($aspect['weights'] ?? []) as $w) {
-                                    $weights[$w['rating']] = $w['score'];
-                                }
-                            }
-                        @endphp
-                        <tr class="aspect-row">
+                    <tbody id="objectives-body">
+                    @php $objectives = old('objectives', $template->objectives->toArray()); @endphp
+                    @foreach($objectives as $i => $obj)
+                        <tr class="objective-row">
                             <td class="align-middle text-center text-muted row-num">{{ $i + 1 }}</td>
-                            <input type="hidden" name="aspects[{{ $i }}][id]" value="{{ $aspect['id'] ?? '' }}">
+                            <input type="hidden" name="objectives[{{ $i }}][id]" value="{{ $obj['id'] ?? '' }}">
                             <td>
-                                <input type="text" name="aspects[{{ $i }}][name]"
+                                <input type="text" name="objectives[{{ $i }}][title]"
                                        class="form-control form-control-sm"
-                                       value="{{ $aspect['name'] ?? '' }}" placeholder="Nama aspek" required>
+                                       value="{{ $obj['title'] ?? '' }}" placeholder="Nama KPI" required>
                             </td>
-                            @foreach(['BS','B','C','K'] as $r)
                             <td>
-                                <input type="number" name="aspects[{{ $i }}][weights][{{ $r }}]"
-                                       class="form-control form-control-sm text-center"
-                                       value="{{ $weights[$r] ?? 0 }}" min="0">
+                                <input type="text" name="objectives[{{ $i }}][category]"
+                                       class="form-control form-control-sm"
+                                       value="{{ $obj['category'] ?? '' }}" placeholder="mis. Financial">
                             </td>
-                            @endforeach
+                            <td>
+                                <input type="number" name="objectives[{{ $i }}][weight_pct]"
+                                       class="form-control form-control-sm text-center"
+                                       value="{{ $obj['weight_pct'] ?? 0 }}" min="0" max="100">
+                            </td>
                             <td class="align-middle text-center">
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-aspect-btn" title="Hapus">
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-objective-btn" title="Hapus">
                                     <i class="gd-trash"></i>
                                 </button>
                             </td>
@@ -177,41 +171,36 @@
 @section('scripts')
 <script>
 (function ($) {
-    // ── Aspect rows ──────────────────────────────────────────────
-    function aspectIndex() {
-        return $('#aspects-body .aspect-row').length;
+    // ── Objective rows ──────────────────────────────────────────────
+    function objectiveIndex() {
+        return $('#objectives-body .objective-row').length;
     }
 
-    function reindexAspects() {
-        $('#aspects-body .aspect-row').each(function (i) {
+    function reindexObjectives() {
+        $('#objectives-body .objective-row').each(function (i) {
             $(this).find('.row-num').text(i + 1);
             $(this).find('input').each(function () {
-                this.name = this.name.replace(/aspects\[\d+\]/, 'aspects[' + i + ']');
+                this.name = this.name.replace(/objectives\[\d+\]/, 'objectives[' + i + ']');
             });
         });
     }
 
-    $('#add-aspect-btn').on('click', function () {
-        var i = aspectIndex();
-        var row = '<tr class="aspect-row">' +
+    $('#add-objective-btn').on('click', function () {
+        var i = objectiveIndex();
+        var row = '<tr class="objective-row">' +
             '<td class="align-middle text-center text-muted row-num">' + (i + 1) + '</td>' +
-            '<input type="hidden" name="aspects[' + i + '][id]" value="">' +
-            '<td><input type="text" name="aspects[' + i + '][name]" class="form-control form-control-sm" placeholder="Nama aspek" required></td>' +
-            ['BS','B','C','K'].map(function(r){
-                return '<td><input type="number" name="aspects[' + i + '][weights][' + r + ']" class="form-control form-control-sm text-center" value="0" min="0"></td>';
-            }).join('') +
-            '<td class="align-middle text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0 remove-aspect-btn"><i class="gd-trash"></i></button></td>' +
+            '<input type="hidden" name="objectives[' + i + '][id]" value="">' +
+            '<td><input type="text" name="objectives[' + i + '][title]" class="form-control form-control-sm" placeholder="Nama KPI" required></td>' +
+            '<td><input type="text" name="objectives[' + i + '][category]" class="form-control form-control-sm" placeholder="mis. Financial"></td>' +
+            '<td><input type="number" name="objectives[' + i + '][weight_pct]" class="form-control form-control-sm text-center" value="0" min="0" max="100"></td>' +
+            '<td class="align-middle text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0 remove-objective-btn"><i class="gd-trash"></i></button></td>' +
             '</tr>';
-        $('#aspects-body').append(row);
+        $('#objectives-body').append(row);
     });
 
-    $(document).on('click', '.remove-aspect-btn', function () {
-        if ($('#aspects-body .aspect-row').length <= 1) {
-            alert('Template harus memiliki minimal 1 aspek.');
-            return;
-        }
+    $(document).on('click', '.remove-objective-btn', function () {
         $(this).closest('tr').remove();
-        reindexAspects();
+        reindexObjectives();
     });
 
     // ── Grade band rows ──────────────────────────────────────────

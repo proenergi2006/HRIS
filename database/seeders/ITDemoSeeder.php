@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Appraisal\AppraisalFlowConfig;
 use App\Models\Appraisal\AppraisalPeriod;
+use App\Models\Company;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Level;
+use App\Models\Position;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -20,6 +22,25 @@ class ITDemoSeeder extends Seeder
         // ── Level SPV (sudah ada dari LevelSeeder) ────────────────────────
         $spvLevel = Level::where('name', 'SPV')->firstOrFail();
 
+        // ── Master org: company + department + posisi IT (Employee sudah
+        //    pakai FK department_id/position_id, bukan string lagi) ────────
+        $company = Company::where('name', 'PT. Pro Energi')->first() ?? Company::first();
+
+        $itDept = Department::firstOrCreate(
+            ['company_id' => $company?->id, 'name' => 'IT'],
+            ['code' => 'IT', 'is_active' => true]
+        );
+
+        $posProgrammer = Position::firstOrCreate(
+            ['company_id' => $company?->id, 'department_id' => $itDept->id, 'name' => 'SPV Programmer'],
+            ['code' => 'IT-SPV-PROG', 'level_id' => $spvLevel->id, 'is_active' => true]
+        );
+
+        $posInfra = Position::firstOrCreate(
+            ['company_id' => $company?->id, 'department_id' => $itDept->id, 'name' => 'SPV Infrastructure'],
+            ['code' => 'IT-SPV-INFRA', 'level_id' => $spvLevel->id, 'is_active' => true]
+        );
+
         // ── Karyawan IT level SPV (yang dinilai) ──────────────────────────
         // Hanya SPV ke atas yang masuk penilaian — Staff tidak masuk
         $itEmployees = [
@@ -27,8 +48,9 @@ class ITDemoSeeder extends Seeder
                 'name'              => 'Andi Saputra',
                 'nip'               => 'IT-001',
                 'lob'               => 'Technology',
-                'department'        => 'IT',
-                'position'          => 'SPV Programmer',
+                'company_id'        => $company?->id,
+                'department_id'     => $itDept->id,
+                'position_id'       => $posProgrammer->id,
                 'level_id'          => $spvLevel->id,
                 'start_date'        => '2021-03-01',
                 'employment_status' => 'permanent',
@@ -38,8 +60,9 @@ class ITDemoSeeder extends Seeder
                 'name'              => 'Candra Wijaya',
                 'nip'               => 'IT-003',
                 'lob'               => 'Technology',
-                'department'        => 'IT',
-                'position'          => 'SPV Infrastructure',
+                'company_id'        => $company?->id,
+                'department_id'     => $itDept->id,
+                'position_id'       => $posInfra->id,
                 'level_id'          => $spvLevel->id,
                 'start_date'        => '2020-01-10',
                 'employment_status' => 'permanent',
@@ -102,14 +125,8 @@ class ITDemoSeeder extends Seeder
             ]
         );
 
-        // ── Pastikan flow config IT ada (step1=user_ii, step2=ceo) ────────
-        AppraisalFlowConfig::updateOrCreate(
-            ['department' => 'IT', 'step' => 1],
-            ['role' => 'user_ii', 'label' => 'Direktur IT']
-        );
-        AppraisalFlowConfig::updateOrCreate(
-            ['department' => 'IT', 'step' => 2],
-            ['role' => 'ceo', 'label' => 'CEO']
-        );
+        // Routing approval appraisal sekarang generik lewat ApprovalWorkflowSeeder
+        // (transaction_type='appraisal', default hr_manager -> ceo per company) —
+        // tidak ada lagi konfigurasi per-departemen (appraisal_flow_configs dihapus).
     }
 }

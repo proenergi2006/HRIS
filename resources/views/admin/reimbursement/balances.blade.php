@@ -52,7 +52,7 @@
           <td class="text-muted small">{{ $u->email }}</td>
           <td class="text-right">
             <input type="hidden" name="balances[{{ $loop->index }}][user_id]" value="{{ $u->id }}">
-            <input type="number" name="balances[{{ $loop->index }}][initial_balance]"
+            <input type="number" data-rupiah name="balances[{{ $loop->index }}][initial_balance]"
                    class="form-control form-control-sm text-right"
                    value="{{ $bal?->initial_balance ?? 0 }}" min="0" step="1000" required>
           </td>

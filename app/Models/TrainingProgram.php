@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class TrainingProgram extends Model
+{
+    protected $fillable = ['company_id', 'title', 'category', 'provider', 'duration_hours', 'description', 'is_active'];
+
+    protected $casts = ['is_active' => 'boolean'];
+
+    public function company(): BelongsTo      { return $this->belongsTo(Company::class); }
+    public function participants(): HasMany   { return $this->hasMany(TrainingParticipant::class); }
+}

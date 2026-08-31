@@ -1,0 +1,229 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Company;
+use App\Models\Survey\Survey;
+use App\Models\Survey\SurveyAnswer;
+use App\Models\Survey\SurveyQuestion;
+use App\Models\Survey\SurveyResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+/** Survey kepuasan / engagement karyawan (Fase 2 HRD). */
+class SurveyController extends Controller
+{
+    // ── Self-service — semua karyawan yang login ────────────────────────────
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $answeredIds = SurveyResponse::where('user_id', $user->id)->pluck('survey_id');
+
+        $surveys = Survey::where('status', 'open')
+            ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $user->employee?->company_id))
+            ->whereNotIn('id', $answeredIds)
+            ->orderByDesc('opens_at')->get();
+
+        return view('surveys.index', compact('surveys'));
+    }
+
+    public function show(Request $request, Survey $survey)
+    {
+        abort_unless($survey->isOpen(), 404);
+        $already = SurveyResponse::where('survey_id', $survey->id)->where('user_id', $request->user()->id)->exists();
+        abort_if($already, 422, 'Anda sudah mengisi survey ini.');
+
+        $survey->load('questions');
+
+        return view('surveys.show', compact('survey'));
+    }
+
+    public function submit(Request $request, Survey $survey)
+    {
+        abort_unless($survey->isOpen(), 422);
+        $already = SurveyResponse::where('survey_id', $survey->id)->where('user_id', $request->user()->id)->exists();
+        abort_if($already, 422, 'Anda sudah mengisi survey ini.');
+
+        $survey->load('questions');
+        $rules = [];
+        foreach ($survey->questions as $q) {
+            $rules['answers.' . $q->id] = ($q->is_required ? 'required' : 'nullable');
+        }
+        $request->validate($rules);
+
+        $employee = $request->user()->employee;
+
+        DB::transaction(function () use ($request, $survey, $employee) {
+            $response = SurveyResponse::create([
+                'survey_id'     => $survey->id,
+                'user_id'       => $request->user()->id,
+                'employee_id'   => $survey->is_anonymous ? null : $employee?->id,
+                'company_id'    => $employee?->company_id,
+                'department_id' => $employee?->department_id,
+                'submitted_at'  => now(),
+            ]);
+
+            foreach ($survey->questions as $q) {
+                $val = $request->input('answers.' . $q->id);
+                if ($val === null) {
+                    continue;
+                }
+                SurveyAnswer::create([
+                    'survey_response_id' => $response->id,
+                    'survey_question_id' => $q->id,
+                    'value'               => is_array($val) ? null : $val,
+                    'value_json'          => is_array($val) ? $val : null,
+                ]);
+            }
+        });
+
+        return redirect()->route('surveys.index')->with('status', 'Terima kasih, jawaban Anda tersimpan.');
+    }
+
+    // ── HR (survey.edit) ─────────────────────────────────────────────────────
+
+    public function manage()
+    {
+        $surveys = Survey::withCount('responses')->latest()->get();
+
+        return view('surveys.manage.index', compact('surveys'));
+    }
+
+    public function create()
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+
+        return view('surveys.manage.form', ['companies' => $companies, 'survey' => new Survey(), 'questions' => collect()]);
+    }
+
+    public function store(Request $request)
+    {
+        $survey = DB::transaction(function () use ($request) {
+            $survey = Survey::create($this->validatedSurvey($request) + ['created_by_user_id' => auth()->id()]);
+            $this->syncQuestions($request, $survey);
+
+            return $survey;
+        });
+
+        return redirect()->route('surveys.manage.index')->with('status', 'Survey berhasil dibuat.');
+    }
+
+    public function edit(Survey $survey)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $questions = $survey->questions;
+
+        return view('surveys.manage.form', compact('companies', 'survey', 'questions'));
+    }
+
+    public function update(Request $request, Survey $survey)
+    {
+        DB::transaction(function () use ($request, $survey) {
+            $survey->update($this->validatedSurvey($request));
+            $this->syncQuestions($request, $survey);
+        });
+
+        return redirect()->route('surveys.manage.index')->with('status', 'Survey berhasil diperbarui.');
+    }
+
+    public function destroy(Survey $survey)
+    {
+        $survey->delete();
+
+        return back()->with('status', 'Survey dihapus.');
+    }
+
+    public function open(Survey $survey)
+    {
+        abort_if($survey->questions()->count() === 0, 422, 'Tambahkan minimal 1 pertanyaan sebelum membuka survey.');
+        $survey->update(['status' => 'open']);
+
+        return back()->with('status', 'Survey dibuka.');
+    }
+
+    public function close(Survey $survey)
+    {
+        $survey->update(['status' => 'closed']);
+
+        return back()->with('status', 'Survey ditutup.');
+    }
+
+    public function results(Survey $survey)
+    {
+        $survey->load('questions');
+
+        $data = [];
+        foreach ($survey->questions as $q) {
+            $answers = SurveyAnswer::where('survey_question_id', $q->id)->get();
+
+            if ($q->type === 'scale') {
+                $values = $answers->pluck('value')->filter(fn ($v) => $v !== null)->map(fn ($v) => (float) $v);
+                $data[$q->id] = [
+                    'question' => $q,
+                    'avg'      => $values->isNotEmpty() ? round($values->avg(), 2) : null,
+                    'distribution' => $values->countBy()->sortKeys(),
+                    'count'    => $values->count(),
+                ];
+            } elseif (in_array($q->type, ['single', 'multi'])) {
+                $counts = collect();
+                foreach ($answers as $a) {
+                    $vals = $a->value_json ?? ($a->value ? [$a->value] : []);
+                    foreach ((array) $vals as $v) {
+                        $counts[$v] = ($counts[$v] ?? 0) + 1;
+                    }
+                }
+                $data[$q->id] = ['question' => $q, 'counts' => $counts, 'count' => $answers->count()];
+            } else {
+                $data[$q->id] = ['question' => $q, 'texts' => $answers->pluck('value')->filter(), 'count' => $answers->count()];
+            }
+        }
+
+        $respondentCount = SurveyResponse::where('survey_id', $survey->id)->count();
+
+        return view('surveys.manage.results', compact('survey', 'data', 'respondentCount'));
+    }
+
+    private function validatedSurvey(Request $request): array
+    {
+        $data = $request->validate([
+            'company_id'    => 'nullable|exists:companies,id',
+            'title'          => 'required|string|max:200',
+            'description'    => 'nullable|string',
+            'is_anonymous'   => 'boolean',
+            'opens_at'       => 'nullable|date',
+            'closes_at'      => 'nullable|date',
+        ]);
+        $data['is_anonymous'] = $request->boolean('is_anonymous', true);
+
+        return $data;
+    }
+
+    private function syncQuestions(Request $request, Survey $survey): void
+    {
+        $request->validate([
+            'questions'        => 'nullable|array',
+            'questions.*.text' => 'required_with:questions|string|max:500',
+            'questions.*.type' => 'required_with:questions|in:scale,text,single,multi',
+        ]);
+
+        $survey->questions()->delete();
+        foreach ($request->input('questions', []) as $i => $q) {
+            if (empty($q['text'])) {
+                continue;
+            }
+            $options = null;
+            if (in_array($q['type'], ['single', 'multi']) && ! empty($q['options'])) {
+                $options = array_values(array_filter(array_map('trim', explode(',', $q['options']))));
+            }
+            SurveyQuestion::create([
+                'survey_id'   => $survey->id,
+                'text'         => $q['text'],
+                'type'         => $q['type'],
+                'options'      => $options,
+                'is_required'  => ! empty($q['is_required']),
+                'sort_order'   => $i,
+            ]);
+        }
+    }
+}

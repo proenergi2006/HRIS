@@ -24,7 +24,7 @@
       </div>
       <div class="card-footer">
         <button onclick="window.print()" class="btn btn-primary mr-2">
-          <i class="gd-print mr-1"></i> Cetak Barcode
+          <i class="gd-printer mr-1"></i> Cetak Barcode
         </button>
         <a href="{{ $url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
           <i class="gd-link mr-1"></i> Buka Link

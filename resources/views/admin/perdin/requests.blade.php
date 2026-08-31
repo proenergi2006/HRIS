@@ -54,7 +54,7 @@
           <td>{{ $r->destination }}</td>
           <td>{{ $r->departure_date->format('d/m/Y') }}</td>
           <td class="text-right">Rp {{ number_format($r->total_budget, 0, ',', '.') }}</td>
-          <td class="text-center"><span class="badge badge-{{ $badges[$r->status] }}">{{ $labels[$r->status] }}</span></td>
+          <td class="text-center"><span class="badge badge-{{ $badges[$r->status] ?? 'secondary' }}">{{ $labels[$r->status] ?? ucfirst($r->status) }}</span></td>
           <td class="text-right">
             <a href="{{ route('perdin.show', $r) }}" class="btn btn-xs btn-outline-info">
               <i class="gd-eye icon-text"></i>

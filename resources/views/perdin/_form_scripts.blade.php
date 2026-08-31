@@ -32,13 +32,14 @@
       </td>
       <td><input type="number" name="budget[${i}][qty]" class="form-control form-control-sm text-right b-qty"
                  min="1" value="${parseInt(data.qty || 1, 10)}" required></td>
-      <td><input type="number" name="budget[${i}][unit_cost]" class="form-control form-control-sm text-right b-cost"
+      <td><input type="number" data-rupiah name="budget[${i}][unit_cost]" class="form-control form-control-sm text-right b-cost"
                  min="0" value="${parseInt(data.unit_cost || 0, 10)}" required></td>
       <td class="text-right align-middle b-total">Rp 0</td>
       <td class="text-center align-middle">
         <button type="button" class="btn btn-xs btn-outline-danger b-del"><i class="gd-trash icon-text"></i></button>
       </td>`;
     budgetBody.appendChild(tr);
+    if (window.initRupiahFields) window.initRupiahFields(tr);
     recalcBudget();
   }
 
@@ -46,7 +47,7 @@
     let totalAll = 0, totalSelf = 0;
     budgetBody.querySelectorAll('tr').forEach(tr => {
       const qty  = parseInt(tr.querySelector('.b-qty').value || 0, 10);
-      const cost = parseInt(tr.querySelector('.b-cost').value || 0, 10);
+      const cost = parseInt((tr.querySelector('.b-cost').value || '0').replace(/\D/g, ''), 10) || 0;
       const sub  = qty * cost;
       tr.querySelector('.b-total').textContent = rupiah(sub);
       totalAll += sub;

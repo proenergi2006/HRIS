@@ -33,11 +33,22 @@
       </div>
 
       @if(count($result['errors']))
-        <div class="alert alert-danger mb-0">
+        <div class="alert alert-danger {{ !empty($result['warnings']) ? 'mb-3' : 'mb-0' }}">
           <div class="font-weight-bold mb-2">Baris yang gagal diimport:</div>
           <ul class="mb-0 pl-3">
             @foreach($result['errors'] as $err)
               <li>Baris {{ $err['row'] }}: {{ $err['message'] }}</li>
+            @endforeach
+          </ul>
+        </div>
+      @endif
+
+      @if(!empty($result['warnings']))
+        <div class="alert alert-warning mb-0">
+          <div class="font-weight-bold mb-2">Peringatan (baris tetap tersimpan):</div>
+          <ul class="mb-0 pl-3">
+            @foreach($result['warnings'] as $warn)
+              <li>Baris {{ $warn['row'] }}: {{ $warn['message'] }}</li>
             @endforeach
           </ul>
         </div>

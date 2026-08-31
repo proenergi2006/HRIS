@@ -7,6 +7,7 @@
 @php
   $statusBadges = \App\Models\HR\LeaveRequest::$statusBadges;
   $statusLabels = \App\Models\HR\LeaveRequest::$statusLabels;
+  $ar = $leave->approvalRequest;
 @endphp
 
 <nav class="d-none d-md-block" aria-label="breadcrumb">
@@ -21,8 +22,8 @@
   <div>
     <div class="h3 mb-0">Detail Pengajuan Cuti</div>
   </div>
-  <span class="badge badge-{{ $statusBadges[$leave->status] }}" style="font-size:.9rem;padding:.4em .8em">
-    {{ $statusLabels[$leave->status] }}
+  <span class="badge badge-{{ $statusBadges[$leave->status] ?? 'secondary' }}" style="font-size:.9rem;padding:.4em .8em">
+    {{ $statusLabels[$leave->status] ?? ucfirst($leave->status) }}
   </span>
 </div>
 
@@ -61,101 +62,66 @@
       </div>
     </div>
 
-    {{-- Approval Trail --}}
+    {{-- Alur Persetujuan (Approval Engine) --}}
     <div class="card mb-3">
-      <div class="card-header font-weight-bold">Riwayat Approval</div>
-      <div class="card-body py-2">
-        <div class="d-flex align-items-center mb-2">
-          <div class="mr-3 text-center" style="width:36px">
-            @if(in_array($leave->status, ['approved_manager','approved_hr','rejected']))
-              <i class="gd-check text-success" style="font-size:1.2rem"></i>
-            @else
-              <i class="gd-time text-warning" style="font-size:1.2rem"></i>
-            @endif
-          </div>
-          <div>
-            <div class="font-weight-bold small">Atasan Langsung</div>
-            <small class="text-muted">
-              {{ $leave->managerApprover?->name ?? 'Menunggu' }}
-              @if($leave->manager_approved_at) — {{ $leave->manager_approved_at->format('d/m/Y H:i') }} @endif
-            </small>
-            @if($leave->manager_notes)<br><small class="text-muted">Catatan: {{ $leave->manager_notes }}</small>@endif
-          </div>
-        </div>
-        <div class="d-flex align-items-center">
-          <div class="mr-3 text-center" style="width:36px">
-            @if($leave->status === 'approved_hr')
-              <i class="gd-check text-success" style="font-size:1.2rem"></i>
-            @elseif($leave->status === 'rejected' && $leave->hr_approved_by)
-              <i class="gd-close text-danger" style="font-size:1.2rem"></i>
-            @else
-              <i class="gd-time text-secondary" style="font-size:1.2rem"></i>
-            @endif
-          </div>
-          <div>
-            <div class="font-weight-bold small">HR / Admin</div>
-            <small class="text-muted">
-              {{ $leave->hrApprover?->name ?? 'Menunggu' }}
-              @if($leave->hr_approved_at) — {{ $leave->hr_approved_at->format('d/m/Y H:i') }} @endif
-            </small>
-            @if($leave->hr_notes)<br><small class="text-muted">Catatan: {{ $leave->hr_notes }}</small>@endif
-          </div>
-        </div>
+      <div class="card-header font-weight-bold">Alur Persetujuan</div>
+      <div class="card-body py-3">
+        @if(! $ar)
+          @if(in_array($leave->status, ['approved_hr','approved_manager','submitted','rejected']))
+            <p class="text-muted small mb-0">Pengajuan lama (sebelum migrasi ke engine).
+              Manager: {{ $leave->managerApprover?->name ?? '-' }} · HR: {{ $leave->hrApprover?->name ?? '-' }}
+              @if($leave->hr_notes)<br>Catatan: {{ $leave->hr_notes }}@endif
+            </p>
+          @else
+            <p class="text-muted small mb-0">Belum ada alur.</p>
+          @endif
+        @else
+          <ol class="list-unstyled mb-0">
+            @foreach($ar->steps as $s)
+              <li class="d-flex mb-3">
+                <span class="mr-3" style="width:24px">
+                  @if($s->status === 'approved')<i class="gd-check text-success" style="font-size:1.1rem"></i>
+                  @elseif($s->status === 'rejected')<i class="gd-close text-danger" style="font-size:1.1rem"></i>
+                  @elseif($s->status === 'skipped')<i class="gd-minus text-muted" style="font-size:1.1rem"></i>
+                  @else<i class="gd-time text-warning" style="font-size:1.1rem"></i>@endif
+                </span>
+                <div>
+                  <div class="font-weight-bold small">Step {{ $s->step_order }} — {{ $s->approver_label }}</div>
+                  <small class="text-muted">
+                    {{ $s->approver?->name ?? ($s->approver_type === 'specific_role' ? 'berbasis role' : '—') }}
+                    @if($s->acted_at) · {{ ucfirst($s->status) }} oleh {{ $s->actedBy?->name }} {{ $s->acted_at->format('d/m/Y H:i') }}@endif
+                  </small>
+                  @if($s->notes)<br><small class="font-italic">"{{ $s->notes }}"</small>@endif
+                </div>
+              </li>
+            @endforeach
+          </ol>
+        @endif
       </div>
     </div>
   </div>
 
   {{-- Actions --}}
   <div class="col-md-5">
-    @if($leave->isSubmitted())
-    <div class="card mb-3 border-warning">
-      <div class="card-header font-weight-bold text-warning">Approval Atasan Langsung</div>
+    <div class="card mb-3">
       <div class="card-body">
-        <form method="POST" action="{{ route('hr.leave.approve.manager', $leave) }}" class="mb-3">
-          @csrf
-          <div class="form-group">
-            <label class="small font-weight-bold">Catatan (opsional)</label>
-            <textarea name="notes" class="form-control form-control-sm" rows="2"></textarea>
+        @if($leave->isPending())
+          <p class="small text-muted">Persetujuan dilakukan oleh approver lewat <a href="{{ route('approval.inbox.index') }}">Kotak Persetujuan</a> masing-masing.</p>
+          <form method="POST" action="{{ route('hr.leave.cancel', $leave) }}" onsubmit="return confirm('Batalkan pengajuan cuti ini?')">
+            @csrf
+            <button class="btn btn-outline-danger btn-sm">Batalkan Pengajuan</button>
+          </form>
+        @elseif($leave->isApproved())
+          <div class="text-success"><i class="gd-check mr-1"></i>Cuti disetujui. Saldo cuti karyawan sudah dipotong.</div>
+        @elseif($leave->isRejected())
+          <div class="text-danger"><i class="gd-close mr-1"></i>Pengajuan ditolak.
+            @if($leave->hr_notes)<div class="small mt-1">{{ $leave->hr_notes }}</div>@endif
           </div>
-          <button type="submit" class="btn btn-success btn-sm">Setujui (Atasan)</button>
-        </form>
-        <hr>
-        <form method="POST" action="{{ route('hr.leave.reject', $leave) }}">
-          @csrf
-          <div class="form-group">
-            <label class="small font-weight-bold">Alasan Penolakan <span class="text-danger">*</span></label>
-            <textarea name="notes" class="form-control form-control-sm" rows="2" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tolak pengajuan ini?')">Tolak</button>
-        </form>
+        @elseif($leave->isCancelled())
+          <div class="text-muted">Pengajuan dibatalkan.</div>
+        @endif
       </div>
     </div>
-    @endif
-
-    @if($leave->isApprovedManager())
-    <div class="card mb-3 border-info">
-      <div class="card-header font-weight-bold text-info">Approval HR / Admin</div>
-      <div class="card-body">
-        <form method="POST" action="{{ route('hr.leave.approve.hr', $leave) }}" class="mb-3">
-          @csrf
-          <div class="form-group">
-            <label class="small font-weight-bold">Catatan (opsional)</label>
-            <textarea name="notes" class="form-control form-control-sm" rows="2"></textarea>
-          </div>
-          <button type="submit" class="btn btn-success btn-sm">Setujui Final (HR)</button>
-        </form>
-        <hr>
-        <form method="POST" action="{{ route('hr.leave.reject', $leave) }}">
-          @csrf
-          <div class="form-group">
-            <label class="small font-weight-bold">Alasan Penolakan <span class="text-danger">*</span></label>
-            <textarea name="notes" class="form-control form-control-sm" rows="2" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tolak pengajuan ini?')">Tolak</button>
-        </form>
-      </div>
-    </div>
-    @endif
   </div>
 </div>
 @endsection

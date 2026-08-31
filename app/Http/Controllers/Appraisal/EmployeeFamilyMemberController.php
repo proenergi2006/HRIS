@@ -23,6 +23,22 @@ class EmployeeFamilyMemberController extends Controller
             ->with('success', 'Anggota keluarga berhasil ditambahkan.');
     }
 
+    public function update(Request $request, Employee $employee, EmployeeFamilyMember $familyMember)
+    {
+        abort_if($familyMember->employee_id !== $employee->id, 404);
+
+        $data = $request->validate([
+            'name'       => 'required|string|max:100',
+            'relation'   => 'required|in:' . implode(',', array_keys(EmployeeFamilyMember::$relationLabels)),
+            'birth_date' => 'nullable|date|before_or_equal:' . now()->format('Y-m-d'),
+        ]);
+
+        $familyMember->update($data);
+
+        return redirect()->route('appraisal.employees.edit', $employee)
+            ->with('success', 'Anggota keluarga berhasil diperbarui.');
+    }
+
     public function destroy(Employee $employee, EmployeeFamilyMember $familyMember)
     {
         abort_if($familyMember->employee_id !== $employee->id, 404);

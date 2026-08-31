@@ -22,7 +22,7 @@
                 <table id="dt-levels" class="table text-nowrap mb-0">
                 <thead>
                 <tr>
-                <th class="font-weight-semi-bold border-top-0 py-2">#</th>
+                <th class="font-weight-semi-bold border-top-0 py-2">Urutan</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Nama Level</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Deskripsi</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Jml Karyawan</th>
@@ -32,7 +32,7 @@
                 <tbody>
                 @foreach($levels as $level)
                 <tr>
-                <td class="py-3">{{ $level->id }}</td>
+                <td class="py-3">{{ $level->rank }}</td>
                 <td class="py-3 font-weight-bold">{{ $level->name }}</td>
                 <td class="py-3">{{ $level->description ?? '-' }}</td>
                 <td class="py-3">{{ $level->employees_count }}</td>

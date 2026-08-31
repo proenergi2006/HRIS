@@ -42,7 +42,7 @@
 
         @if($pending->isEmpty())
             <div class="text-center py-4 text-muted">
-                <i class="gd-check-circle" style="font-size:2rem;"></i>
+                <i class="gd-check" style="font-size:2rem;"></i>
                 <p class="mt-2 mb-0">{{ $emptyMsg }}</p>
             </div>
         @else

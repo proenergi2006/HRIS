@@ -35,8 +35,10 @@
 <div class="page">
 
   <div class="header">
-    <h1>PT. PRO ENERGI</h1>
-    <h2>Integrated Energy Solutions</h2>
+    @php $kopLogo = \App\Support\Branding::pdfLogo(config('sipro.company.code')); @endphp
+    @if($kopLogo)<img src="{{ $kopLogo }}" alt="" style="height:44px; margin-bottom:4px;">@endif
+    <h1>{{ config('sipro.company.name') }}</h1>
+    <h2>{{ config('sipro.company.tagline') }}</h2>
     <div class="subtitle">Formulir Pengajuan Medical Reimbursement</div>
   </div>
 

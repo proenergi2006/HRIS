@@ -14,7 +14,7 @@
     <div class="col-6 col-xl-3 mb-3 mb-xl-4">
         <div class="card flex-row align-items-center p-3 p-md-4">
             <div class="icon icon-lg bg-soft-primary rounded-circle mr-3">
-                <i class="gd-check-circle icon-text d-inline-block text-primary"></i>
+                <i class="gd-check icon-text d-inline-block text-primary"></i>
             </div>
             <div>
                 <h4 class="lh-1 mb-1">{{ $stats['total'] }}</h4>
@@ -109,7 +109,7 @@
                     <i class="gd-plus mr-1"></i> {{ __('common.create') }}
                 </a>
                 <a href="{{ route('appraisal.appraisals.index') }}" class="btn btn-outline-primary btn-block mb-2">
-                    <i class="gd-check-circle mr-1"></i> {{ __('nav.appraisals') }}
+                    <i class="gd-check mr-1"></i> {{ __('nav.appraisals') }}
                 </a>
                 <a href="{{ route('appraisal.report.index') }}" class="btn btn-outline-secondary btn-block">
                     <i class="gd-search mr-1"></i> {{ __('nav.reports') }}

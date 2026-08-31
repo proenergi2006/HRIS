@@ -12,6 +12,7 @@ class AttendanceRecord extends Model
     protected $fillable = [
         'employee_id', 'company_id', 'date', 'check_in', 'check_out',
         'status', 'late_minutes', 'overtime_minutes', 'source', 'notes',
+        'shift_id', 'scheduled_start', 'scheduled_end',
     ];
 
     protected $casts = ['date' => 'date'];
@@ -38,6 +39,7 @@ class AttendanceRecord extends Model
 
     public function employee(): BelongsTo { return $this->belongsTo(Employee::class); }
     public function company(): BelongsTo  { return $this->belongsTo(Company::class); }
+    public function shift(): BelongsTo    { return $this->belongsTo(Shift::class); }
 
     public function getWorkingHours(): ?float
     {

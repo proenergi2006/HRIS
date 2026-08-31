@@ -33,6 +33,10 @@ class EmployeeDocument extends Model
         'Sertifikasi'   => 'Sertifikasi / Lisensi',
         'Kontrak Kerja' => 'Kontrak Kerja',
         'CV'            => 'CV / Resume',
+        'SIM'           => 'SIM',
+        'Paspor'        => 'Paspor',
+        'KITAS'         => 'KITAS (Expat)',
+        'IMTA'          => 'IMTA / Izin Kerja (Expat)',
         'Lainnya'       => 'Lainnya',
     ];
 

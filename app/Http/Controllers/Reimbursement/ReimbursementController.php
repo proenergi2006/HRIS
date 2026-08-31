@@ -9,6 +9,7 @@ use App\Models\Reimbursement\ReimbursementBalance;
 use App\Models\Reimbursement\ReimbursementItem;
 use App\Models\Reimbursement\ReimbursementRequest;
 use App\Models\User;
+use App\Services\ApprovalEngine;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ReimbursementController extends Controller
 {
+    public function __construct(private ApprovalEngine $engine) {}
+
     private function itemRules(): array
     {
         $today = \Carbon\Carbon::today()->format('Y-m-d');
@@ -102,7 +105,7 @@ class ReimbursementController extends Controller
     public function show(ReimbursementRequest $reimbursement)
     {
         abort_unless($reimbursement->user_id === auth()->id(), 403);
-        $reimbursement->load(['items', 'attachments', 'approver']);
+        $reimbursement->load(['items', 'attachments', 'approver', 'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy']);
         $balance = ReimbursementBalance::forUser($reimbursement->user_id, $reimbursement->request_date->year);
         return view('reimbursement.show', compact('reimbursement', 'balance'));
     }
@@ -179,19 +182,32 @@ class ReimbursementController extends Controller
                 ') melebihi sisa saldo (Rp ' . number_format($balance->remaining_balance, 0, ',', '.') . ').');
         }
 
-        $reimbursement->update(['status' => 'submitted']);
+        $reimbursement->update(['status' => 'pending']);
 
-        try {
-            $admins = User::role('admin')->get();
-            foreach ($admins as $admin) {
-                Mail::to($admin->email)->send(new ReimbursementSubmittedMail($reimbursement));
-            }
-        } catch (\Throwable) {
-            // mail failure must not block submission
+        // Jalankan lewat Approval Engine — alur diambil dari workflow
+        // "Reimbursement" yang dikonfigurasi HR per perusahaan.
+        $this->engine->start($reimbursement);
+        $reimbursement->refresh();
+        if ($reimbursement->approvalRequest?->status === 'approved' && ! $reimbursement->isApproved()) {
+            $reimbursement->forceFill(['status' => 'approved'])->save();
         }
 
         return redirect()->route('reimbursement.show', $reimbursement)
-            ->with('status', 'Pengajuan berhasil disubmit dan menunggu persetujuan.');
+            ->with('status', 'Pengajuan disubmit. Menunggu persetujuan.');
+    }
+
+    /** Batalkan pengajuan yang masih menunggu persetujuan. */
+    public function cancel(ReimbursementRequest $reimbursement)
+    {
+        abort_unless($reimbursement->user_id === auth()->id() || auth()->user()->hasRole('admin'), 403);
+        abort_unless($reimbursement->isPending(), 422);
+
+        if ($reimbursement->approvalRequest) {
+            $this->engine->cancel($reimbursement->approvalRequest);
+        }
+        $reimbursement->forceFill(['status' => 'cancelled'])->save();
+
+        return back()->with('status', 'Pengajuan dibatalkan.');
     }
 
     public function pdf(ReimbursementRequest $reimbursement)

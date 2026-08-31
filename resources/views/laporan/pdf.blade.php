@@ -34,8 +34,12 @@
 </head>
 <body>
 
+<div style="padding:14px 20px 0;">
+  @include('components.pdf-kop', ['company' => config('sipro.company.code')])
+</div>
+
 <div class="header">
-  <h1>Laporan Rekap Bulanan &mdash; PT. Pro Energi</h1>
+  <h1>Laporan Rekap Bulanan</h1>
   <p>Periode: {{ \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y') }} &nbsp;|&nbsp;
      Dicetak: {{ now()->format('d F Y, H:i') }} WIB</p>
 </div>
@@ -164,6 +168,6 @@
 </table>
 @endif
 
-<div class="footer">HRMS &mdash; PT. Pro Energi &mdash; Dokumen ini digenerate otomatis oleh sistem</div>
+<div class="footer">ProPeople &mdash; PT. Pro Energi &mdash; Dokumen ini digenerate otomatis oleh sistem</div>
 </body>
 </html>

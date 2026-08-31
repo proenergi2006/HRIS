@@ -7,14 +7,20 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'HRMS') }} - @yield('title')</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f2a4a'/><text x='50' y='70' font-family='Arial,sans-serif' font-size='46' font-weight='bold' text-anchor='middle' fill='white'>HR</text></svg>">
+    <title>{{ config('app.name', 'ProPeople') }} - @yield('title')</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/propeople-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/propeople-icon-512.png') }}">
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
+      /* graindashboard.css menyembunyikan semua badge di sidebar (opacity:0) tanpa
+         ada aturan yang menampilkannya lagi — override supaya badge notifikasi
+         (appraisal, reimbursement, perdin, whistleblower, dst) selalu terlihat. */
+      .side-nav-menu-link [class*="badge"] { opacity: 1; }
+
       /* Badge kecil di icon sidebar — selalu terlihat walaupun sidebar compact/mini */
       .sidebar-icon-badge {
         position: absolute;
@@ -33,11 +39,47 @@
       }
       .sidebar-icon-badge.badge-danger  { background: #dc3545; }
       .sidebar-icon-badge.badge-warning { background: #f59e0b; color: #1a1a1a; }
+
+      /* ── Indikator loading pindah halaman ── */
+      #nprog { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 3000;
+               pointer-events: none; opacity: 0; transition: opacity .25s ease; }
+      #nprog.active { opacity: 1; }
+      #nprog .bar {
+        height: 100%; width: 0;
+        background: linear-gradient(90deg, #0F2A4A, #2563eb 35%, #e8a020 70%, #0F2A4A);
+        background-size: 220% 100%;
+        box-shadow: 0 0 10px rgba(37,99,235,.65), 0 0 6px rgba(232,160,32,.5);
+        transition: width .35s cubic-bezier(.1,.85,.25,1);
+        animation: nprog-shimmer 1s linear infinite;
+      }
+      @keyframes nprog-shimmer { to { background-position: -220% 0; } }
+
+      #nav-spinner {
+        position: fixed; right: 20px; bottom: 20px; z-index: 3000;
+        display: flex; align-items: center; gap: 10px;
+        background: #0F2A4A; color: #fff; font-size: .82rem; font-weight: 600;
+        padding: 9px 15px; border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(4,12,26,.32);
+        opacity: 0; transform: translateY(12px); pointer-events: none;
+        transition: opacity .25s ease, transform .25s ease;
+      }
+      #nav-spinner.show { opacity: 1; transform: translateY(0); }
+      #nav-spinner .ring {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.28); border-top-color: #e8a020;
+        animation: nprog-spin .7s linear infinite;
+      }
+      @keyframes nprog-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        #nprog .bar, #nav-spinner .ring { animation: none; }
+      }
     </style>
     @yield('styles')
 </head>
 
   <body class="has-sidebar has-fixed-sidebar-and-header">
+    <div id="nprog"><div class="bar"></div></div>
+    <div id="nav-spinner"><span class="ring"></span> Memuat halaman…</div>
 	@include('components.header')
 
     <main class="main">
@@ -72,6 +114,75 @@
     };
     </script>
     @yield('scripts')
+
+    {{-- Indikator loading saat pindah halaman (bar atas + spinner pojok) --}}
+    <script>
+    (function () {
+        var prog = document.getElementById('nprog'),
+            bar  = prog.querySelector('.bar'),
+            spin = document.getElementById('nav-spinner'),
+            tick, spinT, safety, w = 0, running = false;
+
+        function setW(v) { w = v; bar.style.width = v + '%'; }
+
+        function start() {
+            if (running) return;
+            running = true;
+            prog.classList.add('active');
+            setW(18);
+            tick = setInterval(function () {
+                // merangkak cepat mendekati 96% (tidak pernah 100 sebelum halaman benar-benar ganti)
+                setW(Math.min(96, w + (96 - w) * 0.10 + 1));
+            }, 200);
+            spinT  = setTimeout(function () { spin.classList.add('show'); }, 450);
+            safety = setTimeout(done, 20000); // jaga-jaga kalau navigasi batal
+        }
+        // Dipanggil tepat sebelum halaman lama ditinggalkan → bar diisi penuh
+        function finish() {
+            if (!running) start();
+            clearInterval(tick); clearTimeout(spinT); clearTimeout(safety);
+            bar.style.transition = 'width .18s ease';
+            setW(100);
+        }
+        function done() {
+            if (!running) return;
+            clearInterval(tick); clearTimeout(spinT); clearTimeout(safety);
+            setW(100);
+            spin.classList.remove('show');
+            setTimeout(function () {
+                prog.classList.remove('active');
+                setTimeout(function () { bar.style.transition = ''; setW(0); running = false; }, 260);
+            }, 300);
+        }
+
+        // Navigasi apa pun yang benar-benar meninggalkan halaman → isi bar sampai penuh
+        window.addEventListener('beforeunload', finish);
+        // Kembali via tombol Back (bfcache) — reset indikator
+        window.addEventListener('pageshow', function (e) { if (e.persisted) done(); });
+
+        // Klik link internal → mulai lebih awal supaya terasa responsif
+        document.addEventListener('click', function (e) {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            var a = e.target.closest('a');
+            if (!a) return;
+            var href = a.getAttribute('href') || '';
+            if (!href || href.charAt(0) === '#' || a.target === '_blank'
+                || a.hasAttribute('download') || a.hasAttribute('data-toggle')
+                || a.hasAttribute('data-confirm') || a.hasAttribute('data-form')
+                || a.hasAttribute('data-no-progress')
+                || /^(javascript:|mailto:|tel:)/i.test(href)) return;
+            if (a.origin && a.origin !== location.origin) return;
+            start();
+        }, true);
+
+        // Submit form (kecuali yang ditandai / buka tab baru)
+        document.addEventListener('submit', function (e) {
+            var f = e.target;
+            if (f.hasAttribute('data-no-progress') || f.target === '_blank') return;
+            start();
+        }, true);
+    })();
+    </script>
 
     {{-- Custom SIPRO modals — di level body, di luar semua stacking context --}}
     @stack('modals')
@@ -380,6 +491,55 @@
       }
 
       return show;
+    })();
+    </script>
+
+    {{-- Format Rupiah otomatis saat diketik: input manapun ber-atribut data-rupiah
+         menampilkan pemisah ribuan ("1.000.000") sambil diketik, dan dikembalikan ke
+         angka polos tepat sebelum form di-submit (server tetap terima integer biasa). --}}
+    <script>
+    (function () {
+      function formatRupiah(raw) {
+        var digits = String(raw || '').replace(/[^\d]/g, '');
+        if (!digits) return '';
+        digits = digits.replace(/^0+(?=\d)/, '');
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      }
+
+      function initField(el) {
+        if (el.dataset.rupiahInit) return;
+        el.dataset.rupiahInit = '1';
+        el.type = 'text';
+        el.setAttribute('inputmode', 'numeric');
+        el.setAttribute('autocomplete', 'off');
+        if (el.value) el.value = formatRupiah(el.value);
+
+        el.addEventListener('input', function () {
+          var cursorFromEnd = el.value.length - (el.selectionStart || el.value.length);
+          el.value = formatRupiah(el.value);
+          var pos = Math.max(0, el.value.length - cursorFromEnd);
+          try { el.setSelectionRange(pos, pos); } catch (e) {}
+        });
+
+        // el.form (bukan closest) supaya field yang ditautkan lewat atribut
+        // form="..." (mis. tabel edit Jabatan) tetap ikut dibersihkan titiknya.
+        var form = el.form || el.closest('form');
+        if (form && !form.dataset.rupiahSubmitBound) {
+          form.dataset.rupiahSubmitBound = '1';
+          form.addEventListener('submit', function () {
+            document.querySelectorAll('input[data-rupiah]').forEach(function (f) {
+              if (f.form === form) f.value = f.value.replace(/\./g, '');
+            });
+          });
+        }
+      }
+
+      function initAll(root) {
+        (root || document).querySelectorAll('input[data-rupiah]').forEach(initField);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () { initAll(document); });
+      window.initRupiahFields = initAll; // dipanggil ulang kalau ada baris ditambah lewat JS
     })();
     </script>
 

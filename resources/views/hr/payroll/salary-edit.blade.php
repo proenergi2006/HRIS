@@ -27,7 +27,7 @@
             </label>
             <div class="input-group input-group-sm">
               <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
-              <input type="number" name="components[{{ $comp->id }}]"
+              <input type="number" data-rupiah name="components[{{ $comp->id }}]"
                      class="form-control"
                      value="{{ $existing[$comp->id] ?? '' }}"
                      min="0" step="1000" placeholder="0 = tidak digunakan">

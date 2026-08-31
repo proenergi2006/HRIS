@@ -8,7 +8,7 @@
 	<div class="row justify-content-md-center">
 		<div class="card-wrapper col-12 col-md-4 mt-5">
 			<div class="brand text-center mb-3">
-				<a href="/"><img src="{{ asset('img/logo.png') }}"></a>
+				<a href="/"><img src="{{ asset('img/propeople-icon.png') }}" alt="ProPeople" style="height:56px;border-radius:12px;"></a>
 			</div>
 			<div class="card">
 				<div class="card-body">

@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Appraisal;
 
 use App\Http\Controllers\Controller;
-use App\Models\Appraisal\AppraisalAspect;
-use App\Models\Appraisal\AppraisalAspectWeight;
 use App\Models\Appraisal\AppraisalGradeBand;
 use App\Models\Appraisal\AppraisalTemplate;
+use App\Models\Appraisal\AppraisalTemplateObjective;
 use App\Models\Level;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -22,7 +21,7 @@ class TemplateController extends Controller implements HasMiddleware
 
     public function index()
     {
-        $templates = AppraisalTemplate::with('level')->withCount('aspects')->get();
+        $templates = AppraisalTemplate::with('level')->withCount('objectives')->get();
         return view('appraisal.template.index', compact('templates'));
     }
 
@@ -49,7 +48,7 @@ class TemplateController extends Controller implements HasMiddleware
                 'is_default' => $request->boolean('is_default'),
             ]);
 
-            $this->syncAspectsAndBands($template, $request);
+            $this->syncObjectivesAndBands($template, $request);
         });
 
         return redirect()->route('appraisal.templates.index')->with('status', 'Template berhasil dibuat.');
@@ -57,7 +56,7 @@ class TemplateController extends Controller implements HasMiddleware
 
     public function edit(AppraisalTemplate $template)
     {
-        $template->load(['aspects.weights', 'gradeBands']);
+        $template->load(['objectives', 'gradeBands']);
         $levels = Level::orderBy('name')->get();
         return view('appraisal.template.edit', compact('template', 'levels'));
     }
@@ -76,7 +75,7 @@ class TemplateController extends Controller implements HasMiddleware
                 'is_default' => $request->boolean('is_default'),
             ]);
 
-            $this->syncAspectsAndBands($template, $request);
+            $this->syncObjectivesAndBands($template, $request);
         });
 
         return redirect()->route('appraisal.templates.index')->with('status', 'Template berhasil diperbarui.');
@@ -92,37 +91,35 @@ class TemplateController extends Controller implements HasMiddleware
         return redirect()->route('appraisal.templates.index')->with('status', 'Template berhasil dihapus.');
     }
 
-    private function syncAspectsAndBands(AppraisalTemplate $template, Request $request): void
+    private function syncObjectivesAndBands(AppraisalTemplate $template, Request $request): void
     {
-        // Sync aspects & weights
-        $submittedAspects = $request->input('aspects', []);
-        $keptIds = [];
+        // Sync KPI/objective starter
+        $submitted = $request->input('objectives', []);
+        $keptIds   = [];
 
-        foreach ($submittedAspects as $order => $aspectData) {
-            if (empty(trim($aspectData['name'] ?? ''))) continue;
+        foreach ($submitted as $order => $row) {
+            if (empty(trim($row['title'] ?? ''))) continue;
 
-            $aspect = AppraisalAspect::updateOrCreate(
+            $objective = AppraisalTemplateObjective::updateOrCreate(
                 [
                     'appraisal_template_id' => $template->id,
-                    'id'                    => $aspectData['id'] ?? null,
+                    'id'                    => $row['id'] ?? null,
                 ],
-                ['name' => $aspectData['name'], 'order' => $order + 1]
+                [
+                    'title'       => $row['title'],
+                    'description' => $row['description'] ?? null,
+                    'category'    => $row['category'] ?? null,
+                    'weight_pct'  => (int) ($row['weight_pct'] ?? 0),
+                    'order'       => $order + 1,
+                ]
             );
 
-            $keptIds[] = $aspect->id;
-
-            foreach (['BS', 'B', 'C', 'K'] as $rating) {
-                AppraisalAspectWeight::updateOrCreate(
-                    ['appraisal_aspect_id' => $aspect->id, 'rating' => $rating],
-                    ['score' => (int) ($aspectData['weights'][$rating] ?? 0)]
-                );
-            }
+            $keptIds[] = $objective->id;
         }
 
-        // Remove deleted aspects
-        $template->aspects()->whereNotIn('id', $keptIds)->delete();
+        $template->objectives()->whereNotIn('id', $keptIds)->delete();
 
-        // Sync grade bands
+        // Sync grade bands (replace semua)
         $submittedBands = $request->input('grade_bands', []);
         $template->gradeBands()->delete();
 

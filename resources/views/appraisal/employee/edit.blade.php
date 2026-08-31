@@ -91,10 +91,20 @@
                             @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-3">
-                            <label for="employee_type">Tipe Karyawan <span class="text-danger">*</span></label>
+                            <label for="employee_type_id">Tipe Karyawan</label>
+                            <select id="employee_type_id" name="employee_type_id" class="form-control{{ $errors->has('employee_type_id') ? ' is-invalid' : '' }}">
+                                <option value="">-- Pilih --</option>
+                                @foreach($employeeTypes as $et)
+                                    <option value="{{ $et->id }}" {{ (int) old('employee_type_id', $employee->employee_type_id) === $et->id ? 'selected' : '' }}>{{ $et->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('employee_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-6 col-md-3">
+                            <label for="employee_type">Status Kewarganegaraan <span class="text-danger">*</span></label>
                             <select id="employee_type" name="employee_type" class="form-control{{ $errors->has('employee_type') ? ' is-invalid' : '' }}">
-                                <option value="local" {{ old('employee_type', $employee->employee_type ?? 'local') == 'local' ? 'selected' : '' }}>Local</option>
-                                <option value="expat" {{ old('employee_type', $employee->employee_type) == 'expat' ? 'selected' : '' }}>Expat</option>
+                                <option value="local" {{ old('employee_type', $employee->employee_type ?? 'local') == 'local' ? 'selected' : '' }}>Local / WNI</option>
+                                <option value="expat" {{ old('employee_type', $employee->employee_type) == 'expat' ? 'selected' : '' }}>Expat / WNA</option>
                             </select>
                             @error('employee_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -129,38 +139,37 @@
                             @error('ktp_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-4">
-                            <label for="status_kawin_dummy">Status Kawin</label>
-                            <select id="marital_status" name="marital_status" class="form-control{{ $errors->has('marital_status') ? ' is-invalid' : '' }}">
+                            <label for="marital_status_id">Status Kawin</label>
+                            <select id="marital_status_id" name="marital_status_id" class="form-control{{ $errors->has('marital_status_id') ? ' is-invalid' : '' }}">
                                 <option value="">-- Pilih --</option>
-                                <option value="belum_kawin" {{ old('marital_status', $employee->marital_status) == 'belum_kawin' ? 'selected' : '' }}>Belum Kawin</option>
-                                <option value="kawin" {{ old('marital_status', $employee->marital_status) == 'kawin' ? 'selected' : '' }}>Kawin</option>
-                                <option value="cerai_hidup" {{ old('marital_status', $employee->marital_status) == 'cerai_hidup' ? 'selected' : '' }}>Cerai Hidup</option>
-                                <option value="cerai_mati" {{ old('marital_status', $employee->marital_status) == 'cerai_mati' ? 'selected' : '' }}>Cerai Mati</option>
-                            </select>
-                            @error('marital_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="form-group col-6 col-md-4">
-                            <label for="agama_dummy">Agama</label>
-                            <select id="religion" name="religion" class="form-control{{ $errors->has('religion') ? ' is-invalid' : '' }}">
-                                <option value="">-- Pilih --</option>
-                                @foreach(['Islam','Kristen','Katolik','Hindu','Buddha','Konghucu','Lainnya'] as $r)
-                                    <option value="{{ $r }}" {{ old('religion', $employee->religion) == $r ? 'selected' : '' }}>{{ $r }}</option>
+                                @foreach($maritalStatuses as $ms)
+                                    <option value="{{ $ms->id }}" {{ (int) old('marital_status_id', $employee->marital_status_id) === $ms->id ? 'selected' : '' }}>{{ $ms->name }}</option>
                                 @endforeach
                             </select>
-                            @error('religion')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('marital_status_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-6 col-md-4">
+                            <label for="religion_id">Agama</label>
+                            <select id="religion_id" name="religion_id" class="form-control{{ $errors->has('religion_id') ? ' is-invalid' : '' }}">
+                                <option value="">-- Pilih --</option>
+                                @foreach($religions as $r)
+                                    <option value="{{ $r->id }}" {{ (int) old('religion_id', $employee->religion_id) === $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('religion_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group col-6 col-md-3">
-                            <label for="blood_type">Golongan Darah</label>
-                            <select id="blood_type" name="blood_type" class="form-control{{ $errors->has('blood_type') ? ' is-invalid' : '' }}">
+                            <label for="blood_type_id">Golongan Darah</label>
+                            <select id="blood_type_id" name="blood_type_id" class="form-control{{ $errors->has('blood_type_id') ? ' is-invalid' : '' }}">
                                 <option value="">-- Pilih --</option>
-                                @foreach(['A','B','AB','O'] as $bt)
-                                    <option value="{{ $bt }}" {{ old('blood_type', $employee->blood_type) == $bt ? 'selected' : '' }}>{{ $bt }}</option>
+                                @foreach($bloodTypes as $bt)
+                                    <option value="{{ $bt->id }}" {{ (int) old('blood_type_id', $employee->blood_type_id) === $bt->id ? 'selected' : '' }}>{{ $bt->name }}</option>
                                 @endforeach
                             </select>
-                            @error('blood_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('blood_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-3">
                             <label for="npwp_number">NPWP</label>
@@ -215,23 +224,41 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-12 col-md-4">
-                            <label for="domicile_city">Kota</label>
-                            <input type="text" id="domicile_city" name="domicile_city" class="form-control{{ $errors->has('domicile_city') ? ' is-invalid' : '' }}"
-                                   value="{{ old('domicile_city', $employee->domicile_city) }}">
-                            @error('domicile_city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="domicile_province_id">Provinsi</label>
+                            <select id="domicile_province_id" name="domicile_province_id" class="form-control region-province" data-city-target="domicile_city_id">
+                                <option value="">-- Pilih --</option>
+                                @foreach($provinces as $prov)
+                                    <option value="{{ $prov->id }}" {{ (int) old('domicile_province_id', $employee->domicile_province_id) === $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="form-group col-6 col-md-4">
-                            <label for="domicile_district">Kecamatan</label>
-                            <input type="text" id="domicile_district" name="domicile_district" class="form-control{{ $errors->has('domicile_district') ? ' is-invalid' : '' }}"
-                                   value="{{ old('domicile_district', $employee->domicile_district) }}">
-                            @error('domicile_district')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="domicile_city_id">Kota / Kabupaten</label>
+                            <select id="domicile_city_id" name="domicile_city_id" class="form-control{{ $errors->has('domicile_city_id') ? ' is-invalid' : '' }}"
+                                    data-selected="{{ old('domicile_city_id', $employee->domicile_city_id) }}">
+                                <option value="">-- Pilih Provinsi dulu --</option>
+                            </select>
+                            @error('domicile_city_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-group col-6 col-md-4">
-                            <label for="domicile_subdistrict">Kelurahan</label>
-                            <input type="text" id="domicile_subdistrict" name="domicile_subdistrict" class="form-control{{ $errors->has('domicile_subdistrict') ? ' is-invalid' : '' }}"
-                                   value="{{ old('domicile_subdistrict', $employee->domicile_subdistrict) }}">
-                            @error('domicile_subdistrict')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="domicile_district_id">Kecamatan</label>
+                            <select id="domicile_district_id" name="domicile_district_id" class="form-control region-district"
+                                    data-city-source="domicile_city_id" data-village-target="domicile_village_id"
+                                    data-selected="{{ old('domicile_district_id', $employee->domicile_district_id) }}">
+                                <option value="">-- Pilih Kota dulu --</option>
+                            </select>
+                            <input type="text" name="domicile_district" class="form-control form-control-sm mt-1 region-manual"
+                                   placeholder="atau ketik manual" value="{{ old('domicile_district', $employee->domicile_district) }}">
+                        </div>
+                        <div class="form-group col-6 col-md-3">
+                            <label for="domicile_village_id">Kelurahan</label>
+                            <select id="domicile_village_id" name="domicile_village_id" class="form-control"
+                                    data-selected="{{ old('domicile_village_id', $employee->domicile_village_id) }}">
+                                <option value="">-- Pilih Kecamatan dulu --</option>
+                            </select>
+                            <input type="text" name="domicile_subdistrict" class="form-control form-control-sm mt-1 region-manual"
+                                   placeholder="atau ketik manual" value="{{ old('domicile_subdistrict', $employee->domicile_subdistrict) }}">
                         </div>
                     </div>
 
@@ -248,23 +275,41 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-12 col-md-4">
-                            <label for="ktp_city">Kota</label>
-                            <input type="text" id="ktp_city" name="ktp_city" class="form-control{{ $errors->has('ktp_city') ? ' is-invalid' : '' }}"
-                                   value="{{ old('ktp_city', $employee->ktp_city) }}">
-                            @error('ktp_city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="ktp_province_id">Provinsi</label>
+                            <select id="ktp_province_id" name="ktp_province_id" class="form-control region-province" data-city-target="ktp_city_id">
+                                <option value="">-- Pilih --</option>
+                                @foreach($provinces as $prov)
+                                    <option value="{{ $prov->id }}" {{ (int) old('ktp_province_id', $employee->ktp_province_id) === $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="form-group col-6 col-md-4">
-                            <label for="ktp_district">Kecamatan</label>
-                            <input type="text" id="ktp_district" name="ktp_district" class="form-control{{ $errors->has('ktp_district') ? ' is-invalid' : '' }}"
-                                   value="{{ old('ktp_district', $employee->ktp_district) }}">
-                            @error('ktp_district')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="ktp_city_id">Kota / Kabupaten</label>
+                            <select id="ktp_city_id" name="ktp_city_id" class="form-control{{ $errors->has('ktp_city_id') ? ' is-invalid' : '' }}"
+                                    data-selected="{{ old('ktp_city_id', $employee->ktp_city_id) }}">
+                                <option value="">-- Pilih Provinsi dulu --</option>
+                            </select>
+                            @error('ktp_city_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-group col-6 col-md-4">
-                            <label for="ktp_subdistrict">Kelurahan</label>
-                            <input type="text" id="ktp_subdistrict" name="ktp_subdistrict" class="form-control{{ $errors->has('ktp_subdistrict') ? ' is-invalid' : '' }}"
-                                   value="{{ old('ktp_subdistrict', $employee->ktp_subdistrict) }}">
-                            @error('ktp_subdistrict')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-group col-6 col-md-3">
+                            <label for="ktp_district_id">Kecamatan</label>
+                            <select id="ktp_district_id" name="ktp_district_id" class="form-control region-district"
+                                    data-city-source="ktp_city_id" data-village-target="ktp_village_id"
+                                    data-selected="{{ old('ktp_district_id', $employee->ktp_district_id) }}">
+                                <option value="">-- Pilih Kota dulu --</option>
+                            </select>
+                            <input type="text" name="ktp_district" class="form-control form-control-sm mt-1 region-manual"
+                                   placeholder="atau ketik manual" value="{{ old('ktp_district', $employee->ktp_district) }}">
+                        </div>
+                        <div class="form-group col-6 col-md-3">
+                            <label for="ktp_village_id">Kelurahan</label>
+                            <select id="ktp_village_id" name="ktp_village_id" class="form-control"
+                                    data-selected="{{ old('ktp_village_id', $employee->ktp_village_id) }}">
+                                <option value="">-- Pilih Kecamatan dulu --</option>
+                            </select>
+                            <input type="text" name="ktp_subdistrict" class="form-control form-control-sm mt-1 region-manual"
+                                   placeholder="atau ketik manual" value="{{ old('ktp_subdistrict', $employee->ktp_subdistrict) }}">
                         </div>
                     </div>
 
@@ -327,17 +372,38 @@
 
                     <div class="form-row">
                         <div class="form-group col-12 col-md-6">
+                            <label for="division_id">Divisi</label>
+                            <select id="division_id" name="division_id" class="form-control{{ $errors->has('division_id') ? ' is-invalid' : '' }}">
+                                <option value="">-- Pilih Divisi --</option>
+                                @foreach($divisions as $dv)
+                                    <option value="{{ $dv->id }}" data-company="{{ $dv->company_id }}" {{ (int) old('division_id', $employee->division_id) === $dv->id ? 'selected' : '' }}>{{ $dv->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('division_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-12 col-md-6">
                             <label for="department_id">Departemen</label>
                             <select id="department_id" name="department_id" class="form-control{{ $errors->has('department_id') ? ' is-invalid' : '' }}">
                                 <option value="">-- Pilih Departemen --</option>
                                 @foreach($departments as $d)
-                                    <option value="{{ $d->id }}" {{ old('department_id', $employee->department_id) == $d->id ? 'selected' : '' }}>
+                                    <option value="{{ $d->id }}" data-company="{{ $d->company_id }}" data-division="{{ $d->division_id }}" {{ old('department_id', $employee->department_id) == $d->id ? 'selected' : '' }}>
                                         [{{ $d->code }}] {{ $d->name }}
                                     </option>
                                 @endforeach
                             </select>
                             <small class="text-muted">Belum ada di daftar? <a href="{{ route('appraisal.departments.index') }}" target="_blank">Kelola Departemen</a></small>
                             @error('department_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-12 col-md-6">
+                            <label for="section_id">Section / Bagian</label>
+                            <select id="section_id" name="section_id" class="form-control{{ $errors->has('section_id') ? ' is-invalid' : '' }}"
+                                    data-selected="{{ old('section_id', $employee->section_id) }}">
+                                <option value="">-- Pilih Departemen dulu --</option>
+                            </select>
+                            @error('section_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-12 col-md-6">
                             <label for="lob">LOB (Line of Business)</label>
@@ -447,69 +513,8 @@
 
         @if($employee->id)
         <hr class="my-4">
-        <div class="h5 mb-2">Anggota Keluarga (Istri &amp; Anak)</div>
-        <div class="alert alert-info py-2 px-3 mb-3" style="font-size:.85rem">
-            <i class="gd-info mr-1"></i> Perusahaan menanggung medical reimbursement untuk maksimal <strong>1 istri/suami</strong> dan <strong>2 anak</strong>. Data ini dipakai sebagai pilihan "Nama Pasien" saat karyawan mengajukan reimbursement — jadi tidak perlu diketik ulang setiap pengajuan.
-        </div>
-
-        <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered mb-0">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Nama</th>
-                        <th style="width:160px">Hubungan</th>
-                        <th style="width:140px">Tgl Lahir</th>
-                        <th style="width:70px"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($employee->familyMembers as $fm)
-                    <tr>
-                        <td>{{ $fm->name }}</td>
-                        <td>{{ \App\Models\EmployeeFamilyMember::$relationLabels[$fm->relation] ?? $fm->relation }}</td>
-                        <td>{{ $fm->birth_date?->format('d/m/Y') ?? '-' }}</td>
-                        <td class="text-center">
-                            <form method="POST" action="{{ route('appraisal.employees.family-members.destroy', [$employee, $fm]) }}"
-                                  onsubmit="return confirm('Hapus {{ $fm->name }} dari anggota keluarga?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-xs btn-outline-danger"><i class="gd-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4" class="text-center text-muted py-3">Belum ada data istri/anak.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <form method="POST" action="{{ route('appraisal.employees.family-members.store', $employee) }}" class="form-row align-items-end">
-            @csrf
-            <div class="form-group col-md-4 mb-2">
-                <label class="small font-weight-bold mb-1">Nama</label>
-                <input type="text" name="name" class="form-control form-control-sm @error('name') is-invalid @enderror"
-                       value="{{ old('name') }}" required maxlength="100" placeholder="Nama lengkap">
-                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-            <div class="form-group col-md-3 mb-2">
-                <label class="small font-weight-bold mb-1">Hubungan</label>
-                <select name="relation" class="form-control form-control-sm @error('relation') is-invalid @enderror" required>
-                    @foreach(\App\Models\EmployeeFamilyMember::$relationLabels as $val => $label)
-                        <option value="{{ $val }}" {{ old('relation') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
-                @error('relation')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-            <div class="form-group col-md-3 mb-2">
-                <label class="small font-weight-bold mb-1">Tgl Lahir <span class="text-muted font-weight-normal">(opsional)</span></label>
-                <input type="date" name="birth_date" class="form-control form-control-sm @error('birth_date') is-invalid @enderror"
-                       value="{{ old('birth_date') }}" max="{{ now()->format('Y-m-d') }}">
-                @error('birth_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-            <div class="form-group col-md-2 mb-2">
-                <button type="submit" class="btn btn-sm btn-outline-primary btn-block"><i class="gd-plus mr-1"></i>Tambah</button>
-            </div>
-        </form>
+        <div class="h5 mb-3">Data Lengkap Karyawan</div>
+        @include('appraisal.employee._data_tabs')
         @endif
     </div>
 </div>
@@ -548,9 +553,111 @@ function previewEmployeePhoto(input) {
 
 function copyDomicileToKtp() {
     document.getElementById('ktp_address').value = document.getElementById('domicile_address').value;
-    document.getElementById('ktp_city').value = document.getElementById('domicile_city').value;
-    document.getElementById('ktp_district').value = document.getElementById('domicile_district').value;
-    document.getElementById('ktp_subdistrict').value = document.getElementById('domicile_subdistrict').value;
+    document.querySelector('[name="ktp_district"]').value = document.querySelector('[name="domicile_district"]').value;
+    document.querySelector('[name="ktp_subdistrict"]').value = document.querySelector('[name="domicile_subdistrict"]').value;
+
+    var srcProv = document.getElementById('domicile_province_id');
+    var dstProv = document.getElementById('ktp_province_id');
+    dstProv.value = srcProv.value;
+    renderCities(dstProv, document.getElementById('domicile_city_id').value);
+    // biar cascade kecamatan/kelurahan KTP ikut ke-load setelah kota tersalin
+    document.getElementById('ktp_city_id').dispatchEvent(new Event('change'));
 }
+
+// ── Dependent dropdown: Provinsi → Kota → Kecamatan → Kelurahan, Departemen → Section ──
+(function () {
+    var CITIES   = @json($cities->map->only(['id', 'name', 'province_id'])->values());
+    var SECTIONS = @json($sections->map->only(['id', 'name', 'department_id'])->values());
+    var REGION_API = "{{ url('region-api') }}";
+
+    window.renderCities = function (provinceSelect, selectedId) {
+        var target = document.getElementById(provinceSelect.dataset.cityTarget);
+        if (!target) return;
+        var pid = parseInt(provinceSelect.value, 10);
+        target.innerHTML = '<option value="">-- Pilih --</option>';
+        CITIES.filter(function (c) { return c.province_id === pid; })
+              .sort(function (a, b) { return a.name.localeCompare(b.name); })
+              .forEach(function (c) {
+                  var o = document.createElement('option');
+                  o.value = c.id;
+                  o.textContent = c.name;
+                  if (String(c.id) === String(selectedId)) o.selected = true;
+                  target.appendChild(o);
+              });
+        target.dispatchEvent(new Event('change'));
+    };
+
+    function fillSelect(sel, rows, selectedId, placeholder) {
+        sel.innerHTML = '<option value="">' + placeholder + '</option>';
+        rows.forEach(function (r) {
+            var o = document.createElement('option');
+            o.value = r.id;
+            o.textContent = r.name;
+            if (String(r.id) === String(selectedId)) o.selected = true;
+            sel.appendChild(o);
+        });
+    }
+
+    function loadRegion(url, params) {
+        var qs = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return fetch(REGION_API + '/' + url + '?' + qs, { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .catch(function () { return []; });
+    }
+
+    // Kecamatan: bereaksi saat kota berubah
+    document.querySelectorAll('.region-district').forEach(function (distSel) {
+        var citySel   = document.getElementById(distSel.dataset.citySource);
+        var villageSel = document.getElementById(distSel.dataset.villageTarget);
+
+        function reloadDistricts(keepSelected) {
+            var cityId = citySel.value;
+            if (!cityId) { fillSelect(distSel, [], null, '-- Pilih Kota dulu --'); fillSelect(villageSel, [], null, '-- Pilih Kecamatan dulu --'); return; }
+            loadRegion('districts', { city_id: cityId }).then(function (rows) {
+                fillSelect(distSel, rows, keepSelected ? distSel.dataset.selected : null, rows.length ? '-- Pilih Kecamatan --' : '-- (belum ada data, isi manual) --');
+                distSel.dispatchEvent(new Event('change'));
+            });
+        }
+        function reloadVillages(keepSelected) {
+            var distId = distSel.value;
+            if (!distId) { fillSelect(villageSel, [], null, '-- Pilih Kecamatan dulu --'); return; }
+            loadRegion('villages', { district_id: distId }).then(function (rows) {
+                fillSelect(villageSel, rows, keepSelected ? villageSel.dataset.selected : null, rows.length ? '-- Pilih Kelurahan/Desa --' : '-- (belum ada data, isi manual) --');
+            });
+        }
+
+        citySel.addEventListener('change', function () { reloadDistricts(true); });
+        distSel.addEventListener('change', function () { reloadVillages(true); });
+        // load awal (kalau kota sudah ada nilainya)
+        if (citySel.value) reloadDistricts(true);
+    });
+
+    function renderSections(selectedId) {
+        var target = document.getElementById('section_id');
+        var did = parseInt(document.getElementById('department_id').value, 10);
+        target.innerHTML = '<option value="">-- Pilih --</option>';
+        SECTIONS.filter(function (s) { return s.department_id === did; })
+                .forEach(function (s) {
+                    var o = document.createElement('option');
+                    o.value = s.id;
+                    o.textContent = s.name;
+                    if (String(s.id) === String(selectedId)) o.selected = true;
+                    target.appendChild(o);
+                });
+    }
+
+    document.querySelectorAll('.region-province').forEach(function (sel) {
+        var cityEl = document.getElementById(sel.dataset.cityTarget);
+        renderCities(sel, cityEl ? cityEl.dataset.selected : null);
+        sel.addEventListener('change', function () { renderCities(sel, null); });
+    });
+
+    var deptEl = document.getElementById('department_id');
+    var sectionEl = document.getElementById('section_id');
+    if (deptEl && sectionEl) {
+        renderSections(sectionEl.dataset.selected);
+        deptEl.addEventListener('change', function () { renderSections(null); });
+    }
+})();
 </script>
 @endsection

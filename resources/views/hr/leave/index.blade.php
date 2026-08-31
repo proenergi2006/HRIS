@@ -37,7 +37,7 @@
         <label class="small font-weight-bold">Status</label>
         <select name="status" class="form-control form-control-sm">
           <option value="">Semua</option>
-          @foreach(\App\Models\HR\LeaveRequest::$statusLabels as $val => $lbl)
+          @foreach(['draft'=>'Draft','pending'=>'Menunggu Persetujuan','approved'=>'Disetujui','rejected'=>'Ditolak','cancelled'=>'Dibatalkan'] as $val => $lbl)
             <option value="{{ $val }}" {{ $status === $val ? 'selected' : '' }}>{{ $lbl }}</option>
           @endforeach
         </select>
@@ -90,8 +90,8 @@
             </td>
             <td class="text-center">{{ $req->total_days }}</td>
             <td class="text-center">
-              <span class="badge badge-{{ \App\Models\HR\LeaveRequest::$statusBadges[$req->status] }}">
-                {{ \App\Models\HR\LeaveRequest::$statusLabels[$req->status] }}
+              <span class="badge badge-{{ \App\Models\HR\LeaveRequest::$statusBadges[$req->status] ?? 'secondary' }}">
+                {{ \App\Models\HR\LeaveRequest::$statusLabels[$req->status] ?? ucfirst($req->status) }}
               </span>
             </td>
             <td>

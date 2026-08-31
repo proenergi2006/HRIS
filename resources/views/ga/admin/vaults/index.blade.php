@@ -8,7 +8,7 @@
   <div class="h3 mb-0">Berangkas Dokumen</div>
   <div>
     <a href="{{ route('ga.admin.vault-documents.index') }}" class="btn btn-outline-secondary mr-1">
-      <i class="gd-file-text mr-1"></i> Daftar Dokumen
+      <i class="gd-file mr-1"></i> Daftar Dokumen
     </a>
     <a href="{{ route('ga.admin.vaults.create') }}" class="btn btn-primary">
       <i class="gd-plus mr-1"></i> Tambah Berangkas

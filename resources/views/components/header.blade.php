@@ -70,7 +70,7 @@ if ($authUser) {
             ]);
 
         // 4. Penilaian masih dalam proses (monitoring admin)
-        $appraisalPending = Appraisal::whereIn('status', ['submitted', 'approved_user2'])
+        $appraisalPending = Appraisal::where('status', 'pending')
             ->whereHas('employee')
             ->whereHas('period')
             ->with(['employee', 'period'])
@@ -78,7 +78,7 @@ if ($authUser) {
             ->take(3)
             ->get()
             ->map(fn($a) => [
-                'icon'  => 'gd-clock',
+                'icon'  => 'gd-time',
                 'color' => 'text-warning',
                 'title' => __('notifications.appraisal_pending_admin'),
                 'body'  => __('notifications.appraisal_pending_admin_body', [
@@ -89,7 +89,11 @@ if ($authUser) {
                 'time' => $a->updated_at->diffForHumans(),
             ]);
 
-        $notifItems = $contractNotif->merge($reimbPending)->merge($wbNew)->merge($appraisalPending)->take(8);
+        // collect() dulu (base Support Collection) sebelum merge — kalau operand
+        // pertama kebetulan kosong, Eloquent\Collection::merge() tetap terpakai
+        // (tidak turun ke base Collection) dan meledak begitu operand lain berisi
+        // array biasa (bukan Model) karena manggil ->getKey() di array.
+        $notifItems = collect()->merge($contractNotif)->merge($reimbPending)->merge($wbNew)->merge($appraisalPending)->take(8);
         $viewAllUrl = route('reimbursement.admin.index', ['status' => 'submitted']);
 
     // ── HR MANAGER ────────────────────────────────────────────────────────────
@@ -122,21 +126,47 @@ if ($authUser) {
                 'time'  => $w->created_at->diffForHumans(),
             ]);
 
-        $notifItems = $contractNotifHr->merge($wbNewHr)->take(8);
+        $engine = app(\App\Services\ApprovalEngine::class);
+        $appraisalPendingHr = $engine->pendingStepsFor($authUser)
+            ->whereHas('request', fn($q) => $q->where('transaction_type', 'appraisal'))
+            ->with('request.approvable.employee', 'request.approvable.period')
+            ->latest('updated_at')
+            ->take(6)
+            ->get()
+            ->filter(fn($s) => $engine->canActOn($s, $authUser))
+            ->map(fn($s) => $s->request->approvable)
+            ->filter()
+            ->map(fn($a) => [
+                'icon'  => 'gd-time',
+                'color' => 'text-warning',
+                'title' => __('notifications.pending_approval'),
+                'body'  => __('notifications.pending_approval_body', [
+                    'name'   => $a->employee?->name ?? '-',
+                    'period' => $a->period?->name ?? '-',
+                ]),
+                'url'  => route('appraisal.appraisals.show', $a),
+                'time' => $a->updated_at->diffForHumans(),
+            ]);
+
+        // collect() dulu — lihat komentar di blok ADMIN soal jebakan Eloquent\Collection::merge().
+        $notifItems = collect()->merge($contractNotifHr)->merge($wbNewHr)->merge($appraisalPendingHr)->take(8);
         $viewAllUrl = route('dashboard');
 
     // ── USER II ────────────────────────────────────────────────────────────────
     } elseif ($authUser->hasRole('user_ii')) {
 
-        $notifItems = Appraisal::where('status', Appraisal::STATUS_SUBMITTED)
-            ->whereHas('employee')
-            ->whereHas('period')
-            ->with(['employee', 'period'])
+        $engine = app(\App\Services\ApprovalEngine::class);
+        $notifItems = $engine->pendingStepsFor($authUser)
+            ->whereHas('request', fn($q) => $q->where('transaction_type', 'appraisal'))
+            ->with('request.approvable.employee', 'request.approvable.period')
             ->latest('updated_at')
             ->take(6)
             ->get()
+            ->filter(fn($s) => $engine->canActOn($s, $authUser))
+            ->map(fn($s) => $s->request->approvable)
+            ->filter()
             ->map(fn($a) => [
-                'icon'  => 'gd-clock',
+                'icon'  => 'gd-time',
                 'color' => 'text-warning',
                 'title' => __('notifications.pending_approval'),
                 'body'  => __('notifications.pending_approval_body', [
@@ -151,13 +181,16 @@ if ($authUser) {
     // ── CFO / CEO ──────────────────────────────────────────────────────────────
     } elseif ($authUser->hasAnyRole(['cfo', 'ceo'])) {
 
-        $notifItems = Appraisal::where('status', Appraisal::STATUS_APPROVED_U2)
-            ->whereHas('employee')
-            ->whereHas('period')
-            ->with(['employee', 'period'])
+        $engine = app(\App\Services\ApprovalEngine::class);
+        $notifItems = $engine->pendingStepsFor($authUser)
+            ->whereHas('request', fn($q) => $q->where('transaction_type', 'appraisal'))
+            ->with('request.approvable.employee', 'request.approvable.period')
             ->latest('updated_at')
             ->take(6)
             ->get()
+            ->filter(fn($s) => $engine->canActOn($s, $authUser))
+            ->map(fn($s) => $s->request->approvable)
+            ->filter()
             ->map(fn($a) => [
                 'icon'  => 'gd-arrow-circle-right',
                 'color' => 'text-info',
@@ -174,7 +207,7 @@ if ($authUser) {
     // ── EVALUATOR ──────────────────────────────────────────────────────────────
     } elseif ($authUser->hasRole('evaluator')) {
 
-        $notifItems = Appraisal::where('status', Appraisal::STATUS_REJECTED)
+        $notifItems = Appraisal::where('status', 'rejected')
             ->where('evaluator_id', $authUser->id)
             ->whereHas('employee')
             ->whereHas('period')
@@ -206,7 +239,7 @@ if ($authUser) {
             ->take(6)
             ->get()
             ->map(fn($r) => [
-                'icon'  => $r->status === 'approved' ? 'gd-check-circle' : 'gd-times-circle',
+                'icon'  => $r->status === 'approved' ? 'gd-check' : 'gd-close',
                 'color' => $r->status === 'approved' ? 'text-success' : 'text-danger',
                 'title' => $r->status === 'approved'
                     ? __('notifications.reimb_approved')
@@ -234,19 +267,17 @@ $notifCount = $notifItems->count();
   <nav class="navbar flex-nowrap p-0">
     <div class="navbar-brand-wrapper d-flex align-items-center col-auto">
       <!-- Brand Mobile -->
-      <a class="navbar-brand navbar-brand-mobile" href="{{ route('dashboard') }}"
-         style="font-size:1.4rem;font-weight:900;letter-spacing:3px;color:#e8a020;text-decoration:none;">
-        SI
+      <a class="navbar-brand navbar-brand-mobile" href="{{ route('dashboard') }}" style="text-decoration:none;">
+        <img src="{{ asset('img/propeople-icon.png') }}" alt="ProPeople" style="height:38px;width:38px;border-radius:9px;">
       </a>
 
       <!-- Brand Desktop -->
-      <a class="navbar-brand navbar-brand-desktop" href="{{ route('dashboard') }}"
-         style="text-decoration:none;line-height:1;">
-        <span class="side-nav-show-on-closed"
-              style="font-size:1.4rem;font-weight:900;letter-spacing:3px;color:#e8a020;">SI</span>
-        <span class="side-nav-hide-on-closed d-flex flex-column" style="line-height:1.2;">
-          <span style="font-size:1.6rem;font-weight:900;letter-spacing:4px;color:#e8a020;">HRMS</span>
-          <span style="font-size:0.65rem;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;">PT. Pro Energi</span>
+      <a class="navbar-brand navbar-brand-desktop d-flex align-items-center" href="{{ route('dashboard') }}"
+         style="text-decoration:none;line-height:1;gap:10px;">
+        <img src="{{ asset('img/propeople-icon.png') }}" alt="ProPeople" style="height:42px;width:42px;border-radius:10px;flex-shrink:0;">
+        <span class="side-nav-hide-on-closed d-flex flex-column" style="line-height:1.12;">
+          <span style="font-size:1.45rem;font-weight:900;letter-spacing:1px;color:#e8a020;">ProPeople</span>
+          <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;color:#8a94a6;text-transform:uppercase;">PT. Pro Energi</span>
         </span>
       </a>
     </div>
@@ -354,7 +385,7 @@ $notifCount = $notifItems->count();
                                 {{ $notif['body'] }}
                               </div>
                               <div class="text-muted mt-1" style="font-size:0.72rem;">
-                                <i class="gd-clock mr-1"></i>{{ $notif['time'] }}
+                                <i class="gd-time mr-1"></i>{{ $notif['time'] }}
                               </div>
                             </div>
                           </div>

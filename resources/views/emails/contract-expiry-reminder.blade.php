@@ -42,5 +42,5 @@ Kelola Data Karyawan
 </x-mail::button>
 
 Salam,
-**HRMS — PT. Pro Energi**
+**ProPeople — PT. Pro Energi**
 </x-mail::message>

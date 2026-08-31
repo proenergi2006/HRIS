@@ -14,7 +14,7 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="card flex-row align-items-center p-3">
             <div class="icon icon-lg bg-soft-primary rounded-circle mr-3">
-                <i class="gd-check-circle icon-text d-inline-block text-primary"></i>
+                <i class="gd-check icon-text d-inline-block text-primary"></i>
             </div>
             <div>
                 <h4 class="lh-1 mb-1">{{ $stats['total'] }}</h4>

@@ -25,6 +25,12 @@
         </button>
       </form>
     @endif
+    @if($reimbursement->isPending())
+      <form method="POST" action="{{ route('reimbursement.cancel', $reimbursement) }}" class="d-inline" onsubmit="return confirm('Batalkan pengajuan ini?')">
+        @csrf
+        <button class="btn btn-sm btn-outline-danger mr-1"><i class="gd-close mr-1"></i>Batalkan</button>
+      </form>
+    @endif
     <a href="{{ route('reimbursement.pdf', $reimbursement) }}" target="_blank" class="btn btn-sm btn-outline-secondary ml-1">
       <i class="gd-export mr-1"></i> Download PDF
     </a>
@@ -49,8 +55,8 @@
       </div>
       <div class="col-sm-2">
         <div class="text-muted small">Status</div>
-        <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$reimbursement->status] }}">
-          {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$reimbursement->status] }}
+        <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$reimbursement->status] ?? 'secondary' }}">
+          {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$reimbursement->status] ?? ucfirst($reimbursement->status) }}
         </span>
       </div>
       <div class="col-sm-3 text-right">
@@ -69,8 +75,9 @@
     @endif
     @if($reimbursement->isApproved())
       <div class="alert alert-success mt-2 mb-0 py-2">
-        Disetujui oleh <strong>{{ $reimbursement->approver?->name }}</strong>
-        pada {{ $reimbursement->approved_at->format('d M Y, H:i') }}
+        Disetujui
+        @if($reimbursement->approver) oleh <strong>{{ $reimbursement->approver->name }}</strong>@endif
+        @if($reimbursement->approved_at) pada {{ $reimbursement->approved_at->format('d M Y, H:i') }}@endif
         @if($reimbursement->payment_period_label)
           <br>Akan dibayarkan pada periode gaji <strong>{{ $reimbursement->payment_period_label }}</strong>.
         @endif
@@ -78,6 +85,31 @@
     @endif
   </div>
 </div>
+
+@if($reimbursement->isPending() && $reimbursement->approvalRequest)
+<div class="card mb-3">
+  <div class="card-header font-weight-bold">Alur Persetujuan</div>
+  <div class="card-body py-2">
+    <ol class="list-unstyled mb-0">
+      @foreach($reimbursement->approvalRequest->steps as $s)
+        <li class="d-flex mb-2">
+          <span class="mr-3" style="width:20px">
+            @if($s->status === 'approved')<i class="gd-check text-success"></i>
+            @elseif($s->status === 'rejected')<i class="gd-close text-danger"></i>
+            @elseif($s->status === 'skipped')<i class="gd-minus text-muted"></i>
+            @else<i class="gd-time text-warning"></i>@endif
+          </span>
+          <div>
+            <div class="font-weight-bold small">Step {{ $s->step_order }} — {{ $s->approver_label }}</div>
+            <small class="text-muted">{{ $s->approver?->name ?? ($s->approver_type === 'specific_role' ? 'berbasis role' : '—') }}
+              @if($s->acted_at) · {{ ucfirst($s->status) }} {{ $s->acted_at->format('d/m/Y H:i') }}@endif</small>
+          </div>
+        </li>
+      @endforeach
+    </ol>
+  </div>
+</div>
+@endif
 
 {{-- Saldo --}}
 @if($balance)

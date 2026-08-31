@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Perdin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\Perdin\PerdinSubmittedMail;
 use App\Models\Perdin\PerdinRequest;
+use App\Services\ApprovalEngine;
 use App\Services\Perdin\PerdinApprovalService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class PerdinController extends Controller
 {
-    public function __construct(private PerdinApprovalService $service) {}
+    public function __construct(
+        private PerdinApprovalService $service,
+        private ApprovalEngine $engine,
+    ) {}
 
     private function rules(): array
     {
@@ -86,12 +88,14 @@ class PerdinController extends Controller
     public function show(PerdinRequest $perdin)
     {
         $this->authorizeOwnerOrApprover($perdin);
-        $perdin->load(['budgetItems', 'itineraries', 'approvals.approver', 'user']);
+        $perdin->load([
+            'budgetItems', 'itineraries', 'user',
+            'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy',
+        ]);
 
-        $canApprove    = $this->service->canApprove($perdin, auth()->user());
-        $managerUser   = $this->service->directManagerUser($perdin);
+        $managerUser = $this->service->directManagerUser($perdin);
 
-        return view('perdin.show', compact('perdin', 'canApprove', 'managerUser'));
+        return view('perdin.show', compact('perdin', 'managerUser'));
     }
 
     public function edit(PerdinRequest $perdin)
@@ -136,16 +140,34 @@ class PerdinController extends Controller
         abort_unless($perdin->isEditable(), 403);
         abort_if($perdin->budgetItems()->count() === 0, 422, 'Tambahkan minimal 1 item anggaran sebelum submit.');
 
-        try {
-            $this->service->submit($perdin);
-        } catch (ValidationException $e) {
-            return back()->with('error', collect($e->errors())->flatten()->first());
+        $perdin->recalculateTotals();
+        $perdin->refresh();
+        $perdin->update(['status' => 'pending', 'notes_rejection' => null]);
+
+        // Jalankan lewat Approval Engine — alur diambil dari workflow
+        // "Perjalanan Dinas" yang dikonfigurasi HR per perusahaan.
+        $this->engine->start($perdin);
+        $perdin->refresh();
+        if ($perdin->approvalRequest?->status === 'approved' && ! $perdin->isApproved()) {
+            $perdin->forceFill(['status' => 'approved'])->save();
         }
 
-        $this->notifyNextApprover($perdin);
-
         return redirect()->route('perdin.show', $perdin)
-            ->with('status', 'Permohonan berhasil disubmit dan menunggu persetujuan.');
+            ->with('status', 'Permohonan disubmit. Menunggu persetujuan.');
+    }
+
+    /** Batalkan permohonan yang masih menunggu persetujuan. */
+    public function cancel(PerdinRequest $perdin)
+    {
+        abort_unless($perdin->user_id === auth()->id() || auth()->user()->hasRole('admin'), 403);
+        abort_unless($perdin->isPending(), 422);
+
+        if ($perdin->approvalRequest) {
+            $this->engine->cancel($perdin->approvalRequest);
+        }
+        $perdin->forceFill(['status' => 'cancelled'])->save();
+
+        return back()->with('status', 'Permohonan dibatalkan.');
     }
 
     public function pdf(PerdinRequest $perdin)
@@ -171,28 +193,9 @@ class PerdinController extends Controller
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
-    private function notifyNextApprover(PerdinRequest $perdin): void
-    {
-        try {
-            $recipients = collect();
-            $role = $perdin->nextApprovalRole();
-
-            if ($role === 'direct_manager') {
-                $recipients->push($this->service->directManagerUser($perdin));
-            } elseif ($role === 'hr_manager') {
-                $recipients = \App\Models\User::role('hr_manager')->get();
-            } elseif ($role === 'ceo') {
-                $recipients = \App\Models\User::role('ceo')->get();
-            }
-
-            foreach ($recipients->filter() as $user) {
-                Mail::to($user->email)->send(new PerdinSubmittedMail($perdin, $user));
-            }
-        } catch (\Throwable) {
-            // notification failure must not block the flow
-        }
-    }
+    // notifyNextApprover() dihapus — sudah dead code (tidak pernah dipanggil),
+    // dan notifikasi "menunggu persetujuan" sekarang generik lewat
+    // App\Services\ApprovalEngine::notifyStepApprover().
 
     private function authorizeOwnerOrApprover(PerdinRequest $perdin): void
     {
@@ -204,6 +207,12 @@ class PerdinController extends Controller
             return;
         }
         if ($this->service->directManagerUser($perdin)?->id === $user->id) {
+            return;
+        }
+        // Approver di alur engine (mis. delegasi) juga boleh melihat.
+        if ($perdin->approvalRequest
+            && $perdin->approvalRequest->steps()
+                ->where('approver_user_id', $user->id)->exists()) {
             return;
         }
         abort(403);

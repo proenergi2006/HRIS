@@ -73,10 +73,10 @@
 
             <div class="form-row">
                 <div class="form-group col-12 col-md-6">
-                    <label for="appraisal_template_id">Template Penilaian <span class="text-danger">*</span></label>
+                    <label for="appraisal_template_id">Template KPI Awal <small class="text-muted">(opsional)</small></label>
                     <select id="appraisal_template_id" name="appraisal_template_id"
                             class="form-control{{ $errors->has('appraisal_template_id') ? ' is-invalid' : '' }}">
-                        <option value="">-- Pilih Template --</option>
+                        <option value="">-- Tanpa Template (isi KPI dari nol) --</option>
                         @foreach($templates as $tmpl)
                             <option value="{{ $tmpl->id }}"
                                     data-level="{{ $tmpl->level_id }}"
@@ -90,7 +90,7 @@
                     @error('appraisal_template_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
-                    <small class="text-muted">Template otomatis dipilih sesuai level jabatan karyawan.</small>
+                    <small class="text-muted">Kalau dipilih, daftar KPI starter template ini otomatis disalin — tetap bisa diedit/ditambah/dihapus per penilaian.</small>
                 </div>
             </div>
 

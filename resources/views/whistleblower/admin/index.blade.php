@@ -19,7 +19,7 @@
                 <small class="text-muted">Whistleblower System — PT. Pro Energi</small>
             </div>
             <a href="{{ route('whistleblower.admin.qrcode') }}" class="btn btn-outline-secondary">
-                <i class="gd-qr-code icon-text"></i> QR Code
+                <i class="gd-view-grid icon-text"></i> QR Code
             </a>
         </div>
 

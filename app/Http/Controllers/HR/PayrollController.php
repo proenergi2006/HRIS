@@ -12,6 +12,7 @@ use App\Models\HR\PayrollSlipDetail;
 use App\Models\HR\SalaryComponent;
 use App\Models\HR\EmployeeSalaryComponent;
 use App\Models\Reimbursement\ReimbursementRequest;
+use App\Services\Payroll\Pph21Calculator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -120,8 +121,19 @@ class PayrollController extends Controller
                 // 4. overtime        — Tunjangan Lembur: tarif/jam (master Jabatan) x jam lembur
                 // 5. percent_of_base / late_deduction — butuh Gaji Tetap (Gaji Pokok + Tunjangan Jabatan) dari langkah 1-2
                 // 6. medical_claim   — independen, dari reimbursement medical approved
-                // 7. mirror_pph21    — butuh nominal Potongan PPh 21 dari langkah 1 (gross-up)
-                $calcOrder = ['manual', 'position_fixed', 'position_daily', 'overtime', 'percent_of_base', 'late_deduction', 'medical_claim', 'mirror_pph21'];
+                // 7. pph21_ter       — PPh21 TER otomatis, dari total komponen is_taxable=true yang SUDAH terhitung
+                //                      (lihat App\Services\Payroll\Pph21Calculator — masih perlu validasi Finance)
+                // 8. mirror_pph21    — butuh nominal Potongan PPh 21 dari langkah 7 (gross-up)
+                // 9. loan_installment — Potongan Kasbon/Pinjaman: cicilan jatuh tempo periode ini
+                $calcOrder = ['manual', 'position_fixed', 'position_daily', 'overtime', 'percent_of_base', 'late_deduction', 'medical_claim', 'pph21_ter', 'mirror_pph21', 'loan_installment'];
+
+                // Reset cicilan pinjaman yang pernah ditandai slip ini — supaya generate ulang idempotent.
+                $existingSlipId = PayrollSlip::where('payroll_period_id', $period->id)
+                    ->where('employee_id', $empId)->value('id');
+                if ($existingSlipId) {
+                    \App\Models\HR\LoanInstallment::where('payroll_slip_id', $existingSlipId)
+                        ->update(['status' => 'pending', 'payroll_slip_id' => null, 'deducted_at' => null]);
+                }
 
                 foreach ($calcOrder as $calcType) {
                     foreach ($components->where('calculation_type', $calcType) as $comp) {
@@ -135,7 +147,9 @@ class PayrollController extends Controller
                             'percent_of_base' => $this->calcPercentOfBase($gajiTetap, $comp->rate_percent, $comp->salary_cap),
                             'late_deduction'  => $this->calcLateDeduction($lateMinutes, $gajiTetap),
                             'medical_claim'   => $this->calcMedicalClaim($employee, $period),
+                            'pph21_ter'       => $this->calcPph21Ter($employee, $details, $components),
                             'mirror_pph21'    => $this->findAmount($details, 'Potongan PPh 21', 'deduction'),
+                            'loan_installment' => $this->calcLoanInstallment($empId, $period),
                             default           => 0,
                         };
                         if ($amount === 0) continue;
@@ -182,6 +196,16 @@ class PayrollController extends Controller
                 foreach ($details as $d) {
                     $slip->details()->create($d);
                 }
+
+                // Tandai cicilan pinjaman yang benar-benar terpotong di slip ini.
+                if ($this->findAmount($details, 'Potongan Kasbon/Pinjaman', 'deduction') > 0) {
+                    \App\Models\HR\LoanInstallment::whereHas('loan', fn ($q) => $q
+                            ->where('employee_id', $empId)->where('status', 'active'))
+                        ->where('period_month', $period->month)
+                        ->where('period_year', $period->year)
+                        ->where('status', 'pending')
+                        ->update(['status' => 'deducted', 'payroll_slip_id' => $slip->id, 'deducted_at' => now()]);
+                }
             }
         });
 
@@ -189,19 +213,114 @@ class PayrollController extends Controller
             ->with('success', 'Slip gaji berhasil digenerate untuk ' . count($employeeIds) . ' karyawan.');
     }
 
+    // ── ESS — karyawan lihat slip gaji sendiri (PRD Bab 4: "lihat slip gaji") ──────
+
+    public function mySlips(Request $request)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
+
+        $slips = PayrollSlip::where('employee_id', $employee->id)
+            ->with('period')
+            ->whereHas('period', fn ($q) => $q->where('status', 'closed'))
+            ->orderByDesc('id')->get();
+
+        $taxYears = $slips->pluck('period.year')->unique()->sortDesc()->values();
+
+        return view('hr.payroll.my-slips', compact('slips', 'taxYears'));
+    }
+
+    public function mySlipPdf(Request $request, PayrollSlip $slip)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee && $slip->employee_id === $employee->id, 403);
+        abort_unless($slip->period?->status === 'closed', 403, 'Slip belum final.');
+
+        return $this->renderSlipPdf($slip, $slip->period);
+    }
+
     public function slipPdf(PayrollPeriod $period, PayrollSlip $slip)
     {
-        $slip->load(['employee.company', 'employee.level', 'employee.department', 'employee.position', 'details', 'period.company']);
+        return $this->renderSlipPdf($slip, $period);
+    }
+
+    private function renderSlipPdf(PayrollSlip $slip, PayrollPeriod $period)
+    {
+        $slip->load(['employee.company', 'employee.level', 'employee.department', 'employee.position', 'details', 'period.company', 'period.closedBy']);
         $pdf = Pdf::loadView('hr.payroll.slip-pdf', compact('slip', 'period'))
-            ->setPaper([0, 0, 595, 420], 'landscape'); // A5 landscape
+            ->setPaper('a4', 'landscape');
         $filename = 'slip-gaji-' . $slip->employee->nip . '-' . str_pad($period->month, 2, '0', STR_PAD_LEFT) . $period->year . '.pdf';
         return $pdf->download($filename);
+    }
+
+    /**
+     * File transfer bank (CSV) untuk pembayaran gaji satu periode. Nomor rekening
+     * karyawan ter-enkripsi (cast 'encrypted') jadi harus di-decrypt di PHP, bukan SQL.
+     * Format kolom per bank hanya PERKIRAAN — verifikasikan dengan pihak bank.
+     */
+    public function disbursement(Request $request, PayrollPeriod $period)
+    {
+        $format = $request->get('format', 'generic');
+
+        $slips = PayrollSlip::with(['employee.bankAccounts.bank'])
+            ->where('payroll_period_id', $period->id)
+            ->get()
+            ->sortBy(fn ($s) => $s->employee?->name);
+
+        $period->loadMissing('company');
+        $filename = 'transfer-gaji-' . ($period->company?->code ?? 'co') . '-'
+            . str_pad($period->month, 2, '0', STR_PAD_LEFT) . $period->year . '-' . $format . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->streamDownload(function () use ($slips, $period, $format) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['No', 'NIP', 'Nama', 'Bank', 'Kode Bank', 'No Rekening', 'Jumlah', 'Keterangan']);
+
+            $no = 0;
+            foreach ($slips as $slip) {
+                $emp  = $slip->employee;
+                $acct = $emp?->bankAccounts->firstWhere('is_primary', true) ?? $emp?->bankAccounts->first();
+                if (! $emp || ! $acct) {
+                    continue; // dilewati — tidak ada rekening
+                }
+                $no++;
+                $ket = 'Gaji ' . $period->period_label;
+
+                $number = '';
+                try {
+                    $number = (string) $acct->account_number;
+                } catch (\Throwable $e) {
+                    $number = '';
+                }
+
+                if ($format === 'bca') {
+                    // BCA payroll: No Rekening Tujuan | Nominal | (kosong) | Nama | Keterangan
+                    fputcsv($out, [$number, (int) $slip->net_salary, '', $emp->name, $ket]);
+                } elseif ($format === 'mandiri') {
+                    fputcsv($out, [$acct->bank?->code, $number, $emp->name, (int) $slip->net_salary, $ket]);
+                } else {
+                    fputcsv($out, [$no, $emp->nip, $emp->name, $acct->bank?->name, $acct->bank?->code, $number, (int) $slip->net_salary, $ket]);
+                }
+            }
+            fclose($out);
+        }, $filename, $headers);
     }
 
     public function close(PayrollPeriod $period)
     {
         abort_if($period->status === 'closed', 422);
         $period->update(['status' => 'closed', 'closed_by' => auth()->id(), 'closed_at' => now()]);
+
+        // Tandai pinjaman lunas bila semua cicilannya sudah terpotong/di-waive.
+        \App\Models\HR\EmployeeLoan::where('company_id', $period->company_id)
+            ->where('status', 'active')
+            ->whereDoesntHave('installments', fn ($q) => $q->where('status', 'pending'))
+            ->update(['status' => 'completed']);
+
         return back()->with('success', 'Periode penggajian berhasil ditutup.');
     }
 
@@ -406,5 +525,40 @@ class PayrollController extends Controller
         if ($overtimeMinutes <= 0 || ! $ratePerHour) return 0;
 
         return (int) round(($overtimeMinutes / 60) * $ratePerHour);
+    }
+
+    /**
+     * Potongan Kasbon/Pinjaman: total cicilan jatuh tempo (period_month/year periode ini)
+     * dari semua pinjaman aktif karyawan yang belum terpotong.
+     */
+    private function calcLoanInstallment(int $employeeId, PayrollPeriod $period): int
+    {
+        return (int) \App\Models\HR\LoanInstallment::whereHas('loan', fn ($q) => $q
+                ->where('employee_id', $employeeId)->where('status', 'active'))
+            ->where('period_month', $period->month)
+            ->where('period_year', $period->year)
+            ->where('status', 'pending')
+            ->sum('amount');
+    }
+
+    /**
+     * PPh21 TER — jumlahkan komponen allowance yang SUDAH terhitung ($details) dan bertanda
+     * is_taxable, lalu hitung lewat Pph21Calculator (PTKP dari status kawin + tanggungan,
+     * kategori TER, tarif progresif). Lihat catatan validasi di Pph21Calculator.
+     */
+    private function calcPph21Ter(Employee $employee, array $details, $components): int
+    {
+        $taxableGross = 0;
+        foreach ($details as $d) {
+            if ($d['type'] !== 'allowance' || ! $d['salary_component_id']) continue;
+            $comp = $components->firstWhere('id', $d['salary_component_id']);
+            if ($comp?->is_taxable) {
+                $taxableGross += $d['amount'];
+            }
+        }
+
+        if ($taxableGross <= 0) return 0;
+
+        return app(Pph21Calculator::class)->calculate($employee, $taxableGross)['amount'];
     }
 }

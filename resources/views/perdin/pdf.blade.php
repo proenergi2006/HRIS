@@ -8,6 +8,7 @@
   $cats    = \App\Models\Perdin\PerdinRequest::$categoryLabels;
 
   $company = config('sipro.company');
+  $kopLogo = \App\Support\Branding::pdfLogo(config('sipro.company.code'));
 
   $byRole     = $perdin->approvals->where('action', 'approve')->keyBy('role');
   $sigManager = $byRole->get('direct_manager');
@@ -145,6 +146,7 @@
 <table class="lh">
   <tr>
     <td>
+      @if($kopLogo)<img src="{{ $kopLogo }}" alt="" style="height:40px; margin-bottom:5px;">@endif
       <div class="company">{{ $company['name'] }}</div>
       <div class="tagline">{{ $company['tagline'] }}</div>
       <div class="addr">{{ $company['address'] }} &middot; {{ $company['website'] }}</div>
@@ -243,7 +245,8 @@
 <div class="page-break"></div>
 <table class="lh">
   <tr>
-    <td><div class="company" style="font-size:14pt;">{{ $company['name'] }}</div>
+    <td>@if($kopLogo)<img src="{{ $kopLogo }}" alt="" style="height:34px; margin-bottom:4px;">@endif
+        <div class="company" style="font-size:14pt;">{{ $company['name'] }}</div>
         <div class="tagline">{{ $company['tagline'] }}</div></td>
     <td style="text-align:right; vertical-align:bottom;">
       <div style="font-size:8pt; color:#888;">No. Advance</div>
@@ -323,7 +326,8 @@
 <div class="page-break"></div>
 <table class="lh">
   <tr>
-    <td><div class="company" style="font-size:14pt;">{{ $company['name'] }}</div>
+    <td>@if($kopLogo)<img src="{{ $kopLogo }}" alt="" style="height:34px; margin-bottom:4px;">@endif
+        <div class="company" style="font-size:14pt;">{{ $company['name'] }}</div>
         <div class="tagline">{{ $company['tagline'] }}</div></td>
     <td style="text-align:right; vertical-align:bottom;">
       <div style="font-size:8pt; color:#888;">No. Advance</div>

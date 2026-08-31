@@ -77,7 +77,7 @@
                     <input type="number" name="rate_percent" value="{{ $c->rate_percent }}" step="0.01" min="0" max="100"
                            class="form-control form-control-sm mr-1" style="width:60px" title="Persen dari gaji tetap">
                     <span class="small mr-1">%</span>
-                    <input type="number" name="salary_cap" value="{{ $c->salary_cap }}" min="0" step="1000"
+                    <input type="number" data-rupiah name="salary_cap" value="{{ $c->salary_cap }}" min="0" step="1000"
                            class="form-control form-control-sm mr-1" style="width:90px" placeholder="Tanpa batas" title="Batas atas gaji">
                     <button type="submit" class="btn btn-xs btn-outline-primary">Simpan</button>
                   </form>

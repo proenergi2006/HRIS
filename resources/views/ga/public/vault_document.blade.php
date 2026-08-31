@@ -29,7 +29,7 @@
 
 <div class="hero">
   <div style="display:inline-block;background:#fff;border-radius:10px;padding:7px 18px;margin-bottom:12px;">
-    <img src="/img/logo-proenergi.png" alt="PT. Pro Energi" style="height:36px;object-fit:contain;display:block;">
+    <img src="/img/propeople-icon.png" alt="ProPeople" style="height:36px;object-fit:contain;display:block;border-radius:8px;">
   </div>
   <h1>Dokumen Brankas</h1>
   <div class="code">{{ $document->barcode }}</div>
@@ -125,7 +125,7 @@
   </form>
 </div>
 
-<footer>HRMS &mdash; PT. Pro Energi</footer>
+<footer>ProPeople &mdash; PT. Pro Energi</footer>
 
 <script>
 (function() {

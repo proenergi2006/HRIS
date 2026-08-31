@@ -21,7 +21,7 @@ class ContractExpiryReminderMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[HRMS] Pengingat Kontrak Karyawan — ' . now()->format('d F Y'),
+            subject: '[ProPeople] Pengingat Kontrak Karyawan — ' . now()->format('d F Y'),
         );
     }
 

@@ -7,7 +7,9 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'HRMS') }} - @yield('title')</title>
+    <title>{{ config('app.name', 'ProPeople') }} - @yield('title')</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/propeople-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/propeople-icon-512.png') }}">
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">

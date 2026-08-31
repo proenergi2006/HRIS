@@ -22,7 +22,7 @@
         @csrf
         <button type="submit" class="btn btn-primary btn-sm"
                 onclick="return confirm('Generate/update slip gaji semua karyawan aktif?')">
-          <i class="gd-refresh mr-1"></i> Generate Slip
+          <i class="gd-reload mr-1"></i> Generate Slip
         </button>
       </form>
       <form method="POST" action="{{ route('hr.payroll.close', $period) }}">
@@ -37,6 +37,36 @@
     @endif
   </div>
 </div>
+
+@if($slipByEmp->isNotEmpty())
+<div class="card mb-3">
+  <div class="card-body py-3 d-flex align-items-end flex-wrap" style="gap:.75rem">
+    <div>
+      <label class="small font-weight-bold mb-1 d-block">File Transfer Bank</label>
+      <select id="disb-format" class="form-control form-control-sm d-inline-block" style="width:auto">
+        <option value="generic">Format Umum (CSV)</option>
+        <option value="bca">BCA</option>
+        <option value="mandiri">Mandiri</option>
+      </select>
+      <a href="#" id="disb-btn" class="btn btn-sm btn-outline-primary ml-1"
+         data-base="{{ route('hr.payroll.disbursement', $period) }}">
+        <i class="gd-download mr-1"></i> Unduh
+      </a>
+    </div>
+    @if($period->status === 'open')
+      <div class="small text-warning"><i class="gd-alert mr-1"></i> Periode masih terbuka — nilai gaji bersih belum final.</div>
+    @endif
+    <div class="small text-muted">Karyawan tanpa rekening akan dilewati. Format kolom per bank adalah perkiraan — verifikasi dengan pihak bank.</div>
+  </div>
+</div>
+<script>
+  document.getElementById('disb-btn')?.addEventListener('click', function (e) {
+    e.preventDefault();
+    var fmt = document.getElementById('disb-format').value;
+    window.location = this.dataset.base + '?format=' + fmt;
+  });
+</script>
+@endif
 
 <div class="card">
   <div class="card-body p-0">

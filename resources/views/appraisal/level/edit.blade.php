@@ -23,19 +23,27 @@
             @if($level->id) @method('PUT') @endif
 
             <div class="form-row">
-                <div class="form-group col-12 col-md-6">
+                <div class="form-group col-12 col-md-5">
                     <label for="name">Nama Level <span class="text-danger">*</span></label>
                     <input type="text" id="name" name="name"
                            class="form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
                            value="{{ old('name', $level->name) }}" placeholder="cth: SPV, Manager">
                     @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
-                <div class="form-group col-12 col-md-6">
+                <div class="form-group col-12 col-md-4">
                     <label for="description">Deskripsi</label>
                     <input type="text" id="description" name="description"
                            class="form-control{{ $errors->has('description') ? ' is-invalid' : '' }}"
                            value="{{ old('description', $level->description) }}" placeholder="Opsional">
                     @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="form-group col-12 col-md-3">
+                    <label for="rank">Urutan Tingkatan</label>
+                    <input type="number" id="rank" name="rank" min="1" max="99"
+                           class="form-control{{ $errors->has('rank') ? ' is-invalid' : '' }}"
+                           value="{{ old('rank', $level->rank) }}" placeholder="1 = paling senior">
+                    <small class="text-muted">Dipakai untuk urutan di Struktur Organisasi. Angka lebih kecil = lebih senior/di atas.</small>
+                    @error('rank')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
 

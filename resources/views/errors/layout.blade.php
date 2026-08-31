@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('code') — {{ config('app.name', 'HRMS') }}</title>
+    <title>@yield('code') — {{ config('app.name', 'ProPeople') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -35,7 +35,7 @@
         <a href="{{ route('login') }}" class="btn btn-ghost">Login</a>
     @endauth
     <div class="divider"></div>
-    <div class="meta">{{ config('app.name', 'HRMS') }} &bull; PT. Pro Energi</div>
+    <div class="meta">{{ config('app.name', 'ProPeople') }} &bull; PT. Pro Energi</div>
 </div>
 </body>
 </html>

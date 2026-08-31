@@ -5,16 +5,23 @@ namespace App\Http\Controllers;
 use App\Exports\EmployeeExport;
 use App\Exports\PerdinExport;
 use App\Exports\ReimbursementExport;
+use App\Models\Company;
 use App\Models\Employee;
+use App\Models\HR\PayrollPeriod;
 use App\Models\Perdin\PerdinRequest;
 use App\Models\Reimbursement\ReimbursementRequest;
 use App\Models\WhistleblowerReport;
+use App\Services\HrReportBuilder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
 {
+    public function __construct(private HrReportBuilder $reports)
+    {
+    }
+
     public function index(Request $request)
     {
         $bulan = (int) $request->get('bulan', now()->month);
@@ -82,6 +89,112 @@ class LaporanController extends Controller
         $requests = $query->latest('departure_date')->get();
         $filename = 'perdin-' . now()->format('Ymd') . '.xlsx';
         return Excel::download(new PerdinExport($requests), $filename);
+    }
+
+    // ── Laporan Absensi & Cuti bulanan per company (PRD Bab 10) ──────────────
+
+    public function attendanceLeave(Request $request)
+    {
+        [$companies, $companyId, $bulan, $tahun] = $this->companyPeriodFilter($request);
+        $data = $this->reports->buildAttendanceLeave($companyId, $bulan, $tahun);
+
+        return view('laporan.attendance-leave', compact('companies', 'companyId', 'bulan', 'tahun', 'data'));
+    }
+
+    public function attendanceLeavePdf(Request $request)
+    {
+        [$companies, $companyId, $bulan, $tahun] = $this->companyPeriodFilter($request);
+        $data    = $this->reports->buildAttendanceLeave($companyId, $bulan, $tahun);
+        $company = $companies->firstWhere('id', $companyId);
+
+        $pdf = Pdf::loadView('laporan.attendance-leave-pdf', compact('company', 'bulan', 'tahun', 'data'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-absensi-cuti-' . str_pad($bulan, 2, '0', STR_PAD_LEFT) . '-' . $tahun . '.pdf');
+    }
+
+    // ── Laporan Payroll summary per periode per company (PRD Bab 10) ────────
+
+    public function payrollSummary(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $periods   = PayrollPeriod::with('company')->orderByDesc('year')->orderByDesc('month')->get();
+        $periodId  = (int) $request->get('period_id', $periods->first()?->id);
+        $period    = $periods->firstWhere('id', $periodId);
+        $data      = $period ? $this->reports->buildPayrollSummary($period) : null;
+
+        return view('laporan.payroll-summary', compact('companies', 'periods', 'periodId', 'period', 'data'));
+    }
+
+    public function payrollSummaryPdf(Request $request)
+    {
+        $period = PayrollPeriod::with('company')->findOrFail((int) $request->get('period_id'));
+        $data   = $this->reports->buildPayrollSummary($period);
+
+        $pdf = Pdf::loadView('laporan.payroll-summary-pdf', compact('period', 'data'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-payroll-' . $period->year . '-' . str_pad($period->month, 2, '0', STR_PAD_LEFT) . '.pdf');
+    }
+
+    // ── Dashboard Headcount per company / unit / status / tipe (PRD Bab 10) ─
+
+    public function headcount(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        // company_id kosong / 0 = tampilkan konsolidasi grup (semua company).
+        $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
+        $data      = $this->reports->buildHeadcount($companyId);
+
+        return view('laporan.headcount', compact('companies', 'companyId', 'data'));
+    }
+
+    public function headcountPdf(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
+        $data      = $this->reports->buildHeadcount($companyId);
+        $company   = $companyId ? $companies->firstWhere('id', $companyId) : null;
+
+        $pdf = Pdf::loadView('laporan.headcount-pdf', compact('company', 'data'))->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-headcount-' . now()->format('Ymd') . '.pdf');
+    }
+
+    public function analytics(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
+        $year      = (int) $request->get('year', now()->year);
+        $data      = $this->reports->buildAnalytics($companyId, $year);
+
+        return view('laporan.analytics', compact('companies', 'companyId', 'year', 'data'));
+    }
+
+    public function analyticsPdf(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
+        $year      = (int) $request->get('year', now()->year);
+        $data      = $this->reports->buildAnalytics($companyId, $year);
+        $company   = $companyId ? $companies->firstWhere('id', $companyId) : null;
+
+        $pdf = Pdf::loadView('laporan.analytics-pdf', compact('company', 'year', 'data'))->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-analytics-' . $year . '.pdf');
+    }
+
+    // ── Helpers laporan ────────────────────────────────────────────────────
+
+    /** @return array{0:\Illuminate\Support\Collection,1:int,2:int,3:int} */
+    private function companyPeriodFilter(Request $request): array
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $companyId = (int) $request->get('company_id', $companies->first()?->id);
+        $bulan     = (int) $request->get('bulan', now()->month);
+        $tahun     = (int) $request->get('tahun', now()->year);
+
+        return [$companies, $companyId, $bulan, $tahun];
     }
 
     private function buildStats(int $bulan, int $tahun): array

@@ -25,7 +25,7 @@
                 <th class="font-weight-semi-bold border-top-0 py-2">#</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Nama Template</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Level</th>
-                <th class="font-weight-semi-bold border-top-0 py-2">Jml Aspek</th>
+                <th class="font-weight-semi-bold border-top-0 py-2">Jml KPI</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Default</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Aksi</th>
                 </tr>
@@ -36,7 +36,7 @@
                 <td class="py-3">{{ $template->id }}</td>
                 <td class="py-3 font-weight-bold">{{ $template->name }}</td>
                 <td class="py-3">{{ $template->level->name ?? '-' }}</td>
-                <td class="py-3">{{ $template->aspects_count }}</td>
+                <td class="py-3">{{ $template->objectives_count }}</td>
                 <td class="py-3">
                 @if($template->is_default)
                 <span class="badge badge-success">Default</span>

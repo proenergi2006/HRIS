@@ -12,23 +12,18 @@ class AppraisalTemplate extends Model
 {
     use HasHashid;
 
-    protected $fillable = ['level_id', 'name', 'scoring_type', 'is_default'];
+    protected $fillable = ['level_id', 'name', 'is_default'];
 
     protected $casts = ['is_default' => 'boolean'];
-
-    public function isWeightedScale(): bool
-    {
-        return $this->scoring_type === 'weighted_scale';
-    }
 
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);
     }
 
-    public function aspects(): HasMany
+    public function objectives(): HasMany
     {
-        return $this->hasMany(AppraisalAspect::class)->orderBy('order');
+        return $this->hasMany(AppraisalTemplateObjective::class)->orderBy('order');
     }
 
     public function gradeBands(): HasMany

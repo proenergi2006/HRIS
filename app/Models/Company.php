@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
-    protected $fillable = ['code', 'name', 'short_name', 'address', 'phone', 'email', 'npwp', 'is_active'];
+    protected $fillable = ['code', 'name', 'short_name', 'address', 'phone', 'email', 'npwp', 'tax_signer_name', 'tax_signer_npwp', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 

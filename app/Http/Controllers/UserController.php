@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Employee;
+use App\Models\RoleCompanyAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -24,17 +26,21 @@ class UserController extends Controller implements HasMiddleware
 
     public function create()
     {
-        $user      = new User();
-        $roles     = Role::orderBy('name')->pluck('name');
-        $employees = Employee::orderBy('name')->get();
-        return view('user.edit', compact('user', 'roles', 'employees'));
+        $user        = new User();
+        $roles       = Role::orderBy('name')->pluck('name');
+        $employees   = Employee::orderBy('name')->get();
+        $companies   = Company::where('is_active', true)->orderBy('name')->get();
+        $assignments = collect();
+        return view('user.edit', compact('user', 'roles', 'employees', 'companies', 'assignments'));
     }
 
     public function edit(User $user)
     {
-        $roles     = Role::orderBy('name')->pluck('name');
-        $employees = Employee::orderBy('name')->get();
-        return view('user.edit', compact('user', 'roles', 'employees'));
+        $roles       = Role::orderBy('name')->pluck('name');
+        $employees   = Employee::orderBy('name')->get();
+        $companies   = Company::where('is_active', true)->orderBy('name')->get();
+        $assignments = $user->roleCompanyAssignments()->with('role')->get();
+        return view('user.edit', compact('user', 'roles', 'employees', 'companies', 'assignments'));
     }
 
     public function store(Request $request)
@@ -44,7 +50,6 @@ class UserController extends Controller implements HasMiddleware
             'email'       => 'required|email|unique:users,email',
             'password'    => 'required|string|min:6|confirmed',
             'department'  => 'nullable|string|max:100',
-            'role'        => 'nullable|string|exists:roles,name',
             'employee_id' => 'nullable|exists:employees,id',
         ]);
 
@@ -55,9 +60,7 @@ class UserController extends Controller implements HasMiddleware
             'department' => $request->department ?: null,
         ]);
 
-        if ($request->filled('role')) {
-            $user->syncRoles([$request->role]);
-        }
+        $this->syncAssignments($request, $user);
 
         // Hubungkan ke employee jika dipilih
         if ($request->filled('employee_id')) {
@@ -74,7 +77,6 @@ class UserController extends Controller implements HasMiddleware
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $user->id,
             'department'  => 'nullable|string|max:100',
-            'role'        => 'nullable|string|exists:roles,name',
             'employee_id' => 'nullable|exists:employees,id',
         ]);
 
@@ -89,7 +91,7 @@ class UserController extends Controller implements HasMiddleware
             $user->update(['password' => bcrypt($request->password)]);
         }
 
-        $user->syncRoles($request->filled('role') ? [$request->role] : []);
+        $this->syncAssignments($request, $user);
 
         // Update employee link: lepas link lama, set link baru
         Employee::where('user_id', $user->id)->update(['user_id' => null]);
@@ -111,5 +113,40 @@ class UserController extends Controller implements HasMiddleware
 
         return redirect()->route('user.index')
             ->with('status', 'User berhasil dihapus.');
+    }
+
+    /**
+     * Baris "Role @ Company" dari form (role_id[]/company_id[], company_id kosong = semua
+     * company) -> tulis ulang role_company_assignments, lalu sinkron model_has_roles (spatie)
+     * supaya hasRole()/hasAnyRole() yang belum sempat dikonversi ke permission tetap benar.
+     */
+    private function syncAssignments(Request $request, User $user): void
+    {
+        $roleIds     = (array) $request->input('role_id', []);
+        $companyIds  = (array) $request->input('company_id', []);
+        $validRoleIds = Role::pluck('id')->all();
+
+        $rows = [];
+        foreach ($roleIds as $i => $roleId) {
+            if (! $roleId || ! in_array((int) $roleId, $validRoleIds, true)) {
+                continue;
+            }
+            $rows[] = [
+                'role_id'    => (int) $roleId,
+                'company_id' => $companyIds[$i] !== '' && isset($companyIds[$i]) ? (int) $companyIds[$i] : null,
+            ];
+        }
+
+        $user->roleCompanyAssignments()->delete();
+        foreach ($rows as $row) {
+            RoleCompanyAssignment::firstOrCreate([
+                'user_id'    => $user->id,
+                'role_id'    => $row['role_id'],
+                'company_id' => $row['company_id'],
+            ]);
+        }
+
+        $roleNames = Role::whereIn('id', array_column($rows, 'role_id'))->pluck('name')->unique()->values()->all();
+        $user->syncRoles($roleNames);
     }
 }

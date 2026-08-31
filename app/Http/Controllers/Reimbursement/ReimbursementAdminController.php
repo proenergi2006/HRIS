@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Reimbursement;
 
 use App\Http\Controllers\Controller;
-use App\Mail\ReimbursementApprovedMail;
-use App\Mail\ReimbursementRejectedMail;
 use App\Models\Reimbursement\ReimbursementAttachment;
 use App\Models\Reimbursement\ReimbursementBalance;
 use App\Models\Reimbursement\ReimbursementItem;
 use App\Models\Reimbursement\ReimbursementRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class ReimbursementAdminController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ReimbursementRequest::with('user')->latest('request_date');
+        $query = ReimbursementRequest::with('user')
+            ->orderByRaw("CASE WHEN status = 'submitted' THEN 0 ELSE 1 END")
+            ->latest('request_date');
 
         if ($request->status) {
             $query->where('status', $request->status);
@@ -80,61 +79,22 @@ class ReimbursementAdminController extends Controller
         return back()->with('status', 'Item klaim berhasil dihapus.');
     }
 
-    public function approve(Request $request, ReimbursementRequest $reimbursement)
+    /**
+     * Admin menetapkan periode pembayaran (bulan gaji) selagi pengajuan masih
+     * menunggu persetujuan. Persetujuan/penolakan kini lewat Kotak Persetujuan.
+     */
+    public function setPaymentPeriod(Request $request, ReimbursementRequest $reimbursement)
     {
-        abort_unless($reimbursement->isSubmitted(), 422);
+        abort_unless($reimbursement->isPending(), 422);
 
         $data = $request->validate([
             'payment_month' => 'required|integer|between:1,12',
             'payment_year'  => 'required|integer|min:2020|max:2100',
         ]);
 
-        $balance = ReimbursementBalance::forUser($reimbursement->user_id, $reimbursement->request_date->year);
+        $reimbursement->update($data);
 
-        if ($balance && $reimbursement->total_claim > $balance->remaining_balance) {
-            return back()->with('error',
-                'Saldo tidak mencukupi untuk menyetujui pengajuan ini. Sisa saldo Rp ' .
-                number_format($balance->remaining_balance, 0, ',', '.') .
-                ', silakan koreksi rincian biaya terlebih dahulu agar sesuai sisa saldo.');
-        }
-
-        $reimbursement->update([
-            'status'         => 'approved',
-            'approved_by'    => auth()->id(),
-            'approved_at'    => now(),
-            'payment_month'  => $data['payment_month'],
-            'payment_year'   => $data['payment_year'],
-        ]);
-
-        if ($balance) {
-            $balance->increment('used_balance', $reimbursement->total_claim);
-        }
-
-        try {
-            Mail::to($reimbursement->user->email)->send(new ReimbursementApprovedMail($reimbursement));
-        } catch (\Throwable) {}
-
-        return back()->with('status', 'Pengajuan berhasil disetujui.');
-    }
-
-    public function reject(Request $request, ReimbursementRequest $reimbursement)
-    {
-        abort_unless($reimbursement->isSubmitted(), 422);
-
-        $request->validate(['rejection_reason' => 'nullable|string|max:500']);
-
-        $reimbursement->update([
-            'status'           => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
-            'approved_by'      => auth()->id(),
-            'approved_at'      => now(),
-        ]);
-
-        try {
-            Mail::to($reimbursement->user->email)->send(new ReimbursementRejectedMail($reimbursement));
-        } catch (\Throwable) {}
-
-        return back()->with('status', 'Pengajuan ditolak.');
+        return back()->with('status', 'Periode pembayaran disimpan.');
     }
 
     public function attachment(ReimbursementRequest $reimbursement, ReimbursementAttachment $attachment)

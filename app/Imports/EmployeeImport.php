@@ -7,6 +7,11 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Level;
 use App\Models\Position;
+use App\Models\Master\BloodType;
+use App\Models\Master\City;
+use App\Models\Master\EmployeeType;
+use App\Models\Master\MaritalStatus;
+use App\Models\Master\Religion;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -26,15 +31,23 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     private array $departmentCodeCache = [];
     private array $positionCodeCache = [];
 
+    /** @var array<string, array<string, int>> nama(lowercase) => id, per model master */
+    private array $masterCache = [];
+
+    /** Catatan non-fatal per baris (nilai master tidak dikenali, dsb). */
+    public array $warnings = [];
+
+    private int $currentRow = 0;
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $i => $row) {
-            $rowNum = $i + 2; // baris 1 = heading
+            $this->currentRow = $i + 2; // baris 1 = heading
 
             try {
                 $this->importRow($row);
             } catch (\Throwable $e) {
-                $this->errors[] = ['row' => $rowNum, 'message' => $e->getMessage()];
+                $this->errors[] = ['row' => $this->currentRow, 'message' => $e->getMessage()];
             }
         }
     }
@@ -52,7 +65,8 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $isNew    = ! $employee;
         $employee ??= new Employee();
 
-        $companyId = $this->resolveCompanyId($row['kode_perusahaan'] ?? null);
+        $companyId       = $this->resolveCompanyId($row['kode_perusahaan'] ?? null);
+        $employmentStatus = $this->resolveEmploymentStatus($row['status_kepegawaian'] ?? null);
 
         $employee->fill([
             'name'                       => $name,
@@ -64,7 +78,8 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             'level_id'                   => $this->resolveLevelId($row['level_jabatan'] ?? null),
             'manager_id'                 => $this->resolveManagerId($row['nip_atasan'] ?? null),
             'start_date'                 => $this->date($row['tanggal_mulai_kerja'] ?? null),
-            'employment_status'          => $this->resolveEmploymentStatus($row['status_kepegawaian'] ?? null),
+            'employment_status'          => $employmentStatus,
+            'employee_type_id'           => EmployeeType::where('legacy_key', $employmentStatus)->value('id'),
             'contract_end_date'          => $this->date($row['tanggal_kontrak_berakhir'] ?? null),
             'is_active'                  => $this->bool($row['status_aktif'] ?? null, true),
 
@@ -75,10 +90,10 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             'npwp_number'                => $this->str($row['npwp'] ?? null),
             'npwp_city'                  => $this->str($row['kota_npwp'] ?? null),
             'npwp_date'                  => $this->date($row['tanggal_npwp'] ?? null),
-            'marital_status'             => $this->resolveMaritalStatus($row['status_kawin'] ?? null),
-            'religion'                   => $this->str($row['agama'] ?? null),
-            'blood_type'                 => $this->resolveBloodType($row['golongan_darah'] ?? null),
-            'employee_type'              => $this->resolveEmployeeType($row['tipe_karyawan'] ?? null),
+            'marital_status_id'          => $this->resolveMasterId(MaritalStatus::class, $row['status_kawin'] ?? null, 'Status Kawin'),
+            'religion_id'                => $this->resolveMasterId(Religion::class, $row['agama'] ?? null, 'Agama'),
+            'blood_type_id'              => $this->resolveMasterId(BloodType::class, $row['golongan_darah'] ?? null, 'Golongan Darah'),
+            'employee_type'              => $this->resolveEmployeeType($row['kewarganegaraan'] ?? ($row['tipe_karyawan'] ?? null)),
             'finger_id'                  => $this->str($row['finger_id'] ?? null),
 
             'email'                      => $this->str($row['email'] ?? null),
@@ -94,6 +109,10 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             'ktp_city'                   => $this->str($row['kota_ktp'] ?? null),
             'ktp_district'               => $this->str($row['kecamatan_ktp'] ?? null),
             'ktp_subdistrict'            => $this->str($row['kelurahan_ktp'] ?? null),
+        ] + $this->resolveCityFields('domicile', $row['kota_domisili'] ?? null)
+          + $this->resolveCityFields('ktp', $row['kota_ktp'] ?? null)
+          + $this->resolveDistrictVillage('domicile', $row['kecamatan_domisili'] ?? null, $row['kelurahan_domisili'] ?? null)
+          + $this->resolveDistrictVillage('ktp', $row['kecamatan_ktp'] ?? null, $row['kelurahan_ktp'] ?? null) + [
 
             'emergency_contact_name'     => $this->str($row['nama_kontak_darurat'] ?? null),
             'emergency_contact_relation' => $this->str($row['hubungan_kontak_darurat'] ?? null),
@@ -209,31 +228,100 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         };
     }
 
-    private function resolveMaritalStatus(mixed $value): ?string
-    {
-        $v = Str::lower(trim((string) $value));
-
-        return match (true) {
-            str_contains($v, 'belum')       => 'belum_kawin',
-            str_contains($v, 'cerai hidup') => 'cerai_hidup',
-            str_contains($v, 'cerai mati')  => 'cerai_mati',
-            str_contains($v, 'kawin') || str_contains($v, 'menikah') => 'kawin',
-            default => null,
-        };
-    }
-
-    private function resolveBloodType(mixed $value): ?string
-    {
-        $v = Str::upper(trim((string) $value));
-
-        return in_array($v, ['A', 'B', 'AB', 'O'], true) ? $v : null;
-    }
-
     private function resolveEmployeeType(mixed $value): string
     {
         $v = Str::lower(trim((string) $value));
 
-        return $v === 'expat' ? 'expat' : 'local';
+        return in_array($v, ['expat', 'wna', 'asing'], true) ? 'expat' : 'local';
+    }
+
+    /**
+     * Cari id master berdasarkan nama (case-insensitive). Kalau nilai diisi
+     * tapi tidak dikenali, catat sebagai warning (bukan error fatal).
+     *
+     * @param  class-string  $modelClass
+     */
+    private function resolveMasterId(string $modelClass, mixed $value, string $label): ?int
+    {
+        $name = $this->str($value);
+        if (! $name) {
+            return null;
+        }
+
+        $key = mb_strtolower($name);
+        $this->masterCache[$modelClass] ??= $modelClass::pluck('id', 'name')
+            ->mapWithKeys(fn ($id, $n) => [mb_strtolower($n) => $id])
+            ->all();
+
+        $id = $this->masterCache[$modelClass][$key] ?? null;
+
+        if (! $id) {
+            $this->warnings[] = [
+                'row'     => $this->currentRow,
+                'message' => "{$label} \"{$name}\" tidak dikenali — dikosongkan.",
+            ];
+        }
+
+        return $id;
+    }
+
+    /**
+     * @return array{0?: mixed} — kunci {$prefix}_city_id & {$prefix}_province_id bila ketemu.
+     */
+    private function resolveCityFields(string $prefix, mixed $value): array
+    {
+        $name = $this->str($value);
+        if (! $name) {
+            return [];
+        }
+
+        $needle = mb_strtolower(preg_replace('/^(kota|kab\.?|kabupaten)\s+/i', '', $name));
+
+        $city = City::whereRaw('LOWER(name) = ?', [$needle])->first(['id', 'province_id']);
+
+        if (! $city) {
+            $this->warnings[] = [
+                'row'     => $this->currentRow,
+                'message' => "Kota \"{$name}\" tidak ada di master wilayah — hanya disimpan sebagai teks.",
+            ];
+
+            return [];
+        }
+
+        return [
+            "{$prefix}_city_id"     => $city->id,
+            "{$prefix}_province_id" => $city->province_id,
+        ];
+    }
+
+    /**
+     * Match kecamatan & kelurahan ke master (kalau ada). Nilai teks tetap
+     * disimpan lewat mapping utama; di sini cuma isi kolom *_id bila ketemu.
+     *
+     * @return array<string, int>
+     */
+    private function resolveDistrictVillage(string $prefix, mixed $districtName, mixed $villageName): array
+    {
+        $out = [];
+
+        $dName = $this->str($districtName);
+        if ($dName) {
+            $district = \App\Models\Master\District::whereRaw('LOWER(name) = ?', [mb_strtolower(trim($dName))])->first(['id']);
+            if ($district) {
+                $out["{$prefix}_district_id"] = $district->id;
+
+                $vName = $this->str($villageName);
+                if ($vName) {
+                    $village = \App\Models\Master\Village::where('district_id', $district->id)
+                        ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($vName))])->first(['id']);
+                    if ($village) {
+                        $out["{$prefix}_village_id"] = $village->id;
+                    }
+                }
+            }
+        }
+
+        return $out;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

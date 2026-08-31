@@ -16,9 +16,22 @@
   <div class="d-flex" style="gap:.5rem">
     <a href="{{ route('hr.payroll.components', ['company_id' => $companyId]) }}" class="btn btn-outline-secondary btn-sm">Komponen Gaji</a>
     <a href="{{ route('hr.payroll.salary.index', ['company_id' => $companyId]) }}" class="btn btn-outline-secondary btn-sm">Struktur Gaji</a>
+    <a href="{{ route('hr.payroll.bukti-potong', ['company_id' => $companyId]) }}" class="btn btn-outline-secondary btn-sm">Bukti Potong PPh21</a>
     <a href="{{ route('hr.payroll.create') }}" class="btn btn-primary btn-sm">
       <i class="gd-plus mr-1"></i> Buat Periode
     </a>
+  </div>
+</div>
+
+<div class="alert alert-warning d-flex align-items-start" style="gap:.5rem">
+  <i class="gd-alert mt-1"></i>
+  <div>
+    <strong>PPh21 &amp; BPJS dihitung otomatis (metode TER).</strong>
+    Tabel tarif masih perkiraan/ilustratif — <strong>wajib divalidasi paralel dengan jPayroll</strong>
+    sebelum dipakai untuk penggajian resmi.
+    @can('master-data.edit')
+      <a href="{{ route('master.ter-brackets.index') }}">Cek/ubah tabel tarif →</a>
+    @endcan
   </div>
 </div>
 

@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\HR\LeaveBalance;
+use App\Models\HR\LeavePolicy;
 use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveType;
+use App\Models\Level;
+use App\Services\ApprovalEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class LeaveController extends Controller
 {
+    public function __construct(private ApprovalEngine $engine) {}
+
     public function index(Request $request)
     {
         $companies = Company::where('is_active', true)->get();
@@ -75,81 +80,46 @@ class LeaveController extends Controller
             'total_days'    => $totalDays,
             'reason'        => $data['reason'] ?? null,
             'attachment_path' => $attachPath,
-            'status'        => 'submitted', // Admin input langsung submitted
+            'status'        => 'pending',
         ]);
 
+        // Jalankan lewat Approval Engine — alur diambil dari workflow "Cuti"
+        // yang dikonfigurasi HR per perusahaan.
+        $this->engine->start($leave->load('employee', 'leaveType'));
+        $leave->refresh();
+        if ($leave->approvalRequest?->status === 'approved' && ! $leave->isApproved()) {
+            $leave->forceFill(['status' => 'approved'])->save();
+        }
+
         return redirect()->route('hr.leave.show', $leave)
-            ->with('success', 'Pengajuan cuti berhasil dibuat.');
+            ->with('success', 'Pengajuan cuti dibuat. Menunggu persetujuan.');
+    }
+
+    /** Batalkan pengajuan yang masih menunggu persetujuan. */
+    public function cancel(LeaveRequest $leave)
+    {
+        abort_unless($leave->isPending(), 422);
+
+        if ($leave->approvalRequest) {
+            $this->engine->cancel($leave->approvalRequest);
+        }
+        $leave->forceFill(['status' => 'cancelled'])->save();
+
+        return back()->with('success', 'Pengajuan cuti dibatalkan.');
     }
 
     public function show(LeaveRequest $leave)
     {
-        $leave->load(['employee.company', 'leaveType', 'managerApprover', 'hrApprover']);
+        $leave->load([
+            'employee.company', 'leaveType',
+            'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy',
+        ]);
         $balance = LeaveBalance::where('employee_id', $leave->employee_id)
             ->where('leave_type_id', $leave->leave_type_id)
             ->where('year', $leave->start_date->year)
             ->first();
 
         return view('hr.leave.show', compact('leave', 'balance'));
-    }
-
-    public function approveManager(Request $request, LeaveRequest $leave)
-    {
-        abort_unless($leave->isSubmitted(), 422);
-        $request->validate(['notes' => 'nullable|string|max:500']);
-
-        $leave->update([
-            'status'               => 'approved_manager',
-            'manager_approved_by'  => auth()->id(),
-            'manager_approved_at'  => now(),
-            'manager_notes'        => $request->notes,
-        ]);
-
-        return back()->with('success', 'Cuti disetujui oleh atasan langsung.');
-    }
-
-    public function approveHR(Request $request, LeaveRequest $leave)
-    {
-        abort_unless($leave->isApprovedManager(), 422);
-        $request->validate(['notes' => 'nullable|string|max:500']);
-
-        // Potong saldo cuti
-        $year    = $leave->start_date->year;
-        $balance = LeaveBalance::forEmployee($leave->employee_id, $leave->leave_type_id, $year);
-        $balance->increment('used', $leave->total_days);
-
-        $leave->update([
-            'status'          => 'approved_hr',
-            'hr_approved_by'  => auth()->id(),
-            'hr_approved_at'  => now(),
-            'hr_notes'        => $request->notes,
-        ]);
-
-        return back()->with('success', 'Cuti disetujui. Saldo cuti karyawan telah dipotong.');
-    }
-
-    public function reject(Request $request, LeaveRequest $leave)
-    {
-        abort_unless(in_array($leave->status, ['submitted', 'approved_manager']), 422);
-        $request->validate(['notes' => 'required|string|max:500']);
-
-        // Jika sebelumnya sudah approved_manager lalu HR tolak, tidak ada saldo yang perlu dikembalikan
-        $updateData = [
-            'status'   => 'rejected',
-            'hr_notes' => $request->notes,
-        ];
-
-        if ($leave->isSubmitted()) {
-            $updateData['manager_notes'] = $request->notes;
-            $updateData['manager_approved_by'] = auth()->id();
-        } else {
-            $updateData['hr_approved_by'] = auth()->id();
-            $updateData['hr_approved_at'] = now();
-        }
-
-        $leave->update($updateData);
-
-        return back()->with('success', 'Pengajuan cuti ditolak.');
     }
 
     public function balances(Request $request)
@@ -193,5 +163,74 @@ class LeaveController extends Controller
     {
         abort_unless($leave->attachment_path && Storage::disk('local')->exists($leave->attachment_path), 404);
         return Storage::disk('local')->response($leave->attachment_path);
+    }
+
+    // ── Kebijakan cuti: carry-forward / kuota per golongan ─────────────────
+
+    public function policies(Request $request)
+    {
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+        $policies  = LeavePolicy::with(['company', 'leaveType', 'level'])
+            ->orderBy('leave_type_id')->get();
+        $leaveTypes = LeaveType::where('is_active', true)->get();
+        $levels     = Level::orderBy('rank')->get();
+
+        return view('hr.leave.policies', compact('companies', 'policies', 'leaveTypes', 'levels'));
+    }
+
+    public function storePolicy(Request $request)
+    {
+        LeavePolicy::create($this->validatedPolicy($request));
+
+        return back()->with('success', 'Kebijakan cuti ditambahkan.');
+    }
+
+    public function updatePolicy(Request $request, LeavePolicy $policy)
+    {
+        $policy->update($this->validatedPolicy($request));
+
+        return back()->with('success', 'Kebijakan cuti diperbarui.');
+    }
+
+    public function destroyPolicy(LeavePolicy $policy)
+    {
+        $policy->delete();
+
+        return back()->with('success', 'Kebijakan cuti dihapus.');
+    }
+
+    /** Alokasi ulang saldo cuti semua karyawan aktif untuk 1 tahun sesuai kebijakan. */
+    public function generateBalances(Request $request)
+    {
+        $data = $request->validate(['year' => 'required|integer|min:2020']);
+        \Illuminate\Support\Facades\Artisan::call('leave:year-end', ['year' => $data['year']]);
+
+        $leaveTypes = LeaveType::where('is_active', true)->get();
+        $employees  = Employee::where('is_active', true)->get();
+        foreach ($employees as $employee) {
+            foreach ($leaveTypes as $leaveType) {
+                LeaveBalance::forEmployee($employee->id, $leaveType->id, (int) $data['year']);
+            }
+        }
+
+        return back()->with('success', 'Saldo cuti tahun ' . $data['year'] . ' berhasil di-generate untuk semua karyawan aktif.');
+    }
+
+    private function validatedPolicy(Request $request): array
+    {
+        $data = $request->validate([
+            'company_id'                  => 'nullable|exists:companies,id',
+            'leave_type_id'               => 'required|exists:leave_types,id',
+            'level_id'                     => 'nullable|exists:levels,id',
+            'min_years_service'           => 'required|integer|min:0|max:50',
+            'quota_days'                   => 'required|numeric|min:0',
+            'carry_forward_max_days'      => 'nullable|numeric|min:0',
+            'carry_forward_expire_month'  => 'required|integer|between:1,12',
+            'is_active'                    => 'boolean',
+        ]);
+        $data['carry_forward_max_days'] = $data['carry_forward_max_days'] ?? 0;
+        $data['is_active']              = $request->boolean('is_active', true);
+
+        return $data;
     }
 }

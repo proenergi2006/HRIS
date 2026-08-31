@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\HR\AttendanceRecord;
+use App\Models\HR\RosterEntry;
+use App\Models\HR\Shift;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -174,24 +176,47 @@ class AttendanceController extends Controller
             $checkIn  = $row['check_in'] ?? null;
             $checkOut = $row['check_out'] ?? null;
 
-            // Hitung keterlambatan (jam kerja default 08:00)
+            // Jam kerja dari roster shift hari itu; fallback 08:00–17:00 kalau tidak ada roster.
+            $shift = RosterEntry::where('employee_id', $employee->id)
+                ->where('work_date', $row['date'])->first()?->shift
+                ?? Shift::where('is_active', true)
+                    ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $companyId))
+                    ->where('code', 'PAGI')->first();
+
+            $startMins = $shift ? $shift->startMinutes() : 8 * 60;
+            $endMins   = $shift ? $shift->endMinutes() : 17 * 60;
+            $grace     = $shift?->late_grace_minutes ?? 0;
+
             $lateMinutes = 0;
             if ($checkIn) {
                 [$h, $m] = explode(':', $checkIn);
-                $arrivalMins = $h * 60 + $m;
-                $startMins   = 8 * 60;
-                $lateMinutes = max(0, $arrivalMins - $startMins);
+                $arrivalMins = (int) $h * 60 + (int) $m;
+                $lateMinutes = max(0, $arrivalMins - $startMins - $grace);
+            }
+
+            $overtimeMinutes = 0;
+            if ($checkOut && $shift) {
+                [$h, $m] = explode(':', $checkOut);
+                $departMins = (int) $h * 60 + (int) $m;
+                if ($shift->crosses_midnight && $departMins < $startMins) {
+                    $departMins += 1440;
+                }
+                $overtimeMinutes = max(0, $departMins - $endMins);
             }
 
             AttendanceRecord::updateOrCreate(
                 ['employee_id' => $employee->id, 'date' => $row['date']],
                 [
-                    'company_id'   => $companyId,
-                    'check_in'     => $checkIn,
-                    'check_out'    => $checkOut,
-                    'status'       => $lateMinutes > 0 ? 'telat' : 'hadir',
-                    'late_minutes' => $lateMinutes,
-                    'source'       => 'import',
+                    'company_id'       => $companyId,
+                    'check_in'         => $checkIn,
+                    'check_out'        => $checkOut,
+                    'status'           => $lateMinutes > 0 ? 'telat' : 'hadir',
+                    'late_minutes'     => $lateMinutes,
+                    'overtime_minutes' => $overtimeMinutes,
+                    'source'           => 'import',
+                    'shift_id'         => $shift?->id,
+                    'scheduled_start'  => $shift?->start_time,
+                    'scheduled_end'    => $shift?->end_time,
                 ]
             );
             $imported++;

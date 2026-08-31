@@ -30,9 +30,10 @@ class EmployeeImportController extends Controller
         Excel::import($import, $request->file('file'));
 
         return redirect()->route('appraisal.employees.import.form')->with('import_result', [
-            'created' => $import->created,
-            'updated' => $import->updated,
-            'errors'  => $import->errors,
+            'created'  => $import->created,
+            'updated'  => $import->updated,
+            'errors'   => $import->errors,
+            'warnings' => $import->warnings,
         ]);
     }
 }

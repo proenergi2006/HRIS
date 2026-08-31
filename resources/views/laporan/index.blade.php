@@ -8,6 +8,14 @@
   <div class="h3 mb-0">Laporan & Rekap</div>
 </div>
 
+<ul class="nav nav-pills mb-4">
+  <li class="nav-item"><a class="nav-link active" href="{{ route('laporan.index') }}">Rekap Umum</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ route('laporan.attendance-leave') }}">Absensi & Cuti</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ route('laporan.payroll') }}">Payroll Summary</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ route('laporan.headcount') }}">Headcount</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ route('laporan.analytics') }}">HR Analytics</a></li>
+</ul>
+
 {{-- ── Filter Periode ── --}}
 <div class="card mb-4">
   <div class="card-header font-weight-bold">Filter Periode</div>

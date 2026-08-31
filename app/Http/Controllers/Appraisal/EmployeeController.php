@@ -6,8 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Company;
 use App\Models\Department;
+use App\Models\Division;
 use App\Models\Level;
 use App\Models\Position;
+use App\Models\Section;
+use App\Models\Master\BloodType;
+use App\Models\Master\EmployeeType;
+use App\Models\Master\MaritalStatus;
+use App\Models\Master\Province;
+use App\Models\Master\Religion;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -96,11 +103,22 @@ class EmployeeController extends Controller implements HasMiddleware
     {
         return [
             'companies'   => Company::where('is_active', true)->orderBy('name')->get(),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'divisions'   => Division::where('is_active', true)->orderBy('name')->get(['id', 'name', 'company_id']),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'company_id', 'division_id']),
+            'sections'    => Section::where('is_active', true)->orderBy('name')->get(['id', 'name', 'department_id']),
             'positions'   => Position::where('is_active', true)->orderBy('name')->get(),
-            'levels'      => Level::orderBy('name')->get(),
+            'levels'      => Level::orderBy('rank')->orderBy('name')->get(),
             'managers'    => Employee::when($employee?->id, fn ($q) => $q->where('id', '!=', $employee->id))
                 ->orderBy('name')->get(),
+            'religions'       => Religion::active()->ordered()->get(),
+            'maritalStatuses' => MaritalStatus::active()->ordered()->get(),
+            'bloodTypes'      => BloodType::active()->ordered()->get(),
+            'employeeTypes'   => EmployeeType::active()->ordered()->get(),
+            'provinces'       => Province::orderBy('name')->get(['id', 'name']),
+            'cities'          => \App\Models\Master\City::orderBy('name')->get(['id', 'name', 'province_id']),
+            'educationLevels' => \App\Models\Master\EducationLevel::active()->ordered()->get(),
+            'educationMajors' => \App\Models\Master\EducationMajor::active()->ordered()->get(),
+            'banks'           => \App\Models\Master\Bank::active()->ordered()->get(),
         ];
     }
 
@@ -115,7 +133,7 @@ class EmployeeController extends Controller implements HasMiddleware
 
     private function validated(Request $request, ?int $ignoreId = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             // Employee Information
             'company_id'                 => 'nullable|exists:companies,id',
             'branch'                     => 'nullable|string|max:50',
@@ -123,7 +141,9 @@ class EmployeeController extends Controller implements HasMiddleware
             'nip'                        => 'nullable|string|max:50|unique:employees,nip,' . ($ignoreId ?? 'NULL'),
             'level_id'                   => 'nullable|exists:levels,id',
             'manager_id'                 => 'nullable|exists:employees,id',
+            'division_id'                => 'nullable|exists:divisions,id',
             'department_id'              => 'nullable|exists:departments,id',
+            'section_id'                 => 'nullable|exists:sections,id',
             'position_id'                => 'nullable|exists:positions,id',
             'lob'                        => 'nullable|string|max:100',
             'start_date'                 => 'nullable|date',
@@ -140,9 +160,10 @@ class EmployeeController extends Controller implements HasMiddleware
             'npwp_number'                => 'nullable|string|max:30',
             'npwp_city'                  => 'nullable|string|max:100',
             'npwp_date'                  => 'nullable|date',
-            'marital_status'             => 'nullable|in:belum_kawin,kawin,cerai_hidup,cerai_mati',
-            'religion'                   => 'nullable|string|max:30',
-            'blood_type'                 => 'nullable|in:A,B,AB,O',
+            'marital_status_id'          => 'nullable|exists:marital_statuses,id',
+            'religion_id'                => 'nullable|exists:religions,id',
+            'blood_type_id'              => 'nullable|exists:blood_types,id',
+            'employee_type_id'           => 'nullable|exists:employee_types,id',
             'employee_type'              => 'required|in:local,expat',
             'finger_id'                  => 'nullable|string|max:30',
 
@@ -153,14 +174,20 @@ class EmployeeController extends Controller implements HasMiddleware
 
             // Alamat Domisili
             'domicile_address'           => 'nullable|string|max:1000',
-            'domicile_city'              => 'nullable|string|max:100',
+            'domicile_province_id'       => 'nullable|exists:provinces,id',
+            'domicile_city_id'           => 'nullable|exists:cities,id',
+            'domicile_district_id'       => 'nullable|exists:districts,id',
             'domicile_district'          => 'nullable|string|max:100',
+            'domicile_village_id'        => 'nullable|exists:villages,id',
             'domicile_subdistrict'       => 'nullable|string|max:100',
 
             // Alamat KTP
             'ktp_address'                => 'nullable|string|max:1000',
-            'ktp_city'                   => 'nullable|string|max:100',
+            'ktp_province_id'            => 'nullable|exists:provinces,id',
+            'ktp_city_id'                => 'nullable|exists:cities,id',
+            'ktp_district_id'            => 'nullable|exists:districts,id',
             'ktp_district'               => 'nullable|string|max:100',
+            'ktp_village_id'             => 'nullable|exists:villages,id',
             'ktp_subdistrict'            => 'nullable|string|max:100',
 
             // Kontak Darurat
@@ -168,5 +195,34 @@ class EmployeeController extends Controller implements HasMiddleware
             'emergency_contact_relation' => 'nullable|string|max:100',
             'emergency_contact_phone'    => 'nullable|string|max:30',
         ]);
+
+        // Sinkronkan kolom teks &lt;-&gt; FK master kecamatan/kelurahan supaya laporan/PDF
+        // yang baca string tetap benar, dan sebaliknya (isian manual dicoba di-match).
+        $this->syncRegionText($data, 'domicile');
+        $this->syncRegionText($data, 'ktp');
+
+        return $data;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function syncRegionText(array &$data, string $prefix): void
+    {
+        if (! empty($data["{$prefix}_district_id"])) {
+            $data["{$prefix}_district"] = \App\Models\Master\District::whereKey($data["{$prefix}_district_id"])->value('name');
+        } elseif (! empty($data["{$prefix}_district"])) {
+            $data["{$prefix}_district_id"] = \App\Models\Master\District::when(
+                ! empty($data["{$prefix}_city_id"]),
+                fn ($q) => $q->where('city_id', $data["{$prefix}_city_id"])
+            )->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data["{$prefix}_district"]))])->value('id');
+        }
+
+        if (! empty($data["{$prefix}_village_id"])) {
+            $data["{$prefix}_subdistrict"] = \App\Models\Master\Village::whereKey($data["{$prefix}_village_id"])->value('name');
+        } elseif (! empty($data["{$prefix}_subdistrict"])) {
+            $data["{$prefix}_village_id"] = \App\Models\Master\Village::when(
+                ! empty($data["{$prefix}_district_id"]),
+                fn ($q) => $q->where('district_id', $data["{$prefix}_district_id"])
+            )->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data["{$prefix}_subdistrict"]))])->value('id');
+        }
     }
 }

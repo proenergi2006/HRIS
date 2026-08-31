@@ -17,7 +17,7 @@ class LevelController extends Controller implements HasMiddleware
 
     public function index()
     {
-        $levels = Level::withCount('employees')->get();
+        $levels = Level::withCount('employees')->orderBy('rank')->orderBy('name')->get();
         return view('appraisal.level.index', compact('levels'));
     }
 
@@ -31,9 +31,10 @@ class LevelController extends Controller implements HasMiddleware
         $request->validate([
             'name'        => 'required|string|max:100|unique:levels,name',
             'description' => 'nullable|string|max:255',
+            'rank'        => 'nullable|integer|min:1|max:99',
         ]);
 
-        Level::create($request->only('name', 'description'));
+        Level::create($request->only('name', 'description', 'rank'));
 
         return redirect()->route('appraisal.levels.index')->with('status', 'Level berhasil ditambahkan.');
     }
@@ -48,9 +49,10 @@ class LevelController extends Controller implements HasMiddleware
         $request->validate([
             'name'        => 'required|string|max:100|unique:levels,name,' . $level->id,
             'description' => 'nullable|string|max:255',
+            'rank'        => 'nullable|integer|min:1|max:99',
         ]);
 
-        $level->update($request->only('name', 'description'));
+        $level->update($request->only('name', 'description', 'rank'));
 
         return redirect()->route('appraisal.levels.index')->with('status', 'Level berhasil diperbarui.');
     }

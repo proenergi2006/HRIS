@@ -49,5 +49,5 @@ return [
     'login_password'      => 'Password',
     'login_remember'      => 'Ingat saya',
     'login_forgot'        => 'Lupa password?',
-    'login_btn'           => 'Masuk ke HRMS',
+    'login_btn'           => 'Masuk ke ProPeople',
 ];

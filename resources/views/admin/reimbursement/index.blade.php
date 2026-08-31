@@ -34,7 +34,7 @@
         <label class="small font-weight-bold">Status</label>
         <select name="status" class="form-control form-control-sm">
           <option value="">Semua</option>
-          @foreach(\App\Models\Reimbursement\ReimbursementRequest::$statusLabels as $val => $lbl)
+          @foreach(['draft'=>'Draft','pending'=>'Menunggu Persetujuan','approved'=>'Disetujui','rejected'=>'Ditolak','cancelled'=>'Dibatalkan'] as $val => $lbl)
             <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
           @endforeach
         </select>
@@ -79,15 +79,15 @@
       </thead>
       <tbody>
       @forelse($requests as $r)
-        <tr>
+        <tr @if($r->isSubmitted()) style="background:#e3e6eb" @endif>
           <td class="font-weight-bold">{{ $r->request_number }}</td>
           <td>{{ $r->user?->name ?? '-' }}</td>
           <td>{{ $r->request_date->format('d/m/Y') }}</td>
           <td>{{ \App\Models\Reimbursement\ReimbursementRequest::$medicalForLabels[$r->medical_for] }}</td>
           <td class="text-right">Rp {{ number_format($r->total_claim, 0, ',', '.') }}</td>
           <td class="text-center">
-            <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$r->status] }}">
-              {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$r->status] }}
+            <span class="badge badge-{{ \App\Models\Reimbursement\ReimbursementRequest::$statusBadges[$r->status] ?? 'secondary' }}">
+              {{ \App\Models\Reimbursement\ReimbursementRequest::$statusLabels[$r->status] ?? ucfirst($r->status) }}
             </span>
           </td>
           <td class="text-center small">{{ $r->payment_period_label ?? '-' }}</td>

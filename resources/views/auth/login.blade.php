@@ -65,7 +65,7 @@
         margin-bottom: 16px;
     }
     .hero-title {
-        font-size: clamp(2.1rem, 5vw, 2.75rem);
+        font-size: clamp(2.5rem, 6vw, 3.4rem);
         font-weight: 900;
         letter-spacing: 4px;
         margin: 0 0 8px;
@@ -95,8 +95,8 @@
     }
     .card-logo {
         display: block;
-        height: 32px;
-        margin: 0 auto 18px;
+        height: 56px;
+        margin: 0 auto 20px;
         object-fit: contain;
     }
     .login-card h2 {
@@ -219,13 +219,12 @@
     <div class="bg-blob b3"></div>
 
     <div class="hero-brand">
-        <div class="hero-eyebrow">PT Pro Energi Group</div>
-        <div class="hero-title">HRMS</div>
+        <div class="hero-title">ProPeople</div>
         <p class="hero-tagline">{{ __('common.login_tagline') }}</p>
     </div>
 
     <div class="login-card">
-        <img src="{{ asset('img/logo-proenergi.png') }}" class="card-logo" alt="PT. Pro Energi">
+        <img src="{{ asset('img/propeople-logo-lockup.png') }}" class="card-logo" alt="ProPeople">
         <h2>{{ __('common.login_welcome') }}</h2>
         <p class="subtitle">{{ __('common.login_subtitle') }}</p>
 
@@ -303,7 +302,7 @@
     @endif
 
     <div class="login-footer">
-        &copy; {{ date('Y') }} PT. Pro Energi Group &nbsp;&mdash;&nbsp; HRMS v1.0
+        &copy; {{ date('Y') }} PT. Pro Energi Group &nbsp;&mdash;&nbsp; ProPeople v1.0
     </div>
 </div>
 @endsection

@@ -77,17 +77,7 @@
 @endif
 </td>
 <td class="py-3">
-@php
-$badgeClass = match($appraisal->status) {
-  'draft'          => 'secondary',
-  'submitted'      => 'warning',
-  'approved_user2' => 'info',
-  'approved_cfo'   => 'success',
-  'rejected'       => 'danger',
-  default          => 'secondary',
-};
-@endphp
-<span class="badge badge-{{ $badgeClass }}">{{ $appraisal->status_label }}</span>
+<span class="badge badge-{{ \App\Models\Appraisal\Appraisal::$statusBadges[$appraisal->status] ?? 'secondary' }}">{{ $appraisal->status_label }}</span>
 </td>
 <td class="py-3">
 <a href="{{ route('appraisal.appraisals.show', $appraisal) }}"

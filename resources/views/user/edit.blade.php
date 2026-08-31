@@ -46,30 +46,6 @@
 
             <div class="form-row">
                 <div class="form-group col-12 col-md-6">
-                    <label for="role">Role / Hak Akses</label>
-                    <select id="role" name="role" class="form-control @error('role') is-invalid @enderror">
-                        <option value="">-- Tanpa Role --</option>
-                        @foreach($roles as $r)
-                            <option value="{{ $r }}"
-                                {{ old('role', $user->roles->first()?->name) === $r ? 'selected' : '' }}>
-                                {{ match($r) {
-                                    'admin'     => 'Admin HRD',
-                                    'evaluator' => 'Evaluator (SPV/Manager)',
-                                    'user_ii'   => 'Approver Step 1 (User II)',
-                                    'cfo'       => 'CFO (Approver Final)',
-                                    'ceo'       => 'CEO (Approver Final)',
-                                    default     => $r,
-                                } }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <small class="text-muted">
-                        Role <strong>Karyawan</strong> untuk staff yang mengisi penilaian diri sendiri.
-                        User II &amp; CFO/CEO perlu diisi Departemen.
-                    </small>
-                </div>
-                <div class="form-group col-12 col-md-6">
                     <label for="employee_id">Hubungkan ke Data Karyawan</label>
                     <select id="employee_id" name="employee_id"
                             class="form-control @error('employee_id') is-invalid @enderror">
@@ -84,9 +60,88 @@
                         @endforeach
                     </select>
                     @error('employee_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <small class="text-muted">Wajib diisi untuk role Karyawan agar bisa mengisi penilaian diri sendiri.</small>
                 </div>
             </div>
+
+            <hr>
+            <div class="font-weight-bold mb-2">Role & Company</div>
+            <p class="small text-muted">
+                Satu user bisa punya beberapa role, masing-masing bisa dibatasi ke 1 company atau
+                berlaku di semua company. Kelola daftar role &amp; hak aksesnya di
+                <a href="{{ route('admin.roles.index') }}">Role & Hak Akses</a>.
+            </p>
+
+            <div id="role-rows">
+                @forelse($assignments as $i => $a)
+                    <div class="form-row role-row">
+                        <div class="form-group col-5">
+                            <select name="role_id[]" class="form-control">
+                                <option value="">-- Pilih Role --</option>
+                                @foreach($roles as $r)
+                                    @php $roleObj = \Spatie\Permission\Models\Role::where('name', $r)->first(); @endphp
+                                    <option value="{{ $roleObj?->id }}" {{ $a->role_id == $roleObj?->id ? 'selected' : '' }}>{{ $r }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-5">
+                            <select name="company_id[]" class="form-control">
+                                <option value="">-- Semua Company --</option>
+                                @foreach($companies as $c)
+                                    <option value="{{ $c->id }}" {{ $a->company_id == $c->id ? 'selected' : '' }}>{{ $c->short_name ?? $c->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-2">
+                            <button type="button" class="btn btn-outline-danger btn-block remove-role-row"><i class="gd-trash"></i></button>
+                        </div>
+                    </div>
+                @empty
+                @endforelse
+            </div>
+            <button type="button" id="add-role-row" class="btn btn-sm btn-outline-primary mb-3">
+                <i class="gd-plus mr-1"></i> Tambah Role
+            </button>
+
+            <template id="role-row-template">
+                <div class="form-row role-row">
+                    <div class="form-group col-5">
+                        <select name="role_id[]" class="form-control">
+                            <option value="">-- Pilih Role --</option>
+                            @foreach($roles as $r)
+                                @php $roleObj = \Spatie\Permission\Models\Role::where('name', $r)->first(); @endphp
+                                <option value="{{ $roleObj?->id }}">{{ $r }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-5">
+                        <select name="company_id[]" class="form-control">
+                            <option value="">-- Semua Company --</option>
+                            @foreach($companies as $c)
+                                <option value="{{ $c->id }}">{{ $c->short_name ?? $c->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-2">
+                        <button type="button" class="btn btn-outline-danger btn-block remove-role-row"><i class="gd-trash"></i></button>
+                    </div>
+                </div>
+            </template>
+
+            <script>
+            (function () {
+                var rows = document.getElementById('role-rows');
+                var tpl  = document.getElementById('role-row-template');
+
+                document.getElementById('add-role-row').addEventListener('click', function () {
+                    rows.appendChild(tpl.content.cloneNode(true));
+                });
+
+                rows.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.remove-role-row');
+                    if (btn) btn.closest('.role-row').remove();
+                });
+            })();
+            </script>
 
             <div class="form-row">
                 <div class="form-group col-12 col-md-6">

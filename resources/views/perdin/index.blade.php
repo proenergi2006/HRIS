@@ -33,8 +33,8 @@
           <td>{{ $r->departure_date->format('d/m/Y') }}</td>
           <td class="text-right">Rp {{ number_format($r->total_budget, 0, ',', '.') }}</td>
           <td class="text-center">
-            <span class="badge badge-{{ \App\Models\Perdin\PerdinRequest::$statusBadges[$r->status] }}">
-              {{ \App\Models\Perdin\PerdinRequest::$statusLabels[$r->status] }}
+            <span class="badge badge-{{ \App\Models\Perdin\PerdinRequest::$statusBadges[$r->status] ?? 'secondary' }}">
+              {{ \App\Models\Perdin\PerdinRequest::$statusLabels[$r->status] ?? ucfirst($r->status) }}
             </span>
           </td>
           <td class="text-right" style="white-space:nowrap">

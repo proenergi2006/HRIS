@@ -2,7 +2,10 @@
 
 namespace App\Models\Reimbursement;
 
+use App\Contracts\Approvable;
+use App\Models\Employee;
 use App\Models\User;
+use App\Traits\HasApprovalWorkflow;
 use App\Traits\HasHashid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,9 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class ReimbursementRequest extends Model
+class ReimbursementRequest extends Model implements Approvable
 {
-    use HasHashid, LogsActivity;
+    use HasHashid, LogsActivity, HasApprovalWorkflow;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -54,9 +57,13 @@ class ReimbursementRequest extends Model
     }
 
     public function isDraft(): bool      { return $this->status === 'draft'; }
-    public function isSubmitted(): bool  { return $this->status === 'submitted'; }
+    public function isPending(): bool    { return in_array($this->status, ['pending', 'submitted']); }
     public function isApproved(): bool   { return $this->status === 'approved'; }
     public function isRejected(): bool   { return $this->status === 'rejected'; }
+    public function isCancelled(): bool  { return $this->status === 'cancelled'; }
+
+    // Kompatibilitas dgn tampilan lama (mengizinkan koreksi item selama masih pending)
+    public function isSubmitted(): bool  { return $this->isPending(); }
 
     public static array $medicalForLabels = [
         'employee' => 'Karyawan',
@@ -68,20 +75,90 @@ class ReimbursementRequest extends Model
 
     public static array $statusLabels = [
         'draft'     => 'Draft',
-        'submitted' => 'Menunggu Approval',
+        'pending'   => 'Menunggu Persetujuan',
         'approved'  => 'Disetujui',
         'rejected'  => 'Ditolak',
+        'cancelled' => 'Dibatalkan',
+        'submitted' => 'Menunggu Persetujuan',
     ];
 
     public static array $statusBadges = [
         'draft'     => 'secondary',
-        'submitted' => 'warning',
+        'pending'   => 'warning',
         'approved'  => 'success',
         'rejected'  => 'danger',
+        'cancelled' => 'secondary',
+        'submitted' => 'warning',
     ];
 
     public function user(): BelongsTo     { return $this->belongsTo(User::class); }
     public function approver(): BelongsTo { return $this->belongsTo(User::class, 'approved_by'); }
     public function items(): HasMany      { return $this->hasMany(ReimbursementItem::class); }
     public function attachments(): HasMany{ return $this->hasMany(ReimbursementAttachment::class); }
+
+    // ── Approval Engine ─────────────────────────────────────────────────
+
+    public function approvalTransactionType(): string
+    {
+        return 'reimbursement_request';
+    }
+
+    public function approvalCompanyId(): ?int
+    {
+        return Employee::where('user_id', $this->user_id)->value('company_id');
+    }
+
+    public function approvalRequester(): ?User
+    {
+        return $this->user;
+    }
+
+    public function approvalSubjectEmployee(): ?Employee
+    {
+        return Employee::where('user_id', $this->user_id)->first();
+    }
+
+    public function approvalAttributes(): array
+    {
+        return [
+            'total_claim' => (int) $this->total_claim,
+            'medical_for' => $this->medical_for,
+        ];
+    }
+
+    public function approvalSummary(): string
+    {
+        $for = self::$medicalForLabels[$this->medical_for] ?? $this->medical_for;
+
+        return 'Reimbursement ' . $this->request_number
+            . ' — ' . ($this->user?->name ?? '')
+            . ' · ' . $for
+            . ' · Rp ' . number_format((int) $this->total_claim, 0, ',', '.');
+    }
+
+    public function onApprovalApproved(): void
+    {
+        // Default periode pembayaran ke bulan pengajuan bila belum di-set admin.
+        $this->payment_month ??= $this->request_date?->month ?? now()->month;
+        $this->payment_year  ??= $this->request_date?->year ?? now()->year;
+
+        $balance = ReimbursementBalance::forUser($this->user_id, $this->request_date->year);
+        if ($balance) {
+            $balance->increment('used_balance', $this->total_claim);
+        }
+
+        $this->forceFill([
+            'status'      => 'approved',
+            'approved_at' => now(),
+        ])->save();
+    }
+
+    public function onApprovalRejected(?string $reason): void
+    {
+        $this->forceFill([
+            'status'           => 'rejected',
+            'rejection_reason' => $reason,
+            'approved_at'      => now(),
+        ])->save();
+    }
 }

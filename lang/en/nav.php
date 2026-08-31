@@ -24,6 +24,35 @@ return [
     'appraisals'             => 'Appraisals',
     'reports'                => 'Reports',
 
+    // Organization structure
+    'organization'           => 'Organization',
+    'divisions'              => 'Divisions',
+    'departments'            => 'Departments',
+    'sections'               => 'Sections',
+    'positions'              => 'Positions',
+    'org_chart'              => 'Org Chart',
+    'org_history'            => 'Change History',
+
+    // Approval Engine
+    'approval'               => 'Approvals',
+    'approval_inbox'         => 'Approval Inbox',
+    'approval_setting'       => 'Workflow Setting',
+    'reward'                 => 'Reward',
+    'punishment'             => 'Punishment',
+    'promotion_rotation'     => 'Promotion & Rotation',
+    'termination'            => 'Termination',
+
+    // Master data
+    'm_religion'             => 'Religion',
+    'm_edu_level'            => 'Education Level',
+    'm_edu_major'            => 'Education Major',
+    'm_marital'              => 'Marital Status',
+    'm_blood'                => 'Blood Type',
+    'm_emp_type'             => 'Employee Type',
+    'm_bank'                 => 'Bank',
+    'm_company_bank'         => 'Company Bank Account',
+    'm_region'               => 'Region',
+
     // Reimbursement
     'reimbursement'          => 'Reimbursement',
     'medical_reimbursement'  => 'Medical',

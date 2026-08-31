@@ -89,7 +89,7 @@
         </div>
         <hr>
         <p class="small text-muted mb-0">
-          <strong>Catatan:</strong> NIP karyawan di HRMS harus sama dengan ID karyawan di mesin absensi.
+          <strong>Catatan:</strong> NIP karyawan di ProPeople harus sama dengan ID karyawan di mesin absensi.
         </p>
       </div>
     </div>

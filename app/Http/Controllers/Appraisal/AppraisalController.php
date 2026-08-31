@@ -4,21 +4,28 @@ namespace App\Http\Controllers\Appraisal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appraisal\Appraisal;
-use App\Models\Appraisal\AppraisalAspect;
-use App\Models\Appraisal\AppraisalItem;
+use App\Models\Appraisal\AppraisalObjective;
 use App\Models\Appraisal\AppraisalPeriod;
 use App\Models\Appraisal\AppraisalTemplate;
 use App\Models\Employee;
-use App\Services\Appraisal\ApprovalStateMachine;
-use App\Services\Appraisal\ScoreEngine;
+use App\Services\ApprovalEngine;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Penilaian Kinerja — KPI/objective-based, approval lewat App\Services\ApprovalEngine
+ * (bukan lagi state machine 2-step). Pola sama HR\LeaveController: store()/submit()
+ * panggil $engine->start(), approve/reject lewat Kotak Persetujuan terpadu
+ * (App\Http\Controllers\Approval\ApprovalInboxController) — tidak ada approve/reject
+ * di sini lagi.
+ */
 class AppraisalController extends Controller implements HasMiddleware
 {
+    public function __construct(private ApprovalEngine $engine) {}
+
     public static function middleware(): array
     {
         return [new Middleware('auth')];
@@ -31,30 +38,19 @@ class AppraisalController extends Controller implements HasMiddleware
         $selectedPeriod = $request->get('period_id');
 
         $query = Appraisal::with(['employee', 'period', 'template'])
-            ->when($selectedPeriod, fn($q) => $q->where('appraisal_period_id', $selectedPeriod));
+            ->when($selectedPeriod, fn ($q) => $q->where('appraisal_period_id', $selectedPeriod));
 
         if ($user->hasRole('admin')) {
             // Admin HRD: lihat semua
         } elseif ($user->hasRole('karyawan')) {
-            // Karyawan: hanya lihat penilaian milik diri sendiri (via employee link)
-            $query->whereHas('employee', fn($q) => $q->where('user_id', $user->id));
-        } elseif ($user->hasAnyRole(['user_ii', 'cfo', 'ceo'])) {
-            // Approver: filter by department jika user punya department
-            if ($user->department) {
-                $query->whereHas('employee.department', fn($q) => $q->where('name', $user->department));
-            }
+            $query->whereHas('employee', fn ($q) => $q->where('user_id', $user->id));
         } else {
-            // Evaluator: lihat yang dibuat sendiri + seluruh appraisal dept yang sama
-            $query->where(function ($q) use ($user) {
-                $q->where('evaluator_id', $user->id);
-                if ($user->department) {
-                    $q->orWhereHas('employee.department', fn($q2) => $q2->where('name', $user->department));
-                }
-            });
+            // Evaluator: lihat yang dibuat sendiri
+            $query->where('evaluator_id', $user->id);
         }
 
         if ($search = $request->get('search')) {
-            $query->whereHas('employee', fn($q) => $q->where('name', 'like', "%{$search}%"));
+            $query->whereHas('employee', fn ($q) => $q->where('name', 'like', "%{$search}%"));
         }
 
         $appraisals = $query->orderByDesc('id')->paginate(25)->withQueryString();
@@ -74,13 +70,9 @@ class AppraisalController extends Controller implements HasMiddleware
                 return redirect()->route('appraisal.appraisals.index')
                     ->with('error', 'Akun Anda belum dihubungkan ke data karyawan. Hubungi Admin HRD.');
             }
-            $employees = collect([$myEmployee->load('level.appraisalTemplates')]);
+            $employees = collect([$myEmployee]);
         } else {
-            $employees = Employee::with('level.appraisalTemplates')
-                ->where('is_active', true)
-                ->whereHas('level.appraisalTemplates')
-                ->orderBy('name')
-                ->get();
+            $employees = Employee::where('is_active', true)->orderBy('name')->get();
         }
 
         $periods   = AppraisalPeriod::where('status', 'open')->orderByDesc('year')->get();
@@ -95,7 +87,6 @@ class AppraisalController extends Controller implements HasMiddleware
 
         $user = auth()->user();
 
-        // Karyawan hanya boleh buat penilaian untuk dirinya sendiri
         if ($user->hasRole('karyawan')) {
             $myEmployee = $user->employee;
             if (! $myEmployee) {
@@ -108,7 +99,7 @@ class AppraisalController extends Controller implements HasMiddleware
         $request->validate([
             'employee_id'           => 'required|exists:employees,id',
             'appraisal_period_id'   => 'required|exists:appraisal_periods,id',
-            'appraisal_template_id' => 'required|exists:appraisal_templates,id',
+            'appraisal_template_id' => 'nullable|exists:appraisal_templates,id',
         ]);
 
         $exists = Appraisal::where('employee_id', $request->employee_id)
@@ -122,40 +113,33 @@ class AppraisalController extends Controller implements HasMiddleware
         }
 
         $appraisal = DB::transaction(function () use ($request, $user) {
-            $template  = AppraisalTemplate::findOrFail($request->appraisal_template_id);
-            // Karyawan bukan evaluator — evaluator_id diisi nanti saat evaluator submit
-            $evaluatorId = $user->hasRole('karyawan') ? null : $user->id;
+            $employee = Employee::findOrFail($request->employee_id);
+
+            // Evaluator default: atasan langsung dari org chart. Kalau yang mengajukan
+            // bukan karyawan yang dinilai sendiri, dia jadi evaluator (mis. admin buat
+            // atas nama evaluator, atau evaluator langsung isi).
+            $evaluatorId = $user->hasRole('karyawan')
+                ? $employee->manager?->user_id
+                : $user->id;
+
             $appraisal = Appraisal::create([
                 'employee_id'           => $request->employee_id,
                 'appraisal_period_id'   => $request->appraisal_period_id,
-                'appraisal_template_id' => $request->appraisal_template_id,
+                'appraisal_template_id' => $request->appraisal_template_id ?: null,
                 'evaluator_id'          => $evaluatorId,
-                'status'                => Appraisal::STATUS_DRAFT,
+                'status'                => 'draft',
             ]);
 
-            $aspects = AppraisalAspect::where('appraisal_template_id', $request->appraisal_template_id)
-                ->orderBy('order')->get();
-
-            if ($template->isWeightedScale()) {
-                foreach (['self', 'atasan1', 'atasan2', 'ho'] as $evalType) {
-                    foreach ($aspects as $aspect) {
-                        AppraisalItem::create([
-                            'appraisal_id'        => $appraisal->id,
-                            'appraisal_aspect_id' => $aspect->id,
-                            'evaluator_type'      => $evalType,
-                            'rating'              => null,
-                            'score'               => 0,
-                        ]);
-                    }
-                }
-            } else {
-                foreach ($aspects as $aspect) {
-                    AppraisalItem::create([
-                        'appraisal_id'        => $appraisal->id,
-                        'appraisal_aspect_id' => $aspect->id,
-                        'evaluator_type'      => 'evaluator',
-                        'rating'              => null,
-                        'score'               => 0,
+            if ($request->filled('appraisal_template_id')) {
+                $template = AppraisalTemplate::with('objectives')->find($request->appraisal_template_id);
+                foreach ($template?->objectives ?? [] as $obj) {
+                    AppraisalObjective::create([
+                        'appraisal_id' => $appraisal->id,
+                        'title'        => $obj->title,
+                        'description'  => $obj->description,
+                        'category'     => $obj->category,
+                        'weight_pct'   => $obj->weight_pct,
+                        'order'        => $obj->order,
                     ]);
                 }
             }
@@ -164,7 +148,7 @@ class AppraisalController extends Controller implements HasMiddleware
         });
 
         return redirect()->route('appraisal.appraisals.edit', $appraisal)
-            ->with('status', 'Penilaian berhasil dibuat. Silakan isi rating untuk setiap aspek.');
+            ->with('status', 'Penilaian berhasil dibuat. Silakan isi KPI/objective.');
     }
 
     public function edit(Appraisal $appraisal)
@@ -176,22 +160,9 @@ class AppraisalController extends Controller implements HasMiddleware
                 ->with('error', 'Penilaian ini tidak dapat diedit karena sudah disubmit.');
         }
 
-        $appraisal->load([
-            'employee.level', 'period',
-            'template.aspects.weights', 'template.gradeBands', 'items',
-        ]);
+        $appraisal->load(['employee.level', 'employee.position', 'employee.department', 'period', 'template.gradeBands', 'objectives']);
 
-        $isKaryawan = auth()->user()->hasRole('karyawan');
-
-        if ($appraisal->template->isWeightedScale()) {
-            $itemsByEvaluator = $appraisal->items
-                ->groupBy('evaluator_type')
-                ->map(fn($g) => $g->keyBy('appraisal_aspect_id'));
-            return view('appraisal.appraisal.edit', compact('appraisal', 'itemsByEvaluator', 'isKaryawan'));
-        }
-
-        $itemsByAspect = $appraisal->items->keyBy('appraisal_aspect_id');
-        return view('appraisal.appraisal.edit', compact('appraisal', 'itemsByAspect', 'isKaryawan'));
+        return view('appraisal.appraisal.edit', compact('appraisal'));
     }
 
     public function update(Request $request, Appraisal $appraisal)
@@ -203,113 +174,123 @@ class AppraisalController extends Controller implements HasMiddleware
                 ->with('error', 'Penilaian ini tidak dapat diedit.');
         }
 
-        $appraisal->load('template');
-        $isScale = $appraisal->template->isWeightedScale();
+        $request->validate([
+            'objectives'                    => 'nullable|array',
+            'objectives.*.id'               => 'nullable|integer',
+            'objectives.*.title'            => 'required_with:objectives.*.weight_pct|nullable|string|max:200',
+            'objectives.*.description'      => 'nullable|string|max:1000',
+            'objectives.*.category'         => 'nullable|string|max:100',
+            'objectives.*.weight_pct'       => 'nullable|integer|min:0|max:100',
+            'objectives.*.target'           => 'nullable|string|max:1000',
+            'objectives.*.actual'           => 'nullable|string|max:1000',
+            'objectives.*.achievement_pct'  => 'nullable|numeric|min:0|max:999',
+            'strengths'                     => 'nullable|string|max:2000',
+            'development_notes'             => 'nullable|string|max:2000',
+            'notes'                         => 'nullable|string|max:2000',
+        ]);
 
-        if ($isScale) {
-            $request->validate([
-                'ratings'                      => 'nullable|array',
-                'ratings.*.*'                  => 'nullable|integer|between:1,5',
-                'notes'                        => 'nullable|string|max:2000',
-                'strength_points'              => 'nullable|string|max:2000',
-                'development_need'             => 'nullable|string|max:2000',
-                'individual_development_plan'  => 'nullable|string|max:2000',
-            ]);
-        } else {
-            $request->validate([
-                'ratings'             => 'nullable|array',
-                'ratings.*'           => 'nullable|in:BS,B,C,K',
-                'avg_late_per_month'  => 'nullable|numeric|min:0|max:31',
-                'avg_leave_per_month' => 'nullable|numeric|min:0|max:31',
-                'warning_letter'      => 'nullable|boolean',
-                'sp_level'            => 'nullable|in:none,sp1,sp2,sp3',
-                'notes'               => 'nullable|string|max:2000',
-            ]);
-        }
+        DB::transaction(function () use ($request, $appraisal) {
+            $submitted = $request->input('objectives', []);
+            $keptIds   = [];
 
-        DB::transaction(function () use ($request, $appraisal, $isScale) {
-            if ($isScale) {
-                $allowedTypes = auth()->user()->hasRole('karyawan')
-                    ? ['self']
-                    : ['self', 'atasan1', 'atasan2', 'ho'];
-                foreach ($allowedTypes as $evalType) {
-                    foreach ($request->input("ratings.{$evalType}", []) as $aspectId => $rating) {
-                        AppraisalItem::where('appraisal_id', $appraisal->id)
-                            ->where('appraisal_aspect_id', $aspectId)
-                            ->where('evaluator_type', $evalType)
-                            ->update(['rating' => $rating ?: null]);
-                    }
+            foreach ($submitted as $order => $row) {
+                if (empty(trim($row['title'] ?? ''))) {
+                    continue;
                 }
-                $appraisal->update([
-                    'notes'                       => $request->input('notes'),
-                    'strength_points'             => $request->input('strength_points'),
-                    'development_need'            => $request->input('development_need'),
-                    'individual_development_plan' => $request->input('individual_development_plan'),
-                ]);
-            } else {
-                foreach ($request->input('ratings', []) as $aspectId => $rating) {
-                    AppraisalItem::where('appraisal_id', $appraisal->id)
-                        ->where('appraisal_aspect_id', $aspectId)
-                        ->update(['rating' => $rating ?: null]);
+
+                $data = [
+                    'appraisal_id'     => $appraisal->id,
+                    'title'            => $row['title'],
+                    'description'      => $row['description'] ?? null,
+                    'category'         => $row['category'] ?? null,
+                    'weight_pct'       => (int) ($row['weight_pct'] ?? 0),
+                    'target'           => $row['target'] ?? null,
+                    'actual'           => $row['actual'] ?? null,
+                    'achievement_pct'  => $row['achievement_pct'] !== '' && isset($row['achievement_pct']) ? (float) $row['achievement_pct'] : null,
+                    'order'            => $order + 1,
+                ];
+
+                $objective = ! empty($row['id'])
+                    ? AppraisalObjective::where('appraisal_id', $appraisal->id)->find($row['id'])
+                    : null;
+
+                if ($objective) {
+                    $objective->fill($data);
+                } else {
+                    $objective = new AppraisalObjective($data);
                 }
-                $appraisal->update([
-                    'avg_late_per_month'  => $request->input('avg_late_per_month', 0),
-                    'avg_leave_per_month' => $request->input('avg_leave_per_month', 0),
-                    'warning_letter'      => (bool) $request->input('warning_letter', false),
-                    'sp_level'            => $request->input('sp_level', 'none'),
-                    'notes'               => $request->input('notes'),
-                ]);
+
+                $objective->recalculateScore();
+                $objective->save();
+                $keptIds[] = $objective->id;
             }
 
-            ScoreEngine::calculate($appraisal);
+            $appraisal->objectives()->whereNotIn('id', $keptIds)->delete();
+
+            $appraisal->load('objectives');
+            $totalScore = (float) $appraisal->objectives->sum('score');
+
+            // Grade bands ikut template. Kalau appraisal tidak pakai template
+            // (isi KPI dari nol), fallback ke template default supaya grade tetap
+            // bisa dihitung — bukan cuma appraisal yang lewat pilih template yang
+            // dapat predikat.
+            $gradeSource = $appraisal->template ?? AppraisalTemplate::where('is_default', true)->first();
+            $grade = $gradeSource?->gradeBands->first(fn ($b) => $totalScore >= $b->min_score)?->grade_label;
+
+            $appraisal->update([
+                'total_score'       => $totalScore,
+                'grade'             => $grade,
+                'strengths'         => $request->input('strengths'),
+                'development_notes' => $request->input('development_notes'),
+                'notes'             => $request->input('notes'),
+            ]);
         });
 
         return redirect()->route('appraisal.appraisals.edit', $appraisal)
             ->with('status', 'Draft penilaian berhasil disimpan.');
     }
 
+    public function submit(Appraisal $appraisal)
+    {
+        $this->authorizeOwnerOrAdmin($appraisal);
+        abort_unless($appraisal->isDraft(), 422);
+
+        $appraisal->load('objectives');
+        if (! $appraisal->isReadyToSubmit()) {
+            return back()->with('error', 'Total bobot KPI harus 100% dan semua KPI harus diisi capaian sebelum disubmit.');
+        }
+
+        $appraisal->update(['status' => 'pending', 'submitted_at' => now()]);
+        $this->engine->start($appraisal->load('employee'));
+        $appraisal->refresh();
+        if ($appraisal->approvalRequest?->status === 'approved' && ! $appraisal->isApproved()) {
+            $appraisal->forceFill(['status' => 'approved', 'finalized_at' => now()])->save();
+        }
+
+        return redirect()->route('appraisal.appraisals.show', $appraisal)
+            ->with('status', 'Penilaian berhasil disubmit dan menunggu persetujuan.');
+    }
+
     public function show(Appraisal $appraisal)
     {
         $appraisal->load([
-            'employee.level', 'period',
-            'template.aspects.weights', 'template.gradeBands',
-            'items.aspect', 'evaluator', 'approvals.user',
+            'employee.level', 'employee.position', 'employee.department', 'period', 'template',
+            'objectives', 'evaluator',
+            'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy',
         ]);
 
-        $itemsByAspect    = $appraisal->items->keyBy('appraisal_aspect_id');
-        $itemsByEvaluator = $appraisal->items
-            ->groupBy('evaluator_type')
-            ->map(fn($g) => $g->keyBy('appraisal_aspect_id'));
-
-        $sm         = new ApprovalStateMachine();
-        $authUser   = auth()->user();
-        $canSubmit  = $sm->canSubmit($appraisal, $authUser);
-        $canApprove = $sm->canApprove($appraisal, $authUser);
-        $canReject  = $sm->canReject($appraisal, $authUser);
-        $nextLabel  = $sm->nextApproverLabel($appraisal);
-        $isFinalStep = $appraisal->status === Appraisal::STATUS_APPROVED_U2 && $canApprove;
-
-        return view('appraisal.appraisal.show', compact(
-            'appraisal', 'itemsByAspect', 'itemsByEvaluator',
-            'canSubmit', 'canApprove', 'canReject', 'nextLabel', 'isFinalStep'
-        ));
+        return view('appraisal.appraisal.show', compact('appraisal'));
     }
 
     public function pdf(Appraisal $appraisal)
     {
         $appraisal->load([
-            'employee.level', 'period',
-            'template.aspects.weights', 'template.gradeBands',
-            'items.aspect.weights', 'evaluator', 'approvals.user',
+            'employee.level', 'employee.position', 'employee.department', 'period', 'template',
+            'objectives', 'evaluator',
+            'approvalRequest.steps.approver',
         ]);
 
-        $itemsByAspect    = $appraisal->items->keyBy('appraisal_aspect_id');
-        $itemsByEvaluator = $appraisal->items
-            ->groupBy('evaluator_type')
-            ->map(fn($g) => $g->keyBy('appraisal_aspect_id'));
-
-        $pdf = Pdf::loadView('appraisal.pdf.form', compact('appraisal', 'itemsByAspect', 'itemsByEvaluator'))
-            ->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('appraisal.pdf.form', compact('appraisal'))->setPaper('a4', 'portrait');
 
         $filename = 'Penilaian_' . str_replace(' ', '_', $appraisal->employee->name)
             . '_' . $appraisal->period->year . '.pdf';
@@ -346,16 +327,7 @@ class AppraisalController extends Controller implements HasMiddleware
         $user = auth()->user();
         if ($user->hasRole('admin')) return;
         if ($appraisal->evaluator_id === $user->id) return;
-        // Karyawan boleh akses appraisal milik dirinya sendiri
         if ($user->hasRole('karyawan') && $appraisal->employee->user_id === $user->id) return;
-        // Evaluator boleh akses semua appraisal di departemen yang sama
-        if ($user->hasRole('evaluator') && $user->department
-            && $appraisal->employee->department?->name === $user->department) return;
         abort(403, 'Anda tidak memiliki akses ke penilaian ini.');
-    }
-
-    public function isKaryawan(): bool
-    {
-        return auth()->user()->hasRole('karyawan');
     }
 }

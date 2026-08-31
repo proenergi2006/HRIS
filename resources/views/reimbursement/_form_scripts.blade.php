@@ -21,11 +21,15 @@
     return 'Rp ' + Number(n).toLocaleString('id-ID');
   }
 
+  function moneyVal(inp) {
+    return parseInt((inp && inp.value || '0').replace(/\D/g, ''), 10) || 0;
+  }
+
   function rowTotal(row) {
     var sum = 0;
     amtFields.forEach(function(f) {
       var inp = row.querySelector('[data-col="' + f + '"]');
-      if (inp) sum += parseInt(inp.value) || 0;
+      if (inp) sum += moneyVal(inp);
     });
     return sum;
   }
@@ -41,7 +45,7 @@
       grand += rt;
       amtFields.forEach(function(f) {
         var inp = row.querySelector('[data-col="' + f + '"]');
-        colSums[f] += inp ? (parseInt(inp.value) || 0) : 0;
+        colSums[f] += inp ? moneyVal(inp) : 0;
       });
     });
 
@@ -58,7 +62,7 @@
     h += '<td><input type="text"   name="items[' + rowIdx + '][institution]"    data-col="institution"    class="form-control form-control-sm" required></td>';
     h += '<td><input type="text"   name="items[' + rowIdx + '][diagnose]"       data-col="diagnose"       class="form-control form-control-sm"></td>';
     amtFields.forEach(function(f) {
-      h += '<td><input type="number" name="items[' + rowIdx + '][' + f + ']" data-col="' + f + '" class="form-control form-control-sm amt-input text-right" min="0" value="0"></td>';
+      h += '<td><input type="number" data-rupiah name="items[' + rowIdx + '][' + f + ']" data-col="' + f + '" class="form-control form-control-sm amt-input text-right" min="0" value="0"></td>';
     });
     h += '<td class="text-right font-weight-bold row-total align-middle">Rp 0</td>';
     h += '<td class="text-center align-middle"><button type="button" class="btn btn-xs btn-outline-danger btn-remove-row"><i class="gd-minus"></i></button></td>';
@@ -89,6 +93,7 @@
       });
     }
 
+    if (window.initRupiahFields) window.initRupiahFields(row);
     row.querySelectorAll('.amt-input').forEach(function(inp) {
       inp.addEventListener('input', updateTotals);
     });

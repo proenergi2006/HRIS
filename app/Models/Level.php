@@ -10,7 +10,7 @@ class Level extends Model
 {
     use HasHashid;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'rank'];
 
     public function employees(): HasMany
     {

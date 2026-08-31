@@ -13,6 +13,10 @@ return [
      * perjalanan dinas. Override lewat .env bila perlu.
      */
     'company' => [
+        // Kode perusahaan utama — dipakai kop PDF untuk mengisi alamat/website
+        // default bila kolom di tabel companies masih kosong, dan menentukan
+        // logo default (public/img/logo-{code}.png).
+        'code'      => env('COMPANY_CODE', 'proenergi'),
         'name'      => env('COMPANY_NAME', 'PT. PRO ENERGI'),
         'tagline'   => env('COMPANY_TAGLINE', 'Integrated Energy Solutions'),
         'address'   => env('COMPANY_ADDRESS', 'Jl. Energi Raya No. 1, Jakarta'),

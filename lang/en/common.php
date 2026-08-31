@@ -49,5 +49,5 @@ return [
     'login_password'      => 'Password',
     'login_remember'      => 'Remember me',
     'login_forgot'        => 'Forgot password?',
-    'login_btn'           => 'Sign in to HRMS',
+    'login_btn'           => 'Sign in to ProPeople',
 ];

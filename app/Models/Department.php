@@ -8,12 +8,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    protected $fillable = ['company_id', 'code', 'name', 'is_active'];
-    protected $casts    = ['is_active' => 'boolean'];
+    protected $fillable = [
+        'company_id', 'division_id', 'code', 'name',
+        'head_employee_id', 'cost_center', 'is_active',
+    ];
+
+    protected $casts = ['is_active' => 'boolean'];
 
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class);
+    }
+
+    public function head(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'head_employee_id');
+    }
+
+    public function sections(): HasMany
+    {
+        return $this->hasMany(Section::class);
     }
 
     public function positions(): HasMany

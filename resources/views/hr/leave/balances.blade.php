@@ -14,9 +14,17 @@
   </ol>
 </nav>
 
-<div class="mb-3 d-flex justify-content-between align-items-center">
+<div class="mb-3 d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
   <div class="h3 mb-0">Saldo Cuti Karyawan</div>
-  <a href="{{ route('hr.leave.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
+  <div class="d-flex" style="gap:.5rem">
+    <a href="{{ route('hr.leave.policies.index') }}" class="btn btn-outline-primary btn-sm"><i class="gd-settings mr-1"></i> Kebijakan Cuti</a>
+    <form method="POST" action="{{ route('hr.leave.policies.generate') }}" onsubmit="return confirm('Generate ulang saldo cuti {{ $year }} untuk semua karyawan aktif sesuai kebijakan?')">
+      @csrf
+      <input type="hidden" name="year" value="{{ $year }}">
+      <button class="btn btn-outline-success btn-sm"><i class="gd-reload mr-1"></i> Generate Saldo {{ $year }}</button>
+    </form>
+    <a href="{{ route('hr.leave.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
+  </div>
 </div>
 
 {{-- Filter --}}
@@ -78,6 +86,9 @@
                   <div class="text-muted" style="font-size:.75rem">dari {{ $bal->allocated }} hr</div>
                   @if($bal->used > 0)
                     <div style="font-size:.7rem;color:#aaa">terpakai {{ $bal->used }}</div>
+                  @endif
+                  @if($bal->carried_days > 0)
+                    <div style="font-size:.68rem;color:#2e6da4">carry {{ $bal->carried_days }} hr @if($bal->carried_expires_on)(hangus {{ $bal->carried_expires_on->format('d/m/Y') }})@endif</div>
                   @endif
                 @else
                   <span class="text-muted">—</span>
