@@ -106,15 +106,24 @@
         } catch (\Throwable $e) { return 0; }
     });
 
-    // Onboarding Saya — tampil kalau karyawan punya task onboarding & belum semua selesai.
+    // Onboarding Saya — tampil selama karyawan PUNYA task onboarding (bukan cuma
+    // saat masih ada yang pending), supaya tetap bisa buka lagi materi yang sudah
+    // dibaca / lihat progres setelah semua selesai. Badge cuma muncul kalau masih ada yg pending.
     $onboardingPending = 0;
+    $hasOnboarding = false;
     if ($sidebarUser?->employee) {
-        $onboardingPending = Cache::remember('sb_onb_'.$uid, 60, function () use ($sidebarUser) {
+        $onb = Cache::remember('sb_onb_'.$uid, 60, function () use ($sidebarUser) {
             try {
-                return $sidebarUser->employee->onboardingTasks()->where('is_done', false)
-                    ->whereHas('item', fn ($q) => $q->where('requires_acknowledgement', true))->count();
-            } catch (\Throwable $e) { return 0; }
+                $tasks = $sidebarUser->employee->onboardingTasks();
+                return [
+                    'total'   => (clone $tasks)->count(),
+                    'pending' => (clone $tasks)->where('is_done', false)
+                        ->whereHas('item', fn ($q) => $q->where('requires_acknowledgement', true))->count(),
+                ];
+            } catch (\Throwable $e) { return ['total' => 0, 'pending' => 0]; }
         });
+        $hasOnboarding = $onb['total'] > 0;
+        $onboardingPending = $onb['pending'];
     }
 
     // ── Kondisi tampil per-heading (heading disembunyikan kalau tidak ada item di bawahnya) ──
@@ -145,7 +154,7 @@
 
   {{-- Self-service — akun yang terhubung ke data karyawan (bukan permission modul). --}}
   @if($sidebarUser?->employee)
-  @if($onboardingPending > 0 || Request::is('onboarding-saya*'))
+  @if($hasOnboarding || Request::is('onboarding-saya*'))
   <li class="side-nav-menu-item {{ Request::is('onboarding-saya*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('onboarding.mine') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-book"></i></span>
