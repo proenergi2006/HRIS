@@ -276,7 +276,23 @@
       <li class="side-nav-menu-item {{ Request::is('appraisal/report*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.report.index') }}"><i class="gd-bar-chart mr-2"></i>{{ __('nav.reports') }}</a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('checkins-saya*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.checkins.mine') }}"><i class="gd-comment mr-2"></i>1-on-1 Saya</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('feedback-360-saya*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('feedback360.mine') }}"><i class="gd-loop mr-2"></i>360° Feedback Saya</a>
+      </li>
     </ul>
+  </li>
+  @endif
+
+  {{-- 1-on-1 Tim — siapa saja yang punya bawahan langsung --}}
+  @if($sidebarUser?->employee?->subordinates()->exists())
+  <li class="side-nav-menu-item {{ Request::is('appraisal/checkins*') && !Request::is('checkins-saya*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('appraisal.checkins.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-comment"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">1-on-1 Tim</span>
+    </a>
   </li>
   @endif
 
@@ -365,6 +381,12 @@
       </li>
       <li class="side-nav-menu-item {{ Request::is('appraisal/periods*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.periods.index') }}"><i class="gd-calendar mr-2"></i>Periode Penilaian</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/okr*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.okr.index') }}"><i class="gd-target mr-2"></i>OKR / Sasaran</a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('appraisal/feedback-360*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.feedback360.index') }}"><i class="gd-loop mr-2"></i>360° Feedback</a>
       </li>
       @endif
     </ul>

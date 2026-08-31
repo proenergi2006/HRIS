@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AppraisalObjective extends Model
 {
     protected $fillable = [
-        'appraisal_id', 'title', 'description', 'category', 'weight_pct',
+        'appraisal_id', 'company_objective_id', 'title', 'description', 'category', 'weight_pct',
         'target', 'actual', 'achievement_pct', 'score', 'order',
     ];
 
@@ -21,6 +21,11 @@ class AppraisalObjective extends Model
     public function appraisal(): BelongsTo
     {
         return $this->belongsTo(Appraisal::class);
+    }
+
+    public function companyObjective(): BelongsTo
+    {
+        return $this->belongsTo(CompanyObjective::class);
     }
 
     /** score = bobot% x capaian% / 100 — dipanggil ulang tiap kali objective disimpan. */

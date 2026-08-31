@@ -117,6 +117,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 25 | `candidate-database-ats-manual.sql` | setelah #12. `candidates` + `expected_salary`/`assessment_*` + `candidate_educations`/`_experiences`/`_skills`/`_certifications` |
 | 26 | `preemployment-manual.sql` | setelah #25 & #1. `candidate_preemployment`, `preemployment_checklist_items` (+13 item default), `candidate_preemployment_tasks` |
 | 27 | `employee-document-management-manual.sql` | setelah `employee_documents` (baseline) & `termination_requests` (#5). Folder Employee Digital File (`employee_documents.group`) + Exit Interview/Final Settlement (`termination_requests`) |
+| 28 | `performance-management-extras-manual.sql` | setelah #16 (`appraisal_objectives`) & #2 (`departments`). `performance_checkins` (1-on-1), `company_objectives` (OKR) + `appraisal_objectives.company_objective_id`, `feedback_360_cycles`/`_reviews`/`_answers` |
 
 ---
 
@@ -211,3 +212,4 @@ Menjalankan (lihat `routes/console.php`):
 | `preemployment-manual.sql` | `2026_08_31_120000` |
 | `employee-document-management-manual.sql` | `2026_08_31_140000`, `2026_08_31_150000` |
 | `pph21-ter-rate-correction-manual.sql` | (koreksi data, bukan migration — lihat catatan di TAHAP 7) |
+| `performance-management-extras-manual.sql` | `2026_08_31_170000` |

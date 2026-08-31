@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 84 tabel baru + 17 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 89 tabel baru + 18 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -30,6 +30,7 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | `employee_onboarding_tasks` | + `acknowledged_at`, `acknowledgement_note` |
 | `employee_documents` | + `group` (folder Personal/Employment/Movement/Development/Exit) |
 | `termination_requests` | + `exit_interview_date/notes/by_user_id`, `final_settlement_amount/date/notes` |
+| `appraisal_objectives` | + `company_objective_id` (tautan ke OKR — kolom siap, UI penautan belum dikerjakan) |
 
 
 ## Master Data referensi
@@ -1265,3 +1266,16 @@ bila `planned_headcount` MPP (disetujui) − aktual − sedang direkrut ≥ head
 - `created_at` — timestamp NULL DEFAULT NULL
 - `updated_at` — timestamp NULL DEFAULT NULL
 
+
+
+## Performance Management — pelengkap (1-on-1, OKR, 360°) — `performance-management-extras-manual.sql`
+
+🆕 `performance_checkins` — employee_id, created_by_user_id, checkin_date date NOT NULL, notes text NOT NULL, action_items text, employee_comment text, next_checkin_date date
+🆕 `company_objectives` — company_id, department_id, parent_objective_id (self-FK, kaskade), title varchar(200), description text, year smallint, quarter tinyint (null=tahunan), owner_employee_id, status varchar(20) default 'active', created_by_user_id
+🆕 `feedback_360_cycles` — company_id, title varchar(150), period_start/end date, status varchar(20) default 'draft', created_by_user_id
+🆕 `feedback_360_reviews` — cycle_id, subject_employee_id, rater_employee_id, relation_type varchar(20) (self/manager/peer/subordinate), status varchar(20) default 'pending', submitted_at (unique cycle+subject+rater)
+🆕 `feedback_360_answers` — review_id, question_key varchar(60), rating tinyint(1-5), comment text (unique review+question_key)
+
+`appraisal_objectives` (tabel lama): ➕ `company_objective_id` — tautan KPI individu ke OKR (kolom & relasi model siap, form Edit Appraisal belum ada dropdown-nya — OKR jalan sbg tracker berjenjang berdiri sendiri untuk saat ini).
+
+Pertanyaan 360° (communication/teamwork/quality/reliability/leadership/problem_solving) tetap di kode (`Feedback360Review::$questions`), bukan tabel referensi.

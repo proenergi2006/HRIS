@@ -123,6 +123,16 @@ class Employee extends Model
         return $this->hasMany(Employee::class, 'manager_id');
     }
 
+    public function performanceCheckins(): HasMany
+    {
+        return $this->hasMany(\App\Models\Appraisal\PerformanceCheckin::class);
+    }
+
+    public function feedback360Reviews(): HasMany
+    {
+        return $this->hasMany(\App\Models\Appraisal\Feedback360Review::class, 'subject_employee_id');
+    }
+
     public function appraisals(): HasMany
     {
         return $this->hasMany(Appraisal\Appraisal::class);

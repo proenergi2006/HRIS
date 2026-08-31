@@ -9,6 +9,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Appraisal\LevelController;
 use App\Http\Controllers\Appraisal\EmployeeController;
 use App\Http\Controllers\Appraisal\TemplateController;
+use App\Http\Controllers\Appraisal\PerformanceCheckinController;
+use App\Http\Controllers\Appraisal\CompanyObjectiveController;
+use App\Http\Controllers\Appraisal\Feedback360Controller;
 use App\Http\Controllers\Appraisal\PeriodController;
 use App\Http\Controllers\Appraisal\AppraisalController;
 use App\Http\Controllers\Appraisal\ReportController;
@@ -149,6 +152,16 @@ Route::middleware('auth')->group(function () {
     Route::post('onboarding-saya/tasks/{task}/acknowledge', [OnboardingController::class, 'acknowledge'])->name('onboarding.acknowledge');
     Route::get('onboarding-materi/{item}',                  [OnboardingController::class, 'viewMaterial'])->name('onboarding.material');
     Route::get('onboarding-materi/{item}/unduh',             [OnboardingController::class, 'downloadMaterial'])->name('onboarding.material.download');
+
+    // 1-on-1 Saya
+    Route::get('checkins-saya', [PerformanceCheckinController::class, 'mine'])->name('appraisal.checkins.mine');
+
+    // 360° Feedback Saya (isi penilaian sebagai rater)
+    Route::prefix('feedback-360-saya')->name('feedback360.')->group(function () {
+        Route::get('/',                     [Feedback360Controller::class, 'mine'])->name('mine');
+        Route::get('/{review}',             [Feedback360Controller::class, 'fill'])->name('fill');
+        Route::post('/{review}/submit',     [Feedback360Controller::class, 'submit'])->name('submit');
+    });
 
     // Pengajuan Lembur — self-service (Attendance & Leave, Bab 3.2: overtime butuh
     // Dynamic Approval Workflow — mengisi gap transaction type 'overtime_request'
@@ -763,4 +776,36 @@ Route::middleware(['auth', 'permission:appraisal-config.view'])->prefix('apprais
     Route::resource('templates',    TemplateController::class);
     Route::resource('periods',      PeriodController::class);
     Route::patch('periods/{period}/toggle', [PeriodController::class, 'toggle'])->name('periods.toggle');
+
+    // OKR — Sasaran Perusahaan/Departemen (goal cascading)
+    Route::prefix('okr')->name('okr.')->group(function () {
+        Route::get('/',            [CompanyObjectiveController::class, 'index'])->name('index');
+        Route::get('/create',      [CompanyObjectiveController::class, 'create'])->name('create');
+        Route::post('/',           [CompanyObjectiveController::class, 'store'])->name('store');
+        Route::get('/{okr}/edit',  [CompanyObjectiveController::class, 'edit'])->name('edit');
+        Route::put('/{okr}',       [CompanyObjectiveController::class, 'update'])->name('update');
+        Route::delete('/{okr}',    [CompanyObjectiveController::class, 'destroy'])->name('destroy');
+    });
+
+    // 360° Feedback — kelola cycle (HR)
+    Route::prefix('feedback-360')->name('feedback360.')->group(function () {
+        Route::get('/',                              [Feedback360Controller::class, 'index'])->name('index');
+        Route::get('/create',                        [Feedback360Controller::class, 'create'])->name('create');
+        Route::post('/',                              [Feedback360Controller::class, 'store'])->name('store');
+        Route::get('/{cycle}',                        [Feedback360Controller::class, 'show'])->name('show');
+        Route::post('/{cycle}/subjects',               [Feedback360Controller::class, 'addSubject'])->name('add-subject');
+        Route::delete('/{cycle}/reviews/{review}',      [Feedback360Controller::class, 'removeReview'])->name('remove-review');
+        Route::post('/{cycle}/open',                   [Feedback360Controller::class, 'openCycle'])->name('open');
+        Route::post('/{cycle}/close',                  [Feedback360Controller::class, 'closeCycle'])->name('close');
+        Route::get('/{cycle}/results/{employee}',       [Feedback360Controller::class, 'results'])->name('results');
+    });
+});
+
+// ── 1-on-1 / Continuous Feedback — HR & manager (auth saja, cakupan diatur di controller) ──
+Route::middleware('auth')->prefix('appraisal/checkins')->name('appraisal.checkins.')->group(function () {
+    Route::get('/',                [PerformanceCheckinController::class, 'index'])->name('index');
+    Route::get('/{employee}',      [PerformanceCheckinController::class, 'show'])->name('show');
+    Route::post('/{employee}',     [PerformanceCheckinController::class, 'store'])->name('store');
+    Route::delete('/entry/{checkin}', [PerformanceCheckinController::class, 'destroy'])->name('destroy');
+    Route::post('/entry/{checkin}/comment', [PerformanceCheckinController::class, 'comment'])->name('comment');
 });
