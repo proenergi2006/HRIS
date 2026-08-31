@@ -603,6 +603,12 @@
       <span class="side-nav-fadeout-on-closed media-body">Career Management</span>
     </a>
   </li>
+  <li class="side-nav-menu-item {{ Request::is('succession*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('succession.positions') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-target"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Succession Planning</span>
+    </a>
+  </li>
   @endif
 
   {{-- Laporan & Export --}}

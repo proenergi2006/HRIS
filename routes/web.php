@@ -99,6 +99,7 @@ use App\Http\Controllers\Competency\EmployeeCompetencyController;
 use App\Http\Controllers\Training\TrainingParticipantController;
 use App\Http\Controllers\Career\CareerPathController;
 use App\Http\Controllers\Career\CareerController;
+use App\Http\Controllers\HR\SuccessionController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -785,6 +786,17 @@ Route::middleware(['auth', 'permission:career.view'])->prefix('career')->name('c
     Route::get('/',            [CareerController::class, 'index'])->name('index');
     Route::get('/{employee}',  [CareerController::class, 'show'])->name('show');
     Route::post('/{employee}/assign-path', [CareerController::class, 'assignPath'])->name('assign-path');
+});
+
+// ── Succession Planning — bagian Career Management, permission career.* ─────
+Route::middleware(['auth', 'permission:career.view'])->prefix('succession')->name('succession.')->group(function () {
+    Route::get('/',                       [SuccessionController::class, 'positions'])->name('positions');
+    Route::get('/matrix',                 [SuccessionController::class, 'matrix'])->name('matrix');
+    Route::put('/positions/{position}',   [SuccessionController::class, 'toggleCritical'])->name('positions.update');
+    Route::get('/positions/{position}',   [SuccessionController::class, 'show'])->name('show');
+    Route::post('/positions/{position}/pool', [SuccessionController::class, 'storePoolMember'])->name('pool.store');
+    Route::put('/pool/{member}',          [SuccessionController::class, 'updatePoolMember'])->name('pool.update');
+    Route::delete('/pool/{member}',       [SuccessionController::class, 'destroyPoolMember'])->name('pool.destroy');
 });
 
 // ── Konfigurasi Penilaian Kinerja — permission appraisal-config.view ─────
