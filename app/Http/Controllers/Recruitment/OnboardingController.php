@@ -9,11 +9,13 @@ use App\Models\EmployeeFacility;
 use App\Models\EmployeeOnboardingTask;
 use App\Models\OnboardingChecklistItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 /**
- * Onboarding (PRD Bab 3 modul #5) — template checklist per company (light-CRUD) +
- * progress per karyawan baru. Item kategori "aset" yang ditandai selesai otomatis
- * membuat baris di tab Fasilitas karyawan (employee_facilities, sudah ada).
+ * Onboarding (PRD Bab 3 modul #5) — template checklist per company + progress per
+ * karyawan baru. Item kategori "aset" selesai -> baris di tab Fasilitas karyawan.
+ * Item induction bisa dilampiri materi (file/link) + ditandai "perlu konfirmasi
+ * karyawan" — diselesaikan lewat halaman "Onboarding Saya" (ESS), bukan HR.
  */
 class OnboardingController extends Controller
 {
@@ -34,16 +36,27 @@ class OnboardingController extends Controller
 
     public function updateTemplate(Request $request, OnboardingChecklistItem $item)
     {
-        $item->update($this->validated($request));
+        $item->update($this->validated($request, $item));
 
         return back()->with('status', 'Item checklist diperbarui.');
     }
 
     public function destroyTemplate(OnboardingChecklistItem $item)
     {
+        if ($item->material_path) {
+            Storage::disk('public')->delete($item->material_path);
+        }
         $item->delete();
 
         return back()->with('status', 'Item checklist dihapus.');
+    }
+
+    /** Unduh materi induction (HR & karyawan yang punya task-nya). */
+    public function downloadMaterial(OnboardingChecklistItem $item)
+    {
+        abort_unless($item->material_path && Storage::disk('public')->exists($item->material_path), 404);
+
+        return Storage::disk('public')->download($item->material_path, $item->material_original_name ?: basename($item->material_path));
     }
 
     /** Daftar karyawan yang punya task onboarding (progress belum/sudah lengkap). */
@@ -53,8 +66,6 @@ class OnboardingController extends Controller
             ->withCount(['onboardingTasks', 'onboardingTasks as done_tasks_count' => fn ($q) => $q->where('is_done', true)])
             ->orderByDesc('id')->get();
 
-        // Karyawan baru (probation atau masuk ≤ 90 hari) yang onboarding-nya belum dimulai —
-        // supaya tidak ada karyawan baru yang "hilang" gara-gara checklist belum di-generate.
         $pending = Employee::where('is_active', true)
             ->whereDoesntHave('onboardingTasks')
             ->where(fn ($q) => $q->where('employment_status', 'probation')
@@ -68,14 +79,11 @@ class OnboardingController extends Controller
 
     public function show(Employee $employee)
     {
-        $tasks = $employee->onboardingTasks()->with('item')->get()->sortBy('item.sort_order');
+        $tasks = $employee->onboardingTasks()->with(['item', 'doneBy'])->get()->sortBy('item.sort_order');
 
         return view('recruitment.onboarding.show', compact('employee', 'tasks'));
     }
 
-    /** Mulai onboarding manual — generate task dari template aktif untuk karyawan
-     *  yang belum punya (mis. dikonversi sebelum checklist dibuat, atau ditambah
-     *  langsung lewat Data Karyawan tanpa lewat alur Rekrutmen). */
     public function start(Employee $employee)
     {
         self::materialize($employee);
@@ -115,7 +123,6 @@ class OnboardingController extends Controller
             'done_by_user_id' => $isDone ? auth()->id() : null,
         ]);
 
-        // Item kategori "aset" yang ditandai selesai -> catat di tab Fasilitas karyawan.
         if ($isDone && $task->item->category === 'aset') {
             EmployeeFacility::firstOrCreate(
                 ['employee_id' => $employee->id, 'name' => $task->item->label],
@@ -126,16 +133,65 @@ class OnboardingController extends Controller
         return back()->with('status', $isDone ? 'Task ditandai selesai.' : 'Task dibatalkan.');
     }
 
-    private function validated(Request $request): array
+    // ── Sisi karyawan (ESS) — "Onboarding Saya" ─────────────────────────────
+
+    public function mine()
+    {
+        $employee = auth()->user()?->employee;
+        abort_unless($employee, 404, 'Akun Anda belum terhubung ke data karyawan.');
+
+        $tasks = $employee->onboardingTasks()->with('item')->get()->sortBy('item.sort_order');
+
+        return view('onboarding.my', compact('employee', 'tasks'));
+    }
+
+    /** Karyawan menyatakan sudah membaca & memahami materi induction. */
+    public function acknowledge(Request $request, EmployeeOnboardingTask $task)
+    {
+        $employee = auth()->user()?->employee;
+        abort_unless($employee && $task->employee_id === $employee->id, 403);
+        abort_unless($task->item->requires_acknowledgement, 422, 'Item ini tidak butuh konfirmasi.');
+
+        $request->validate(['agree' => 'accepted']);
+
+        $task->update([
+            'is_done'              => true,
+            'done_at'              => now(),
+            'done_by_user_id'      => auth()->id(),
+            'acknowledged_at'      => now(),
+            'acknowledgement_note' => $request->string('note')->toString() ?: null,
+        ]);
+
+        return back()->with('success', 'Terima kasih — "' . $task->item->label . '" ditandai sudah Anda pahami.');
+    }
+
+    private function validated(Request $request, ?OnboardingChecklistItem $item = null): array
     {
         $data = $request->validate([
-            'company_id'  => 'nullable|exists:companies,id',
-            'label'       => 'required|string|max:200',
-            'category'    => 'required|in:dokumen,akun,aset,induction',
-            'is_required' => 'boolean',
-            'sort_order'  => 'nullable|integer|min:0',
+            'company_id'               => 'nullable|exists:companies,id',
+            'label'                    => 'required|string|max:200',
+            'description'              => 'nullable|string|max:5000',
+            'material_url'             => 'nullable|url|max:500',
+            'material'                 => 'nullable|file|mimes:pdf,ppt,pptx,doc,docx,mp4|max:51200',
+            'category'                 => 'required|in:dokumen,akun,aset,induction',
+            'is_required'              => 'boolean',
+            'requires_acknowledgement' => 'boolean',
+            'sort_order'               => 'nullable|integer|min:0',
         ]);
-        $data['is_required'] = $request->boolean('is_required', true);
+
+        $data['is_required']              = $request->boolean('is_required', true);
+        $data['requires_acknowledgement'] = $request->boolean('requires_acknowledgement');
+
+        if ($request->hasFile('material')) {
+            if ($item?->material_path) {
+                Storage::disk('public')->delete($item->material_path);
+            }
+            $file = $request->file('material');
+            $data['material_path']          = $file->store('onboarding-materials', 'public');
+            $data['material_original_name'] = $file->getClientOriginalName();
+        }
+
+        unset($data['material']);
 
         return $data;
     }

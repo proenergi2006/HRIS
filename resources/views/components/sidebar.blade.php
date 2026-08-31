@@ -106,6 +106,17 @@
         } catch (\Throwable $e) { return 0; }
     });
 
+    // Onboarding Saya — tampil kalau karyawan punya task onboarding & belum semua selesai.
+    $onboardingPending = 0;
+    if ($sidebarUser?->employee) {
+        $onboardingPending = Cache::remember('sb_onb_'.$uid, 60, function () use ($sidebarUser) {
+            try {
+                return $sidebarUser->employee->onboardingTasks()->where('is_done', false)
+                    ->whereHas('item', fn ($q) => $q->where('requires_acknowledgement', true))->count();
+            } catch (\Throwable $e) { return 0; }
+        });
+    }
+
     // ── Kondisi tampil per-heading (heading disembunyikan kalau tidak ada item di bawahnya) ──
     $can = fn ($p) => (bool) $sidebarUser?->can($p);
     $showManajemenSdm = $can('employee-master.view') || $can('appraisal-config.view') || $can('org-structure.view')
@@ -134,6 +145,16 @@
 
   {{-- Self-service — akun yang terhubung ke data karyawan (bukan permission modul). --}}
   @if($sidebarUser?->employee)
+  @if($onboardingPending > 0 || Request::is('onboarding-saya*'))
+  <li class="side-nav-menu-item {{ Request::is('onboarding-saya*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('onboarding.mine') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-book"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Onboarding Saya
+        @if($onboardingPending > 0)<span class="badge badge-warning ml-1">{{ $onboardingPending }}</span>@endif
+      </span>
+    </a>
+  </li>
+  @endif
   <li class="side-nav-menu-item {{ Request::is('my-payslips*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('payroll.my.index') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-wallet"></i></span>

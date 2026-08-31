@@ -144,6 +144,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/bukti-potong/{year}/pdf', [BuktiPotongController::class, 'myPdf'])->name('bukti-potong-pdf');
     });
 
+    // Onboarding Saya — ESS: materi induction + konfirmasi karyawan baru.
+    Route::get('onboarding-saya',                           [OnboardingController::class, 'mine'])->name('onboarding.mine');
+    Route::post('onboarding-saya/tasks/{task}/acknowledge', [OnboardingController::class, 'acknowledge'])->name('onboarding.acknowledge');
+    Route::get('onboarding-materi/{item}',                  [OnboardingController::class, 'downloadMaterial'])->name('onboarding.material');
+
     // Pengajuan Lembur — self-service (Attendance & Leave, Bab 3.2: overtime butuh
     // Dynamic Approval Workflow — mengisi gap transaction type 'overtime_request'
     // yang sudah ada di ApprovalWorkflowSeeder sejak awal tapi belum ada modelnya).

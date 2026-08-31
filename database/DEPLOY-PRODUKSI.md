@@ -189,7 +189,7 @@ Menjalankan (lihat `routes/console.php`):
 | `thr-manual.sql` | `2026_08_28_101201` |
 | `overtime-request-manual.sql` | `2026_08_28_101101` |
 | `manpower-planning-manual.sql` | `2026_08_28_100701` |
-| `recruitment-manual.sql` | `2026_08_28_100801`–`100803` |
+| `recruitment-manual.sql` | `2026_08_28_100801`–`100803`, `2026_08_31_130000` (materi + konfirmasi karyawan di onboarding) |
 | `training-career-manual.sql` | `2026_08_28_100901`–`100905` |
 | `competency-manual.sql` | `2026_08_29_150000` |
 | `employee-administration-manual.sql` | `2026_08_28_101001`–`101003` |

@@ -1485,8 +1485,13 @@ CREATE TABLE `onboarding_checklist_items` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `company_id` bigint(20) unsigned DEFAULT NULL,
   `label` varchar(200) NOT NULL,
+  `description` text DEFAULT NULL,
+  `material_path` varchar(500) DEFAULT NULL,
+  `material_original_name` varchar(255) DEFAULT NULL,
+  `material_url` varchar(500) DEFAULT NULL,
   `category` varchar(20) NOT NULL,
   `is_required` tinyint(1) NOT NULL DEFAULT 1,
+  `requires_acknowledgement` tinyint(1) NOT NULL DEFAULT 0,
   `sort_order` int(10) unsigned NOT NULL DEFAULT 0,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1495,6 +1500,13 @@ CREATE TABLE `onboarding_checklist_items` (
   KEY `onboarding_checklist_items_company_id_foreign` (`company_id`),
   CONSTRAINT `onboarding_checklist_items_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- (kalau tabel sudah ada dari rilis lama, jalankan ALTER berikut:)
+-- ALTER TABLE `onboarding_checklist_items`
+--   ADD COLUMN `description` text DEFAULT NULL AFTER `label`,
+--   ADD COLUMN `material_path` varchar(500) DEFAULT NULL AFTER `description`,
+--   ADD COLUMN `material_original_name` varchar(255) DEFAULT NULL AFTER `material_path`,
+--   ADD COLUMN `material_url` varchar(500) DEFAULT NULL AFTER `material_original_name`,
+--   ADD COLUMN `requires_acknowledgement` tinyint(1) NOT NULL DEFAULT 0 AFTER `is_required`;
 
 CREATE TABLE `employee_onboarding_tasks` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -1503,6 +1515,8 @@ CREATE TABLE `employee_onboarding_tasks` (
   `is_done` tinyint(1) NOT NULL DEFAULT 0,
   `done_at` datetime DEFAULT NULL,
   `done_by_user_id` bigint(20) unsigned DEFAULT NULL,
+  `acknowledged_at` datetime DEFAULT NULL,
+  `acknowledgement_note` varchar(500) DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -1516,22 +1530,36 @@ CREATE TABLE `employee_onboarding_tasks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Item checklist onboarding default (global) ───────────────────────────────
--- Setara OnboardingChecklistItemSeeder. Bisa ditambah/nonaktifkan per PT lewat
--- menu Rekrutmen > Onboarding > Template Checklist. Kategori: dokumen/akun/aset/induction.
--- Saat konversi kandidat, item "NIP diterbitkan" + "Perjanjian kerja ditandatangani"
--- (+ "Email & akun sistem" bila buat akun) otomatis ditandai selesai.
-INSERT INTO `onboarding_checklist_items` (`company_id`,`label`,`category`,`is_required`,`sort_order`,`is_active`,`created_at`,`updated_at`) VALUES
-(NULL,'Background check / verifikasi latar belakang','dokumen',1,10,1,NOW(),NOW()),
-(NULL,'Perjanjian kerja ditandatangani','dokumen',1,20,1,NOW(),NOW()),
-(NULL,'Nomor Induk Karyawan (NIP) diterbitkan','akun',1,30,1,NOW(),NOW()),
-(NULL,'Email & akun sistem dibuat','akun',1,40,1,NOW(),NOW()),
-(NULL,'Kartu akses / kartu absensi','aset',1,50,1,NOW(),NOW()),
-(NULL,'Laptop / perangkat kerja','aset',1,60,1,NOW(),NOW()),
-(NULL,'Meja kerja / workstation','aset',1,70,1,NOW(),NOW()),
-(NULL,'Seragam / APD','aset',0,80,1,NOW(),NOW()),
-(NULL,'Induction / orientasi perusahaan','induction',1,90,1,NOW(),NOW()),
-(NULL,'Pengenalan tim & atasan langsung','induction',0,100,1,NOW(),NOW()),
-(NULL,'Serah terima SOP & uraian jabatan','induction',0,110,1,NOW(),NOW());
+-- Setara OnboardingChecklistItemSeeder. Bisa ditambah/nonaktifkan/dilampiri materi
+-- per PT lewat menu Rekrutmen > Onboarding > Template Checklist.
+-- Kategori dokumen/akun/aset = diceklis HR. Kategori induction (requires_acknowledgement=1)
+-- = dibaca & dikonfirmasi KARYAWAN lewat menu "Onboarding Saya".
+-- Saat konversi kandidat, item NIP + Perjanjian kerja (+ Email & akun bila buat akun)
+-- otomatis ditandai selesai.
+INSERT INTO `onboarding_checklist_items`
+(`company_id`,`label`,`description`,`category`,`is_required`,`requires_acknowledgement`,`sort_order`,`is_active`,`created_at`,`updated_at`) VALUES
+(NULL,'Background check / verifikasi latar belakang',NULL,'dokumen',1,0,10,1,NOW(),NOW()),
+(NULL,'Perjanjian kerja ditandatangani',NULL,'dokumen',1,0,20,1,NOW(),NOW()),
+(NULL,'Nomor Induk Karyawan (NIP) diterbitkan',NULL,'akun',1,0,30,1,NOW(),NOW()),
+(NULL,'Email & akun sistem dibuat',NULL,'akun',1,0,40,1,NOW(),NOW()),
+(NULL,'Kartu akses / kartu absensi',NULL,'aset',1,0,50,1,NOW(),NOW()),
+(NULL,'Laptop / perangkat kerja',NULL,'aset',1,0,60,1,NOW(),NOW()),
+(NULL,'Meja kerja / workstation',NULL,'aset',1,0,70,1,NOW(),NOW()),
+(NULL,'Seragam / APD',NULL,'aset',0,0,80,1,NOW(),NOW()),
+(NULL,'Welcome','Sambutan manajemen & gambaran umum hari pertama.','induction',1,1,100,1,NOW(),NOW()),
+(NULL,'Company Introduction / Orientation','Sejarah, visi-misi, nilai perusahaan, lini bisnis, dan lokasi kerja.','induction',1,1,110,1,NOW(),NOW()),
+(NULL,'Organization','Struktur organisasi, jenjang jabatan, dan alur pelaporan.','induction',1,1,120,1,NOW(),NOW()),
+(NULL,'HR Procedure','Kehadiran, cuti, lembur, penilaian kinerja, tata tertib, dan sanksi.','induction',1,1,130,1,NOW(),NOW()),
+(NULL,'Fakta Integritas','Pernyataan integritas, benturan kepentingan, anti-suap & gratifikasi. Wajib dibaca dan disetujui.','induction',1,1,140,1,NOW(),NOW()),
+(NULL,'HR Operation & Incentive','Penggajian, komponen upah, THR/bonus, insentif, BPJS, dan reimbursement.','induction',1,1,150,1,NOW(),NOW()),
+(NULL,'GA Procedure','Fasilitas kantor, aset, kendaraan, perjalanan dinas, kebersihan & keamanan.','induction',1,1,160,1,NOW(),NOW()),
+(NULL,'Vopak Procedure','Prosedur operasi & HSSE terminal Vopak yang berlaku di area kerja.','induction',1,1,170,1,NOW(),NOW()),
+(NULL,'Logistic & Operational Procedure','Alur logistik, penerimaan/pengiriman, dan SOP operasional lapangan.','induction',0,1,180,1,NOW(),NOW()),
+(NULL,'Sales Administration & Finance Procedure','Administrasi penjualan, invoicing, penagihan, dan pelaporan keuangan.','induction',0,1,190,1,NOW(),NOW()),
+(NULL,'Legal & Collection Procedure','Kontrak, kepatuhan hukum, dan prosedur penagihan piutang.','induction',0,1,200,1,NOW(),NOW()),
+(NULL,'Business Overview (Commercial)','Peta pasar, pelanggan utama, dan strategi komersial.','induction',0,1,210,1,NOW(),NOW()),
+(NULL,'Selling Skill & Product Knowledge','Pengetahuan produk dan keterampilan penjualan dasar.','induction',0,1,220,1,NOW(),NOW()),
+(NULL,'Procurement Procedure','Permintaan pembelian, vendor, dan proses pengadaan.','induction',0,1,230,1,NOW(),NOW());
 
 -- ============================================================================
 -- Setelah tabel dibuat, WAJIB jalankan ulang seeder berikut (idempoten):

@@ -9,9 +9,14 @@ class EmployeeOnboardingTask extends Model
 {
     protected $fillable = [
         'employee_id', 'onboarding_checklist_item_id', 'is_done', 'done_at', 'done_by_user_id', 'notes',
+        'acknowledged_at', 'acknowledgement_note',
     ];
 
-    protected $casts = ['is_done' => 'boolean', 'done_at' => 'datetime'];
+    protected $casts = [
+        'is_done'         => 'boolean',
+        'done_at'         => 'datetime',
+        'acknowledged_at' => 'datetime',
+    ];
 
     public function employee(): BelongsTo { return $this->belongsTo(Employee::class); }
     public function item(): BelongsTo     { return $this->belongsTo(OnboardingChecklistItem::class, 'onboarding_checklist_item_id'); }

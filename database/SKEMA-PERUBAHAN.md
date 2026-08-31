@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 84 tabel baru + 13 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 84 tabel baru + 15 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -26,6 +26,8 @@ dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` len
 | `job_requisitions` | + `request_type`, `manpower_plan_id` (FK), `replaces_employee_id` (FK) |
 | `candidates` | + `expected_salary`, `assessment_result`, `assessment_score`, `assessment_notes` |
 | _(candidates)_ | Pre-Employment: relasi 1:1 `candidate_preemployment` + `candidate_preemployment_tasks` (tabel baru, bukan kolom) |
+| `onboarding_checklist_items` | + `description`, `material_path`, `material_original_name`, `material_url`, `requires_acknowledgement` |
+| `employee_onboarding_tasks` | + `acknowledged_at`, `acknowledgement_note` |
 
 
 ## Master Data referensi
