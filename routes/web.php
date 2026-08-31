@@ -694,6 +694,7 @@ Route::middleware(['auth', 'permission:recruitment.view'])->prefix('recruitment'
     Route::post('candidates/{candidate}/convert',  [CandidateController::class, 'convert'])->name('candidates.convert');
     Route::delete('candidates/{candidate}',        [CandidateController::class, 'destroy'])->name('candidates.destroy');
 
+    Route::get('interview-calendar', [CandidateInterviewController::class, 'calendar'])->name('interview-calendar');
     Route::post('candidates/{candidate}/interviews',              [CandidateInterviewController::class, 'store'])->name('candidates.interviews.store');
     Route::put('candidates/{candidate}/interviews/{interview}',   [CandidateInterviewController::class, 'update'])->name('candidates.interviews.update');
     Route::delete('candidates/{candidate}/interviews/{interview}',[CandidateInterviewController::class, 'destroy'])->name('candidates.interviews.destroy');

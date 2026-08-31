@@ -110,9 +110,27 @@ class CandidateController extends Controller
             'assessment_result' => 'nullable|in:pass,hold,fail',
             'assessment_score'  => 'nullable|numeric|min:0|max:100',
             'assessment_notes'  => 'nullable|string|max:1000',
+            'notify_candidate'  => 'nullable|boolean',
         ]);
 
+        $wasRejected = $candidate->status === 'rejected';
+        $notify = $request->boolean('notify_candidate');
+        unset($data['notify_candidate']);
+
         $candidate->update($data);
+
+        // Auto-reject email — cuma saat status BARU pindah ke rejected (bukan tiap update lain
+        // saat kandidat memang sudah rejected), dan HR centang "beri tahu kandidat".
+        if ($data['status'] === 'rejected' && ! $wasRejected && $notify && $candidate->email) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($candidate->email)->send(new \App\Mail\CandidateRejectedMail($candidate));
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->with('warning', 'Status diperbarui, tapi email penolakan gagal terkirim: ' . $e->getMessage());
+            }
+
+            return back()->with('success', 'Status kandidat diperbarui. Email pemberitahuan terkirim ke ' . $candidate->email . '.');
+        }
 
         return back()->with('success', 'Status kandidat diperbarui.');
     }

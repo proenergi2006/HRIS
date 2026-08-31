@@ -534,6 +534,9 @@
       <li class="side-nav-menu-item {{ Request::is('recruitment/candidates*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('recruitment.candidates.index') }}"><i class="gd-user mr-2"></i>Kandidat</a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('recruitment/interview-calendar*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('recruitment.interview-calendar') }}"><i class="gd-calendar mr-2"></i>Kalender Interview</a>
+      </li>
       <li class="side-nav-menu-item {{ Request::is('recruitment/onboarding*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('recruitment.onboarding.index') }}"><i class="gd-check-box mr-2"></i>Onboarding</a>
       </li>

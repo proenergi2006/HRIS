@@ -102,6 +102,16 @@
             <input type="text" name="assessment_notes" class="form-control form-control-sm"
                    value="{{ $candidate->assessment_notes }}" placeholder="mis. psikotes, skill test, panel">
           </div>
+          @if($candidate->status !== 'rejected')
+          <div class="form-group col-md-6 d-flex align-items-end">
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input" id="notify_candidate" name="notify_candidate" value="1" checked>
+              <label class="custom-control-label small" for="notify_candidate">
+                Kirim email pemberitahuan otomatis kalau status diubah jadi <strong>Ditolak</strong>
+              </label>
+            </div>
+          </div>
+          @endif
           <div class="form-group col-md-2 d-flex align-items-end">
             <button type="submit" class="btn btn-sm btn-primary btn-block">Update</button>
           </div>
