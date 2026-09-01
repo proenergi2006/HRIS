@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 89 tabel baru + 18 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 91 tabel baru + 20 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -1279,3 +1279,15 @@ bila `planned_headcount` MPP (disetujui) − aktual − sedang direkrut ≥ head
 `appraisal_objectives` (tabel lama): ➕ `company_objective_id` — tautan KPI individu ke OKR (kolom & relasi model siap, form Edit Appraisal belum ada dropdown-nya — OKR jalan sbg tracker berjenjang berdiri sendiri untuk saat ini).
 
 Pertanyaan 360° (communication/teamwork/quality/reliability/leadership/problem_solving) tetap di kode (`Feedback360Review::$questions`), bukan tabel referensi.
+
+---
+
+## Compensation + Succession Planning + Survey Pulse/eNPS — `compensation-succession-survey-extras-manual.sql`
+
+🆕 `salary_benchmarks` — level_id (FK `levels`, UNIQUE — 1 benchmark per Level, berlaku lintas 3 PT karena Level bukan entitas per-company), market_min/market_mid/market_max bigint unsigned, source varchar(150), notes text, updated_by_user_id
+🆕 `talent_pool_members` — position_id (FK `positions`), employee_id (FK `employees`), readiness varchar(20) (ready_now/ready_1_2yr/ready_3_5yr/development), development_notes text, added_by_user_id (unique position_id+employee_id)
+
+`positions` (tabel lama): ➕ `is_critical_position` tinyint(1) default 0, ➕ `succession_risk` varchar(10) nullable (low/medium/high), ➕ `succession_notes` text nullable
+`surveys` (tabel lama): ➕ `type` varchar(20) default 'standard' (standard/pulse/enps) — skor eNPS (%Promoter 9-10 − %Detraktor 0-6) dihitung on-the-fly dari jawaban pertanyaan skala 0-10, bukan kolom tersimpan.
+
+Total Rewards Statement (Compensation) & Report Builder/export Excel (Analytics) **tidak butuh tabel baru** — keduanya query read-only dari data payroll/THR/bonus/absensi/cuti/training yang sudah ada.

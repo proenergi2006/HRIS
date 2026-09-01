@@ -118,6 +118,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 26 | `preemployment-manual.sql` | setelah #25 & #1. `candidate_preemployment`, `preemployment_checklist_items` (+13 item default), `candidate_preemployment_tasks` |
 | 27 | `employee-document-management-manual.sql` | setelah `employee_documents` (baseline) & `termination_requests` (#5). Folder Employee Digital File (`employee_documents.group`) + Exit Interview/Final Settlement (`termination_requests`) |
 | 28 | `performance-management-extras-manual.sql` | setelah #16 (`appraisal_objectives`) & #2 (`departments`). `performance_checkins` (1-on-1), `company_objectives` (OKR) + `appraisal_objectives.company_objective_id`, `feedback_360_cycles`/`_reviews`/`_answers` |
+| 29 | `compensation-succession-survey-extras-manual.sql` **(baru)** | setelah #1 (`levels`, `positions`) & #23 (`surveys`). `salary_benchmarks` (Compensation), `positions.is_critical_position`/`succession_risk`/`succession_notes` + `talent_pool_members` (Succession Planning), `surveys.type` (Survey pulse/eNPS) |
 
 ---
 
@@ -172,8 +173,10 @@ Menjalankan (lihat `routes/console.php`):
    didaftarkan manual ke tabel `migrations`, semua "Ran").
 2. Kosongkan `storage/logs/laravel.log`, login sebagai admin HRD, buka:
    Dashboard (tab SDM + semua chart), Data Karyawan, Struktur Organisasi (Cabang/
-   Divisi/Section), Approvals, Rekrutmen → Onboarding, Payroll, Laporan (5 halaman
-   + PDF), Kasbon, Bonus, THR, Offboarding, Pengumuman, Survey, Competency, Career.
+   Divisi/Section), Approvals, Rekrutmen → Onboarding → Kalender Interview, Payroll,
+   Laporan (6 halaman termasuk Report Builder + PDF), Kasbon, Bonus, THR, Offboarding,
+   Pengumuman, Survey (+ Tren eNPS), Competency, Career → Succession Planning,
+   Kompensasi & Benchmark.
 3. Cek `laravel.log` bersih.
 4. Spot-check data: `SELECT COUNT(*) FROM permissions;` naik; `approval_workflows`
    terisi per PT; NIK 1 karyawan tampil benar di UI (bukti enkripsi + APP_KEY oke).
@@ -213,3 +216,4 @@ Menjalankan (lihat `routes/console.php`):
 | `employee-document-management-manual.sql` | `2026_08_31_140000`, `2026_08_31_150000` |
 | `pph21-ter-rate-correction-manual.sql` | (koreksi data, bukan migration — lihat catatan di TAHAP 7) |
 | `performance-management-extras-manual.sql` | `2026_08_31_170000` |
+| `compensation-succession-survey-extras-manual.sql` | `2026_08_31_180000` |
