@@ -497,6 +497,7 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::get('/rewards/{employee}/pdf', [CompensationController::class, 'rewardsStatementPdf'])->name('rewards.pdf');
         Route::get('/grades',                 [CompensationController::class, 'grades'])->name('grades');
         Route::put('/grades/{level}',         [CompensationController::class, 'updateGrade'])->name('grades.update');
+        Route::get('/grades/{level}/history', [CompensationController::class, 'gradeHistory'])->name('grades.history');
         Route::get('/grade-position',         [CompensationController::class, 'gradePosition'])->name('grade-position');
     });
 
@@ -840,6 +841,7 @@ Route::middleware(['auth', 'permission:career.view'])->prefix('succession')->nam
     Route::delete('/pool/{member}',       [SuccessionController::class, 'destroyPoolMember'])->name('pool.destroy');
     Route::get('/nine-box',               [SuccessionController::class, 'nineBox'])->name('nine-box');
     Route::put('/nine-box/{employee}/potential', [SuccessionController::class, 'updatePotential'])->name('potential.update');
+    Route::get('/nine-box/{employee}/history',   [SuccessionController::class, 'potentialHistory'])->name('potential.history');
 });
 
 // ── Konfigurasi Penilaian Kinerja — permission appraisal-config.view ─────

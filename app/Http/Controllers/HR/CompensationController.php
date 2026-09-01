@@ -145,7 +145,27 @@ class CompensationController extends Controller
             $data + ['updated_by_user_id' => auth()->id()]
         );
 
+        \App\Models\HR\SalaryGradeHistory::create([
+            'company_id'         => $companyId,
+            'level_id'           => $level->id,
+            'grade_min'          => $data['grade_min'],
+            'grade_mid'          => $data['grade_mid'],
+            'grade_max'          => $data['grade_max'],
+            'changed_by_user_id' => auth()->id(),
+        ]);
+
         return back()->with('success', 'Struktur gaji ' . $level->name . ' disimpan.');
+    }
+
+    public function gradeHistory(Request $request, Level $level)
+    {
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+
+        $history = \App\Models\HR\SalaryGradeHistory::where('level_id', $level->id)
+            ->where('company_id', $companyId)
+            ->with('changedBy')->orderByDesc('created_at')->get();
+
+        return view('hr.compensation.grade-history', compact('level', 'history', 'companyId'));
     }
 
     /** Posisi tiap karyawan dalam band gaji INTERNAL-nya — kontrol ruang merit increase. */

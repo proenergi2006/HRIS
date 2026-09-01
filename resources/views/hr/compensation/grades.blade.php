@@ -47,7 +47,10 @@
             <td><input type="number" data-rupiah name="grade_mid" form="{{ $f }}" value="{{ $g->grade_mid ?? '' }}" class="form-control form-control-sm" min="0" required></td>
             <td><input type="number" data-rupiah name="grade_max" form="{{ $f }}" value="{{ $g->grade_max ?? '' }}" class="form-control form-control-sm" min="0" required></td>
             <td><input type="text" name="notes" form="{{ $f }}" value="{{ $g->notes ?? '' }}" class="form-control form-control-sm"></td>
-            <td class="text-right"><button type="submit" form="{{ $f }}" class="btn btn-xs btn-outline-primary">Simpan</button></td>
+            <td class="text-right text-nowrap">
+              <button type="submit" form="{{ $f }}" class="btn btn-xs btn-outline-primary">Simpan</button>
+              <a href="{{ route('hr.compensation.grades.history', ['level' => $level, 'company_id' => $companyId]) }}" class="btn btn-xs btn-outline-secondary" title="Riwayat"><i class="gd-time"></i></a>
+            </td>
           </tr>
         @endforeach
         </tbody>

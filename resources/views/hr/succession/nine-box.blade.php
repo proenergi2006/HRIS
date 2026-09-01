@@ -85,7 +85,10 @@
               </select>
             </td>
             <td><input type="text" name="potential_notes" form="{{ $f }}" value="{{ $r['employee']->potential_notes }}" class="form-control form-control-sm"></td>
-            <td class="text-right"><button type="submit" form="{{ $f }}" class="btn btn-xs btn-outline-primary">Simpan</button></td>
+            <td class="text-right text-nowrap">
+              <button type="submit" form="{{ $f }}" class="btn btn-xs btn-outline-primary">Simpan</button>
+              <a href="{{ route('succession.potential.history', $r['employee']) }}" class="btn btn-xs btn-outline-secondary" title="Riwayat"><i class="gd-time"></i></a>
+            </td>
           </tr>
         @endforeach
         </tbody>

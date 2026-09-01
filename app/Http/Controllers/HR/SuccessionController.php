@@ -171,7 +171,23 @@ class SuccessionController extends Controller
             'potential_assessed_by_user_id' => auth()->id(),
         ]);
 
+        \App\Models\HR\EmployeePotentialHistory::create([
+            'employee_id'         => $employee->id,
+            'potential_rating'    => $data['potential_rating'],
+            'notes'               => $data['potential_notes'] ?? null,
+            'assessed_by_user_id' => auth()->id(),
+            'assessed_at'         => now(),
+        ]);
+
         return back()->with('success', 'Potensi ' . $employee->name . ' disimpan.');
+    }
+
+    public function potentialHistory(Employee $employee)
+    {
+        $history = \App\Models\HR\EmployeePotentialHistory::where('employee_id', $employee->id)
+            ->with('assessedBy')->orderByDesc('assessed_at')->orderByDesc('id')->get();
+
+        return view('hr.succession.potential-history', compact('employee', 'history'));
     }
 
     /** Performa: total_score Appraisal terakhir yang approved, dibagi 3 kelompok. */
