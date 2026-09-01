@@ -14,7 +14,22 @@
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+      /* Font aplikasi diganti ke Inter (dari 'Source Sans Pro' bawaan tema).
+         SENGAJA tidak pakai selector universal (*) atau menyentuh tag <i>/[class^="gd-"]
+         — itu dipakai icon font gd-icons (public/graindashboard/css/gd-icons.css,
+         font-family:'gd-icons' !important), kalau ke-timpa semua ikon di app jadi rusak. */
+      body, .btn, .form-control, .form-control-sm, .form-control-lg, .card, table, .table,
+      h1, h2, h3, h4, h5, h6, .dropdown-menu, .nav-link, .side-nav-menu-link,
+      input, select, textarea, button, .navbar, .breadcrumb, label, .badge, .alert,
+      .modal-content, .card-header, .card-title, .nav-pills .nav-link, .list-group-item {
+        font-family: 'Inter', 'Source Sans Pro', Helvetica, Arial, sans-serif !important;
+      }
+    </style>
     <style>
       /* graindashboard.css menyembunyikan semua badge di sidebar (opacity:0) tanpa
          ada aturan yang menampilkannya lagi — override supaya badge notifikasi

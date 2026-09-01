@@ -13,6 +13,17 @@
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      /* Samakan dgn layouts/grain.blade.php — font aplikasi = Inter. Tidak sentuh
+         tag <i>/[class^="gd-"] (icon font gd-icons). */
+      body, .btn, .form-control, .form-control-sm, .form-control-lg, .card, table,
+      h1, h2, h3, h4, h5, h6, input, select, textarea, button, label, .alert {
+        font-family: 'Inter', 'Source Sans Pro', Helvetica, Arial, sans-serif !important;
+      }
+    </style>
 </head>
 <body>
     <main class="main">
