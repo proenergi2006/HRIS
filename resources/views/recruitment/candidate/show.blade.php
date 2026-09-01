@@ -39,6 +39,9 @@
           <dt class="col-sm-4 text-muted">Telepon</dt><dd class="col-sm-8">{{ $candidate->phone ?? '—' }}</dd>
           <dt class="col-sm-4 text-muted">Requisition</dt><dd class="col-sm-8">{{ $candidate->jobRequisition?->title ?? 'Walk-in' }}</dd>
           <dt class="col-sm-4 text-muted">Sumber</dt><dd class="col-sm-8">{{ $candidate->source ?? '—' }}</dd>
+          @if($candidate->referred_by_employee_id)
+            <dt class="col-sm-4 text-muted">Dirujuk Oleh</dt><dd class="col-sm-8">{{ $candidate->referredBy?->name ?? '-' }} (Employee Referral)</dd>
+          @endif
           <dt class="col-sm-4 text-muted">Ekspektasi Gaji</dt>
           <dd class="col-sm-8">{{ $candidate->expected_salary ? 'Rp ' . number_format($candidate->expected_salary, 0, ',', '.') : '—' }}</dd>
           <dt class="col-sm-4 text-muted">Hasil Assessment</dt>
@@ -213,6 +216,32 @@
         @endif
       </div>
     </div>
+
+    @if($candidate->referred_by_employee_id)
+    <div class="card mb-4">
+      <div class="card-header font-weight-bold">Bonus Referral</div>
+      <div class="card-body">
+        <form method="POST" action="{{ route('recruitment.candidates.referral-bonus', $candidate) }}" class="form-row align-items-end">
+          @csrf @method('PUT')
+          <div class="form-group col-md-4">
+            <label class="small">Nominal (Rp)</label>
+            <input type="number" data-rupiah name="referral_bonus_amount" class="form-control form-control-sm" min="0" value="{{ $candidate->referral_bonus_amount }}">
+          </div>
+          <div class="form-group col-md-4">
+            <div class="custom-control custom-checkbox mt-4">
+              <input type="checkbox" class="custom-control-input" id="bonus_paid" name="mark_paid" value="1" @checked($candidate->referral_bonus_paid_at)>
+              <label class="custom-control-label small" for="bonus_paid">Tandai sudah dibayar
+                @if($candidate->referral_bonus_paid_at) ({{ $candidate->referral_bonus_paid_at->format('d/m/Y') }}) @endif
+              </label>
+            </div>
+          </div>
+          <div class="form-group col-md-4">
+            <button type="submit" class="btn btn-sm btn-outline-primary btn-block">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    @endif
 
     @php $lockProfile = $candidate->isConverted(); @endphp
 

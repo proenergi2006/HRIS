@@ -16,11 +16,14 @@ class Candidate extends Model
         'job_requisition_id', 'name', 'email', 'phone', 'source', 'expected_salary',
         'status', 'mcu_result', 'assessment_result', 'assessment_score', 'assessment_notes',
         'converted_employee_id', 'notes',
+        'referred_by_employee_id', 'referral_bonus_amount', 'referral_bonus_paid_at',
     ];
 
     protected $casts = [
-        'expected_salary'  => 'integer',
-        'assessment_score' => 'decimal:2',
+        'expected_salary'        => 'integer',
+        'assessment_score'       => 'decimal:2',
+        'referral_bonus_amount'  => 'integer',
+        'referral_bonus_paid_at' => 'date',
     ];
 
     public static array $assessmentLabels = [
@@ -81,6 +84,7 @@ class Candidate extends Model
     public static array $statusFlow = ['applied', 'screening', 'interview', 'offer', 'accepted'];
 
     public function jobRequisition(): BelongsTo { return $this->belongsTo(JobRequisition::class); }
+    public function referredBy(): BelongsTo     { return $this->belongsTo(Employee::class, 'referred_by_employee_id'); }
     public function convertedEmployee(): BelongsTo { return $this->belongsTo(Employee::class, 'converted_employee_id'); }
     public function interviews(): HasMany { return $this->hasMany(CandidateInterview::class)->orderBy('scheduled_at'); }
     public function offers(): HasMany { return $this->hasMany(CandidateOffer::class)->latest(); }

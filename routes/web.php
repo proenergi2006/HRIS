@@ -89,6 +89,7 @@ use App\Http\Controllers\Manpower\ManpowerPlanController;
 use App\Http\Controllers\Recruitment\JobRequisitionController;
 use App\Http\Controllers\Recruitment\CandidateController;
 use App\Http\Controllers\Recruitment\CandidateInterviewController;
+use App\Http\Controllers\Recruitment\ReferralController;
 use App\Http\Controllers\Recruitment\CandidateOfferController;
 use App\Http\Controllers\Recruitment\CandidateDocumentController;
 use App\Http\Controllers\Recruitment\CandidateProfileController;
@@ -160,6 +161,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('my-total-rewards')->name('payroll.my.rewards.')->group(function () {
         Route::get('/',    [CompensationController::class, 'myRewardsStatement'])->name('index');
         Route::get('/pdf', [CompensationController::class, 'myRewardsStatementPdf'])->name('pdf');
+    });
+
+    // Employee Referral — ESS: referensikan kandidat ke lowongan terbuka.
+    Route::prefix('referrals')->name('recruitment.referrals.')->group(function () {
+        Route::get('/',  [ReferralController::class, 'index'])->name('index');
+        Route::post('/', [ReferralController::class, 'store'])->name('store');
     });
 
     // Onboarding Saya — ESS: materi induction + konfirmasi karyawan baru.
@@ -728,6 +735,7 @@ Route::middleware(['auth', 'permission:recruitment.view'])->prefix('recruitment'
     Route::get('candidates/{candidate}/edit',      [CandidateController::class, 'edit'])->name('candidates.edit');
     Route::put('candidates/{candidate}',           [CandidateController::class, 'update'])->name('candidates.update');
     Route::post('candidates/{candidate}/status',   [CandidateController::class, 'updateStatus'])->name('candidates.status');
+    Route::put('candidates/{candidate}/referral-bonus', [CandidateController::class, 'updateReferralBonus'])->name('candidates.referral-bonus');
     Route::post('candidates/{candidate}/convert',  [CandidateController::class, 'convert'])->name('candidates.convert');
     Route::delete('candidates/{candidate}',        [CandidateController::class, 'destroy'])->name('candidates.destroy');
 

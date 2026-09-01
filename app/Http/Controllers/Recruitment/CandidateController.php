@@ -100,6 +100,27 @@ class CandidateController extends Controller
         return redirect()->route('recruitment.candidates.index')->with('success', 'Kandidat dihapus.');
     }
 
+    public function updateReferralBonus(Request $request, Candidate $candidate)
+    {
+        abort_unless($candidate->referred_by_employee_id, 422, 'Kandidat ini bukan hasil referral karyawan.');
+
+        $data = $request->validate(['referral_bonus_amount' => 'nullable|integer|min:0']);
+        $data['referral_bonus_paid_at'] = $request->boolean('mark_paid') ? ($candidate->referral_bonus_paid_at ?? now()) : null;
+
+        $candidate->update($data);
+
+        if ($data['referral_bonus_paid_at']) {
+            $candidate->referredBy?->user?->notify(new \App\Notifications\GenericNotification(
+                'Bonus Referral Dibayarkan',
+                'Terima kasih atas referral ' . $candidate->name . '! Bonus Rp ' . number_format($candidate->referral_bonus_amount ?? 0, 0, ',', '.') . ' sudah diproses.',
+                route('recruitment.referrals.index'),
+                'gd-money'
+            ));
+        }
+
+        return back()->with('success', 'Bonus referral diperbarui.');
+    }
+
     /** Ubah status seleksi (applied/screening/interview/offer/accepted/rejected/withdrawn). */
     public function updateStatus(Request $request, Candidate $candidate)
     {

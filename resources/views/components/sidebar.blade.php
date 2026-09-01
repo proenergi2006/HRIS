@@ -188,6 +188,12 @@
       <span class="side-nav-fadeout-on-closed media-body">Permintaan Surat</span>
     </a>
   </li>
+  <li class="side-nav-menu-item {{ Request::is('referrals*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('recruitment.referrals.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-user"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Referensikan Kandidat</span>
+    </a>
+  </li>
   <li class="side-nav-menu-item {{ Request::is('appraisal/employee-data-changes*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('appraisal.employee-data-changes.index') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-write"></i></span>
