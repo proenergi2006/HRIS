@@ -9,12 +9,8 @@
 @section('content')
 @include('components.notification')
 
-<div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:.5rem">
-  <div class="h3 mb-0">Perbandingan Kompensasi vs Pasar</div>
-  <a href="{{ route('hr.compensation.benchmarks') }}" class="btn btn-sm btn-outline-secondary">
-    <i class="gd-pencil mr-1"></i>Kelola Benchmark
-  </a>
-</div>
+<div class="h3 mb-0">Kompensasi</div>
+@include('hr.compensation._nav', ['active' => 'comparison'])
 
 <form method="GET" class="form-inline mb-3">
   <label class="mr-2 small font-weight-bold">PT</label>

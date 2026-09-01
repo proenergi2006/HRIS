@@ -468,6 +468,9 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::get('/comparison',             [CompensationController::class, 'comparison'])->name('comparison');
         Route::get('/rewards/{employee}',     [CompensationController::class, 'rewardsStatement'])->name('rewards');
         Route::get('/rewards/{employee}/pdf', [CompensationController::class, 'rewardsStatementPdf'])->name('rewards.pdf');
+        Route::get('/grades',                 [CompensationController::class, 'grades'])->name('grades');
+        Route::put('/grades/{level}',         [CompensationController::class, 'updateGrade'])->name('grades.update');
+        Route::get('/grade-position',         [CompensationController::class, 'gradePosition'])->name('grade-position');
     });
 
     // Shift & Roster

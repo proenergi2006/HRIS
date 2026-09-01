@@ -4,17 +4,15 @@
 @section('content')
 @include('components.notification')
 
-<div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:.5rem">
-  <div class="h3 mb-0">Benchmark Gaji Pasar</div>
-  <a href="{{ route('hr.compensation.comparison') }}" class="btn btn-sm btn-outline-primary">
-    <i class="gd-bar-chart mr-1"></i>Lihat Perbandingan
-  </a>
-</div>
+<div class="h3 mb-0">Kompensasi</div>
+@include('hr.compensation._nav', ['active' => 'benchmarks'])
 
 <div class="alert alert-info small mb-4">
-  Benchmark ditetapkan per <strong>Level</strong> (berlaku lintas 3 PT — Level adalah golongan
-  jabatan yang sama di seluruh grup). Isi kisaran gaji pasar (Min / Tengah / Maks) hasil survei
-  gaji atau referensi eksternal, lalu bandingkan dengan gaji aktual karyawan di menu Perbandingan.
+  Benchmark <strong>eksternal</strong> ditetapkan per <strong>Level</strong> (berlaku lintas 3 PT —
+  Level adalah golongan jabatan yang sama di seluruh grup). Isi kisaran gaji pasar (Min / Tengah /
+  Maks) hasil survei gaji/referensi eksternal, lalu bandingkan dengan gaji aktual karyawan di menu
+  Perbandingan Pasar. Untuk kontrol kenaikan gaji internal (bukan acuan pasar), pakai menu
+  Struktur Gaji Internal.
 </div>
 
 <div class="card">

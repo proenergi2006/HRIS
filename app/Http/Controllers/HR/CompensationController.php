@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\HR\BonusPayment;
 use App\Models\HR\PayrollSlip;
 use App\Models\HR\SalaryBenchmark;
+use App\Models\HR\SalaryGrade;
 use App\Models\HR\ThrPayment;
 use App\Models\Level;
 use App\Models\TrainingParticipant;
@@ -111,6 +112,78 @@ class CompensationController extends Controller
         if ($compa < 90) return 'below';
         if ($compa > 110) return 'above';
         return 'within';
+    }
+
+    // ── Struktur Gaji Internal (Salary Grade) — beda dari benchmark pasar ──────
+
+    public function grades(Request $request)
+    {
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+
+        $levels = Level::orderBy('rank')->get();
+        $existing = SalaryGrade::where('company_id', $companyId)->get()->keyBy('level_id');
+
+        return view('hr.compensation.grades', compact('levels', 'existing', 'companies', 'companyId'));
+    }
+
+    public function updateGrade(Request $request, Level $level)
+    {
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+
+        $data = $request->validate([
+            'grade_min' => 'required|integer|min:0',
+            'grade_mid' => 'required|integer|min:0',
+            'grade_max' => 'required|integer|min:0',
+            'notes'     => 'nullable|string',
+        ]);
+        abort_unless($data['grade_min'] <= $data['grade_mid'] && $data['grade_mid'] <= $data['grade_max'], 422,
+            'Urutan harus Min ≤ Tengah ≤ Maks.');
+
+        SalaryGrade::updateOrCreate(
+            ['company_id' => $companyId, 'level_id' => $level->id],
+            $data + ['updated_by_user_id' => auth()->id()]
+        );
+
+        return back()->with('success', 'Struktur gaji ' . $level->name . ' disimpan.');
+    }
+
+    /** Posisi tiap karyawan dalam band gaji INTERNAL-nya — kontrol ruang merit increase. */
+    public function gradePosition(Request $request)
+    {
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+
+        $employees = Employee::where('is_active', true)
+            ->when($companyId, fn ($q, $v) => $q->where('company_id', $v))
+            ->with(['level', 'department', 'position', 'company'])
+            ->get();
+
+        $latestSlips = PayrollSlip::whereIn('employee_id', $employees->pluck('id'))
+            ->whereHas('period', fn ($q) => $q->where('status', 'closed'))
+            ->with('period')->get()
+            ->groupBy('employee_id')
+            ->map(fn ($slips) => $slips->sortByDesc(fn ($s) => [$s->period->year, $s->period->month])->first());
+
+        // Grade per company spesifik dulu, fallback ke grade global (company_id NULL).
+        $gradesGlobal = SalaryGrade::whereNull('company_id')->get()->keyBy('level_id');
+        $gradesByCompany = $companyId ? SalaryGrade::where('company_id', $companyId)->get()->keyBy('level_id') : collect();
+
+        $rows = $employees->map(function ($e) use ($latestSlips, $gradesGlobal, $gradesByCompany) {
+            $slip = $latestSlips->get($e->id);
+            $grade = $e->level_id ? ($gradesByCompany->get($e->level_id) ?? $gradesGlobal->get($e->level_id)) : null;
+            $current = $slip?->gross_salary;
+            $position = ($current !== null && $grade) ? $grade->positionInBand((int) $current) : null;
+
+            return [
+                'employee' => $e, 'current' => $current, 'grade' => $grade, 'position' => $position,
+                'at_ceiling' => $position !== null && $position >= 95,
+            ];
+        });
+
+        $atCeiling = $rows->filter(fn ($r) => $r['at_ceiling'])->sortByDesc('position');
+
+        return view('hr.compensation.grade-position', compact('rows', 'atCeiling', 'companies', 'companyId'));
     }
 
     // ── Total Rewards Statement ──────────────────────────────────────────────
