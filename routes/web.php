@@ -102,6 +102,7 @@ use App\Http\Controllers\Competency\EmployeeCompetencyController;
 use App\Http\Controllers\Training\TrainingParticipantController;
 use App\Http\Controllers\Career\CareerPathController;
 use App\Http\Controllers\Career\CareerController;
+use App\Http\Controllers\HR\ProbationReviewController;
 use App\Http\Controllers\HR\SuccessionController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -473,6 +474,13 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::post('/{period}/amounts',  [BonusController::class, 'updateAmounts'])->name('amounts');
         Route::post('/{period}/close',    [BonusController::class, 'close'])->name('close');
         Route::get('/{period}/payments/{payment}/pdf', [BonusController::class, 'pdf'])->name('pdf');
+    });
+
+    // Probation Review — evaluasi akhir masa probation
+    Route::middleware('permission:employee-master.edit')->prefix('probation')->name('probation.')->group(function () {
+        Route::get('/',            [ProbationReviewController::class, 'index'])->name('index');
+        Route::get('/{employee}',  [ProbationReviewController::class, 'show'])->name('show');
+        Route::post('/{employee}', [ProbationReviewController::class, 'store'])->name('store');
     });
 
     // Compensation — benchmark gaji pasar per Level + Total Rewards Statement

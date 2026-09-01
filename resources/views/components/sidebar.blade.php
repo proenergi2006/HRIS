@@ -392,6 +392,11 @@
       <li class="side-nav-menu-item {{ Request::is('appraisal/employee-letters*') || Request::is('appraisal/letter-templates*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.employee-letters.index') }}"><i class="gd-receipt mr-2"></i>Surat</a>
       </li>
+      @can('employee-master.edit')
+      <li class="side-nav-menu-item {{ Request::is('hr/probation*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.probation.index') }}"><i class="gd-clipboard mr-2"></i>Probation Review</a>
+      </li>
+      @endcan
       @endif
       @if($sidebarUser?->can('appraisal-config.view'))
       <li class="side-nav-menu-item {{ Request::is('appraisal/levels*') ? 'active' : '' }}">
