@@ -218,10 +218,6 @@
     <div class="bg-blob b2"></div>
     <div class="bg-blob b3"></div>
 
-    <div class="hero-brand">
-        <p class="hero-tagline">{{ __('common.login_tagline') }}</p>
-    </div>
-
     <div class="login-card">
         <img src="{{ asset('img/logo-pe.png') }}" class="card-logo" alt="ProPeople">
         <h2>{{ __('common.login_welcome') }}</h2>
