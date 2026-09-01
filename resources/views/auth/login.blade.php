@@ -282,22 +282,5 @@
         </form>
     </div>
 
-    @if($groupCompanies->isNotEmpty())
-    <div class="company-group">
-        <div class="company-group-label">Melayani karyawan dari</div>
-        <div class="company-chips">
-            @foreach($groupCompanies as $i => $c)
-                <span class="chip">
-                    <span class="chip-dot" style="background:{{ $chipColors[$i % count($chipColors)] }}"></span>
-                    {{ $c->short_name ?: $c->name }}
-                </span>
-            @endforeach
-        </div>
-    </div>
-    @endif
-
-    <div class="login-footer">
-        &copy; {{ date('Y') }} PT. Pro Energi Group &nbsp;&mdash;&nbsp; ProPeople v1.0
-    </div>
 </div>
 @endsection
