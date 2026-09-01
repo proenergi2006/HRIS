@@ -25,11 +25,19 @@
         @if($a)
           <hr>
           <div class="small">
-            @foreach($a->getAttributes() as $k => $v)
-              @continue(in_array($k, ['id','created_at','updated_at','company_id','requested_by_user_id','employee_id','status']))
-              @continue($v === null || $v === '')
-              <div><span class="text-muted">{{ $k }}:</span> {{ $v }}</div>
-            @endforeach
+            @if(method_exists($a, 'approvalDetails'))
+              @foreach($a->approvalDetails() as $label => $v)
+                <div><span class="text-muted">{{ $label }}:</span> {{ $v }}</div>
+              @endforeach
+            @else
+              {{-- Fallback generik: model ini belum punya approvalDetails() sendiri,
+                   jadi tampilkan raw attribute apa adanya (bisa berisi ID mentah). --}}
+              @foreach($a->getAttributes() as $k => $v)
+                @continue(in_array($k, ['id','created_at','updated_at','company_id','requested_by_user_id','employee_id','status']))
+                @continue($v === null || $v === '')
+                <div><span class="text-muted">{{ $k }}:</span> {{ $v }}</div>
+              @endforeach
+            @endif
           </div>
         @endif
       </div>

@@ -137,6 +137,31 @@ class JobRequisition extends Model implements Approvable
         ];
     }
 
+    /**
+     * Rincian utk halaman detail persetujuan (Kotak Persetujuan) — label => nilai yang
+     * sudah diresolve dari relasi, BUKAN raw kolom/ID. Kalau method ini ada, view
+     * approval.inbox.show pakai ini; kalau tidak ada di model lain, fallback ke
+     * dump attribute mentah seperti sebelumnya.
+     */
+    public function approvalDetails(): array
+    {
+        return array_filter([
+            'Jenis Permintaan'  => self::$typeLabels[$this->request_type] ?? $this->request_type,
+            'Jabatan'           => $this->title,
+            'Departemen'        => $this->department?->name,
+            'Section'           => $this->section?->name,
+            'Acuan Level/Posisi' => $this->position?->name,
+            'Jumlah Diminta'    => $this->headcount_requested ? $this->headcount_requested . ' orang' : null,
+            'Tipe Karyawan'     => $this->employmentType?->name,
+            'Rencana Manpower'  => $this->manpowerPlan
+                ? ($this->manpowerPlan->position?->name ?? '-') . ' (' . $this->manpowerPlan->month . '/' . $this->manpowerPlan->year . ')'
+                : null,
+            'Menggantikan'      => $this->replacesEmployee?->name,
+            'Target Bergabung'  => $this->target_join_date?->format('d/m/Y'),
+            'Alasan'            => $this->reason,
+        ], fn ($v) => $v !== null && $v !== '');
+    }
+
     public function approvalSummary(): string
     {
         return 'Requisition — ' . $this->title . ' · ' . $this->scopeLabel()
