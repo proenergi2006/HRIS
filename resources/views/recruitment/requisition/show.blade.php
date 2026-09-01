@@ -75,9 +75,14 @@
       <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
         <span>Kandidat</span>
         @can('recruitment.create')
-        <a href="{{ route('recruitment.candidates.create', ['job_requisition_id' => $requisition->id]) }}" class="btn btn-xs btn-primary">
-          <i class="gd-plus mr-1"></i> Tambah Kandidat
-        </a>
+        <span>
+          <a href="{{ route('recruitment.candidates.import.form', $requisition) }}" class="btn btn-xs btn-outline-secondary">
+            <i class="gd-upload mr-1"></i> Import dari Excel
+          </a>
+          <a href="{{ route('recruitment.candidates.create', ['job_requisition_id' => $requisition->id]) }}" class="btn btn-xs btn-primary">
+            <i class="gd-plus mr-1"></i> Tambah Kandidat
+          </a>
+        </span>
         @endcan
       </div>
       <div class="card-body">

@@ -88,6 +88,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Manpower\ManpowerPlanController;
 use App\Http\Controllers\Recruitment\JobRequisitionController;
 use App\Http\Controllers\Recruitment\CandidateController;
+use App\Http\Controllers\Recruitment\CandidateImportController;
 use App\Http\Controllers\Recruitment\CandidateInterviewController;
 use App\Http\Controllers\Recruitment\ReferralController;
 use App\Http\Controllers\Recruitment\CandidateOfferController;
@@ -752,6 +753,11 @@ Route::middleware(['auth', 'permission:recruitment.view'])->prefix('recruitment'
     Route::put('requisitions/{requisition}',       [JobRequisitionController::class, 'update'])->name('requisitions.update');
     Route::post('requisitions/{requisition}/submit', [JobRequisitionController::class, 'submit'])->name('requisitions.submit');
     Route::delete('requisitions/{requisition}',    [JobRequisitionController::class, 'destroy'])->name('requisitions.destroy');
+
+    // Import kandidat massal dari Excel/CSV (mis. export daftar pelamar dari Jobstreet) — per requisition.
+    Route::get('candidates/import/template',                    [CandidateImportController::class, 'template'])->name('candidates.import.template');
+    Route::get('requisitions/{requisition}/candidates/import',  [CandidateImportController::class, 'form'])->name('candidates.import.form');
+    Route::post('requisitions/{requisition}/candidates/import', [CandidateImportController::class, 'import'])->name('candidates.import');
 
     Route::get('candidates',              [CandidateController::class, 'index'])->name('candidates.index');
     Route::get('candidates/create',       [CandidateController::class, 'create'])->name('candidates.create');
