@@ -281,24 +281,23 @@ $notifCount = $notifItems->count();
 <header class="header bg-body">
   <nav class="navbar flex-nowrap p-0">
     <div class="navbar-brand-wrapper d-flex align-items-center col-auto">
-      <!-- Brand Mobile -->
+      <!-- Brand Mobile — logo-pe.png (lockup ikon+wordmark), lebar menyesuaikan
+           proporsional (BUKAN kotak 38x38 dipaksa) supaya tidak gepeng. -->
       <a class="navbar-brand navbar-brand-mobile" href="{{ route('dashboard') }}" style="text-decoration:none;">
-        <img src="{{ asset('img/propeople-icon.png') }}" alt="ProPeople" style="height:38px;width:38px;border-radius:9px;">
+        <img src="{{ asset('img/logo-pe.png') }}" alt="ProPeople" style="height:30px;width:auto;object-fit:contain;">
       </a>
 
-      <!-- Brand Desktop —
+      <!-- Brand Desktop — logo-pe.png sudah memuat wordmark "ProPeople" di dalam
+           gambar, jadi TIDAK perlu span teks terpisah lagi (beda dari versi lama
+           yang pakai ikon persegi + teks manual).
            JANGAN taruh d-flex (atau display apa pun) langsung di .navbar-brand-desktop:
            class itu andalan tema buat sembunyi di mobile (display:none < 992px),
            dan Bootstrap .d-flex punya !important yang menang lawan itu, bikin
            logo mobile+desktop dobel tampil bareng di layar kecil. Flex-nya taruh
            di <span> pembungkus di dalam, bukan di elemen yang di-toggle. -->
       <a class="navbar-brand navbar-brand-desktop" href="{{ route('dashboard') }}" style="text-decoration:none;">
-        <span style="display:flex;align-items:center;line-height:1;gap:10px;">
-          <img src="{{ asset('img/propeople-icon.png') }}" alt="ProPeople" style="height:42px;width:42px;border-radius:10px;flex-shrink:0;">
-          <span class="side-nav-hide-on-closed flex-column" style="line-height:1.12;">
-            <span style="font-size:1.45rem;font-weight:900;letter-spacing:1px;color:#e8a020;">ProPeople</span>
-            <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;color:#8a94a6;text-transform:uppercase;">PT. Pro Energi</span>
-          </span>
+        <span class="side-nav-hide-on-closed" style="display:flex;align-items:center;line-height:1;">
+          <img src="{{ asset('img/logo-pe.png') }}" alt="ProPeople" style="height:36px;width:auto;object-fit:contain;">
         </span>
       </a>
     </div>

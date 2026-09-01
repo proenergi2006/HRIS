@@ -224,7 +224,7 @@
     </div>
 
     <div class="login-card">
-        <img src="{{ asset('img/propeople-logo-lockup.png') }}" class="card-logo" alt="ProPeople">
+        <img src="{{ asset('img/logo-pe.png') }}" class="card-logo" alt="ProPeople">
         <h2>{{ __('common.login_welcome') }}</h2>
         <p class="subtitle">{{ __('common.login_subtitle') }}</p>
 
