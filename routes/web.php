@@ -810,6 +810,8 @@ Route::middleware(['auth', 'permission:career.view'])->prefix('succession')->nam
     Route::post('/positions/{position}/pool', [SuccessionController::class, 'storePoolMember'])->name('pool.store');
     Route::put('/pool/{member}',          [SuccessionController::class, 'updatePoolMember'])->name('pool.update');
     Route::delete('/pool/{member}',       [SuccessionController::class, 'destroyPoolMember'])->name('pool.destroy');
+    Route::get('/nine-box',               [SuccessionController::class, 'nineBox'])->name('nine-box');
+    Route::put('/nine-box/{employee}/potential', [SuccessionController::class, 'updatePotential'])->name('potential.update');
 });
 
 // ── Konfigurasi Penilaian Kinerja — permission appraisal-config.view ─────

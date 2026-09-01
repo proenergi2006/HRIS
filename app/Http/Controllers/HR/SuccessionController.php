@@ -112,4 +112,73 @@ class SuccessionController extends Controller
 
         return view('hr.succession.matrix', compact('critical', 'totalCritical', 'covered', 'readyNow', 'gaps', 'companies', 'companyId'));
     }
+
+    // ── 9-Box Grid (Performance × Potential) ────────────────────────────────
+
+    public function nineBox(Request $request)
+    {
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+        $companies = Company::where('is_active', true)->orderBy('name')->get();
+
+        $employees = Employee::where('is_active', true)
+            ->when($companyId, fn ($q, $v) => $q->where('company_id', $v))
+            ->with(['department', 'position', 'level'])
+            ->orderBy('name')->get();
+
+        $latestApprovedScores = \App\Models\Appraisal\Appraisal::whereIn('employee_id', $employees->pluck('id'))
+            ->where('status', 'approved')
+            ->whereNotNull('total_score')
+            ->orderByDesc('finalized_at')
+            ->get()
+            ->groupBy('employee_id')
+            ->map(fn ($items) => (float) $items->first()->total_score);
+
+        $rows = $employees->map(function ($e) use ($latestApprovedScores) {
+            $score = $latestApprovedScores->get($e->id);
+            $perf = $score === null ? null : $this->bucket($score);
+
+            return [
+                'employee'   => $e,
+                'score'      => $score,
+                'perf'       => $perf,
+                'potential'  => $e->potential_rating,
+            ];
+        });
+
+        // Grid 3x3: baris = potensi (high di atas), kolom = performa (low di kiri).
+        $axis = ['low' => 'Rendah', 'medium' => 'Sedang', 'high' => 'Tinggi'];
+        $grid = [];
+        foreach (['high', 'medium', 'low'] as $pot) {
+            foreach (['low', 'medium', 'high'] as $perf) {
+                $grid[$pot][$perf] = $rows->filter(fn ($r) => $r['potential'] === $pot && $r['perf'] === $perf)->values();
+            }
+        }
+
+        $unassessed = $rows->filter(fn ($r) => $r['potential'] === null || $r['perf'] === null);
+
+        return view('hr.succession.nine-box', compact('rows', 'grid', 'axis', 'unassessed', 'companies', 'companyId'));
+    }
+
+    public function updatePotential(Request $request, Employee $employee)
+    {
+        $data = $request->validate([
+            'potential_rating' => 'required|in:low,medium,high',
+            'potential_notes'  => 'nullable|string|max:1000',
+        ]);
+
+        $employee->update($data + [
+            'potential_assessed_at'         => now(),
+            'potential_assessed_by_user_id' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Potensi ' . $employee->name . ' disimpan.');
+    }
+
+    /** Performa: total_score Appraisal terakhir yang approved, dibagi 3 kelompok. */
+    private function bucket(float $score): string
+    {
+        if ($score < 60) return 'low';
+        if ($score <= 80) return 'medium';
+        return 'high';
+    }
 }

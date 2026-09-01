@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:.5rem">
   <div class="h3 mb-0">Ringkasan Kesiapan Suksesi</div>
-  <a href="{{ route('succession.positions') }}" class="btn btn-sm btn-outline-secondary">&larr; Daftar Jabatan</a>
+  <div style="gap:.5rem" class="d-flex">
+    <a href="{{ route('succession.nine-box') }}" class="btn btn-sm btn-outline-primary"><i class="gd-view-grid mr-1"></i>Grid 9-Kotak</a>
+    <a href="{{ route('succession.positions') }}" class="btn btn-sm btn-outline-secondary">&larr; Daftar Jabatan</a>
+  </div>
 </div>
 
 <form method="GET" class="form-inline mb-3">

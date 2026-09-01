@@ -43,6 +43,10 @@ class Employee extends Model
         'contract_end_date',
         'employment_status',
         'is_active',
+        'potential_rating',
+        'potential_notes',
+        'potential_assessed_at',
+        'potential_assessed_by_user_id',
 
         // Personal
         'gender',
@@ -96,6 +100,7 @@ class Employee extends Model
         'is_active'         => 'boolean',
         'birth_date'        => 'date',
         'npwp_date'         => 'date',
+        'potential_assessed_at' => 'date',
         // Data sensitif (PRD Bab 9) — dienkripsi transparan lewat cast Laravel.
         // Data lama sudah dienkripsi lewat command employees:encrypt-sensitive
         // (dipanggil dari migration 2026_08_29_140000).
