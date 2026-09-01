@@ -306,6 +306,14 @@
       <span class="side-nav-fadeout-on-closed media-body">1-on-1 Tim</span>
     </a>
   </li>
+  @unless($sidebarUser?->can('leave-admin.view'))
+  <li class="side-nav-menu-item {{ Request::is('hr/leave-team-calendar*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('hr.leave.team-calendar') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-calendar"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Kalender Cuti Tim</span>
+    </a>
+  </li>
+  @endunless
   @endif
 
   {{-- Pengumuman — semua user login --}}
@@ -485,6 +493,11 @@
       <li class="side-nav-menu-item {{ Request::is('hr/leave*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('hr.leave.index') }}">
           <i class="gd-check mr-2"></i>Cuti
+        </a>
+      </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/leave-team-calendar*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.leave.team-calendar') }}">
+          <i class="gd-calendar mr-2"></i>Kalender Cuti
         </a>
       </li>
       <li class="side-nav-menu-item {{ Request::is('hr/leave-policies*') ? 'active' : '' }}">

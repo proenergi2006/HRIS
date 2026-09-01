@@ -403,6 +403,11 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
         Route::post('/input',  [OvertimeController::class, 'store'])->name('store');
     });
 
+    // Kalender Cuti Tim — HR (leave-admin.view) atau manager (punya bawahan langsung);
+    // otorisasi dicek di controller sendiri, bukan middleware permission (supaya manager
+    // biasa tanpa permission leave-admin tetap bisa lihat kalender timnya).
+    Route::get('leave-team-calendar', [LeaveController::class, 'teamCalendar'])->name('leave.team-calendar');
+
     // Cuti
     Route::middleware('permission:leave-admin.view')->prefix('leave')->name('leave.')->group(function () {
         Route::get('/',                [LeaveController::class, 'index'])->name('index');

@@ -18,6 +18,57 @@ class LeaveController extends Controller
 {
     public function __construct(private ApprovalEngine $engine) {}
 
+    /**
+     * Kalender cuti tim — HR (leave-admin.view) lihat seluruh PT, manager (punya
+     * bawahan langsung) lihat timnya sendiri. Read-only, dari data leave_requests
+     * yang sudah ada — tidak butuh skema baru.
+     */
+    public function teamCalendar(Request $request)
+    {
+        $user = $request->user();
+        $isHr = $user->can('leave-admin.view');
+        $employee = $user->employee;
+
+        abort_unless($isHr || $employee?->subordinates()->exists(), 403, 'Anda tidak punya tim untuk dilihat kalendernya.');
+
+        $companyId = $request->filled('company_id') ? (int) $request->company_id : null;
+        $companies = $isHr ? Company::where('is_active', true)->orderBy('name')->get() : collect();
+
+        $scopeIds = $isHr
+            ? Employee::where('is_active', true)->when($companyId, fn ($q, $v) => $q->where('company_id', $v))->pluck('id')
+            : $employee->subordinates()->where('is_active', true)->pluck('id');
+
+        $month = (int) $request->get('month', now()->month);
+        $year  = (int) $request->get('year', now()->year);
+        $start = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+        $end   = $start->copy()->endOfMonth();
+
+        $leaves = LeaveRequest::whereIn('employee_id', $scopeIds)
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $end)
+            ->where('end_date', '>=', $start)
+            ->with(['employee', 'leaveType'])
+            ->orderBy('start_date')->get();
+
+        $gridStart = $start->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $gridEnd   = $end->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        $days = [];
+        for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay()) {
+            $days[] = $d->copy();
+        }
+
+        // Kelompokkan per tanggal (satu leave request bisa mencakup beberapa hari).
+        $byDate = collect();
+        foreach ($leaves as $l) {
+            for ($d = $l->start_date->copy(); $d->lte($l->end_date); $d->addDay()) {
+                $key = $d->format('Y-m-d');
+                $byDate[$key] = ($byDate[$key] ?? collect())->push($l);
+            }
+        }
+
+        return view('hr.leave.team-calendar', compact('days', 'byDate', 'month', 'year', 'start', 'leaves', 'companies', 'companyId', 'isHr'));
+    }
+
     public function index(Request $request)
     {
         $companies = Company::where('is_active', true)->get();
