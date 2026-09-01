@@ -12,6 +12,7 @@ use App\Models\Master\BloodType;
 use App\Models\Master\MaritalStatus;
 use App\Models\Master\Religion;
 use App\Models\Position;
+use App\Notifications\GenericNotification;
 use Illuminate\Http\Request;
 
 /**
@@ -114,10 +115,22 @@ class CandidateController extends Controller
         ]);
 
         $wasRejected = $candidate->status === 'rejected';
+        $wasAccepted = $candidate->status === 'accepted';
         $notify = $request->boolean('notify_candidate');
         unset($data['notify_candidate']);
 
         $candidate->update($data);
+
+        // Notifikasi in-app ke requester Job Requisition saat kandidat pindah ke "Diterima".
+        if ($data['status'] === 'accepted' && ! $wasAccepted) {
+            $requester = $candidate->jobRequisition?->requestedBy;
+            $requester?->notify(new GenericNotification(
+                'Kandidat Diterima',
+                $candidate->name . ' diterima untuk posisi ' . ($candidate->jobRequisition?->title ?? '-') . '.',
+                route('recruitment.candidates.show', $candidate),
+                'gd-check'
+            ));
+        }
 
         // Auto-reject email — cuma saat status BARU pindah ke rejected (bukan tiap update lain
         // saat kandidat memang sudah rejected), dan HR centang "beri tahu kandidat".

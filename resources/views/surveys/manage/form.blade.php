@@ -19,15 +19,23 @@
       @if($survey->exists) @method('PUT') @endif
 
       <div class="form-row">
-        <div class="form-group col-md-5">
+        <div class="form-group col-md-4">
           <label>Judul <span class="text-danger">*</span></label>
           <input type="text" name="title" class="form-control" value="{{ old('title', $survey->title) }}" required>
         </div>
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-2">
           <label>Tipe</label>
           <select name="type" class="form-control">
             @foreach(\App\Models\Survey\Survey::$typeLabels as $k => $lbl)
               <option value="{{ $k }}" @selected(old('type', $survey->type ?? 'standard') === $k)>{{ $lbl }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>Perulangan</label>
+          <select name="recurrence" class="form-control">
+            @foreach(\App\Models\Survey\Survey::$recurrenceLabels as $k => $lbl)
+              <option value="{{ $k }}" @selected(old('recurrence', $survey->recurrence ?? 'none') === $k)>{{ $lbl }}</option>
             @endforeach
           </select>
         </div>
@@ -51,7 +59,7 @@
         (function () {
           var hints = {
             standard: 'Survey satu-kali biasa — bebas jenis pertanyaan.',
-            pulse: 'Survey ringkas berkala (mis. bulanan/kuartalan) — sebaiknya 3-5 pertanyaan singkat. Setelah dibuka & ditutup, gunakan tombol "Duplikat" untuk membuat putaran berikutnya.',
+            pulse: 'Survey ringkas berkala — sebaiknya 3-5 pertanyaan singkat. Set "Perulangan" ke Bulanan/Kuartalan supaya putaran berikutnya dibuat & dibuka OTOMATIS setelah survey ini ditutup (atau pakai tombol "Duplikat" manual kapan saja).',
             enps: 'eNPS — tambahkan TEPAT 1 pertanyaan bertipe "Skala 0-10" berbunyi seperti "Seberapa besar kemungkinan Anda merekomendasikan tempat kerja ini ke teman/kolega?". Skor eNPS dihitung otomatis (%Promoter 9-10 dikurangi %Detraktor 0-6) dan bisa dilihat trennya di menu Tren eNPS.',
           };
           var sel = document.querySelector('select[name="type"]');

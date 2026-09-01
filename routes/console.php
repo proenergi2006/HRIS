@@ -14,3 +14,5 @@ Schedule::command('backup:database')->dailyAt('01:00');
 Schedule::command('documents:remind')->dailyAt('08:15');
 Schedule::command('leave:year-end')->yearlyOn(1, 1, '02:00');
 Schedule::command('leave:expire-carry')->dailyAt('02:30');
+Schedule::command('hr:remind-birthdays')->dailyAt('07:00');
+Schedule::command('survey:auto-recur')->dailyAt('06:00');

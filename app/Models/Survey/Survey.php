@@ -16,6 +16,7 @@ class Survey extends Model
     protected $fillable = [
         'company_id', 'title', 'description', 'is_anonymous', 'type',
         'status', 'opens_at', 'closes_at', 'created_by_user_id',
+        'recurrence', 'parent_survey_id',
     ];
 
     protected $casts = [
@@ -30,10 +31,18 @@ class Survey extends Model
         'enps'     => 'eNPS',
     ];
 
+    public static array $recurrenceLabels = [
+        'none'      => 'Tidak Berulang',
+        'monthly'   => 'Bulanan',
+        'quarterly' => 'Kuartalan',
+    ];
+
     public function company(): BelongsTo    { return $this->belongsTo(Company::class); }
     public function createdBy(): BelongsTo  { return $this->belongsTo(User::class, 'created_by_user_id'); }
     public function questions(): HasMany    { return $this->hasMany(SurveyQuestion::class)->orderBy('sort_order'); }
     public function responses(): HasMany    { return $this->hasMany(SurveyResponse::class); }
+    public function parentSurvey(): BelongsTo { return $this->belongsTo(Survey::class, 'parent_survey_id'); }
+    public function children(): HasMany     { return $this->hasMany(Survey::class, 'parent_survey_id'); }
 
     public function isOpen(): bool
     {

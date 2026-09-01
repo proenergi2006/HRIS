@@ -139,7 +139,17 @@ class SurveyController extends Controller
         abort_if($survey->questions()->count() === 0, 422, 'Tambahkan minimal 1 pertanyaan sebelum membuka survey.');
         $survey->update(['status' => 'open']);
 
-        return back()->with('status', 'Survey dibuka.');
+        // Notifikasi in-app ke semua user dalam scope (company_id survey, atau semua kalau null).
+        $users = \App\Models\User::when($survey->company_id, fn ($q, $v) => $q->whereHas('employee', fn ($e) => $e->where('company_id', $v)))
+            ->get();
+        \Illuminate\Support\Facades\Notification::send($users, new \App\Notifications\GenericNotification(
+            'Survey Baru Dibuka',
+            $survey->title,
+            route('surveys.show', $survey),
+            'gd-clipboard'
+        ));
+
+        return back()->with('status', 'Survey dibuka. Notifikasi terkirim ke ' . $users->count() . ' user.');
     }
 
     public function close(Survey $survey)
@@ -267,10 +277,12 @@ class SurveyController extends Controller
             'description'    => 'nullable|string',
             'is_anonymous'   => 'boolean',
             'type'           => 'required|in:standard,pulse,enps',
+            'recurrence'     => 'nullable|in:none,monthly,quarterly',
             'opens_at'       => 'nullable|date',
             'closes_at'      => 'nullable|date',
         ]);
         $data['is_anonymous'] = $request->boolean('is_anonymous', true);
+        $data['recurrence'] = $data['recurrence'] ?? 'none';
 
         return $data;
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\TrainingParticipant;
 use App\Models\TrainingProgram;
+use App\Notifications\GenericNotification;
 use Illuminate\Http\Request;
 
 /** Peserta + training record (PRD Bab 3 modul #11). */
@@ -31,7 +32,15 @@ class TrainingParticipantController extends Controller
 
     public function store(Request $request)
     {
-        TrainingParticipant::create($this->validated($request));
+        $participant = TrainingParticipant::create($this->validated($request));
+
+        $participant->loadMissing(['employee.user', 'program']);
+        $participant->employee?->user?->notify(new GenericNotification(
+            'Terdaftar di Program Training',
+            $participant->program?->title ?? '-',
+            route('training.participants.index'),
+            'gd-book'
+        ));
 
         return back()->with('status', 'Peserta training berhasil ditambahkan.');
     }

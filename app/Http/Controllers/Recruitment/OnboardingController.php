@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeFacility;
 use App\Models\EmployeeOnboardingTask;
 use App\Models\OnboardingChecklistItem;
+use App\Notifications\GenericNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -115,11 +116,25 @@ class OnboardingController extends Controller
             ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $employee->company_id))
             ->get();
 
+        $created = 0;
         foreach ($items as $item) {
-            EmployeeOnboardingTask::firstOrCreate([
+            $task = EmployeeOnboardingTask::firstOrCreate([
                 'employee_id'                  => $employee->id,
                 'onboarding_checklist_item_id' => $item->id,
             ]);
+            if ($task->wasRecentlyCreated) {
+                $created++;
+            }
+        }
+
+        if ($created > 0) {
+            $employee->loadMissing('user');
+            $employee->user?->notify(new GenericNotification(
+                'Onboarding Anda Dimulai',
+                $created . ' tugas onboarding menunggu Anda selesaikan.',
+                route('onboarding.mine'),
+                'gd-book'
+            ));
         }
     }
 
