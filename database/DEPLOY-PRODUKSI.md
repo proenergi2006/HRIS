@@ -121,6 +121,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 29 | `compensation-succession-survey-extras-manual.sql` **(baru)** | setelah #1 (`levels`, `positions`) & #23 (`surveys`). `salary_benchmarks` (Compensation), `positions.is_critical_position`/`succession_risk`/`succession_notes` + `talent_pool_members` (Succession Planning), `surveys.type` (Survey pulse/eNPS) |
 | 30 | `notification-talent-extras-manual.sql` **(baru)** | setelah #1 (`levels`), `companies`, `employees`, `users`. `notifications` (Notification Center — tabel standar Laravel), `salary_grades` (Struktur Gaji Internal), `employees.potential_rating`/`potential_notes`/`potential_assessed_at`/`potential_assessed_by_user_id` (Grid 9-Kotak), `kudos` (Recognition) |
 | 31 | `gap4-extras-manual.sql` **(baru)** | setelah `employees`/`companies`/`users`, `candidates` (#25), `surveys` (TAHAP 29). `salary_increase_requests` (Merit Increase, lewat Approval Engine), `candidates.referred_by_employee_id` dkk (Employee Referral), `probation_reviews`, `employee_potential_history` + `salary_grade_history` (riwayat), `surveys.recurrence` + `parent_survey_id` (Pulse auto-recurring). **Setelah kode live, jalankan ulang `php artisan db:seed --class=ApprovalWorkflowSeeder`** (idempoten — nambah workflow `salary_increase_request` 3 PT). |
+| 32 | `mitra-employee-type-manual.sql` **(baru)** | setelah `master-data-manual.sql` (butuh `employee_types`). Tambah 1 baris tipe karyawan "Mitra" — data saja, tidak ada perubahan skema/kode. |
 
 ---
 
@@ -226,3 +227,4 @@ kerja) · `survey:auto-recur` 06:00 (buka otomatis putaran pulse/eNPS berkala).
 | `compensation-succession-survey-extras-manual.sql` | `2026_08_31_180000` |
 | `notification-talent-extras-manual.sql` | `2026_09_01_100000` |
 | `gap4-extras-manual.sql` | `2026_09_01_110000` |
+| `mitra-employee-type-manual.sql` | `2026_09_01_120000` |
