@@ -120,6 +120,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 28 | `performance-management-extras-manual.sql` | setelah #16 (`appraisal_objectives`) & #2 (`departments`). `performance_checkins` (1-on-1), `company_objectives` (OKR) + `appraisal_objectives.company_objective_id`, `feedback_360_cycles`/`_reviews`/`_answers` |
 | 29 | `compensation-succession-survey-extras-manual.sql` **(baru)** | setelah #1 (`levels`, `positions`) & #23 (`surveys`). `salary_benchmarks` (Compensation), `positions.is_critical_position`/`succession_risk`/`succession_notes` + `talent_pool_members` (Succession Planning), `surveys.type` (Survey pulse/eNPS) |
 | 30 | `notification-talent-extras-manual.sql` **(baru)** | setelah #1 (`levels`), `companies`, `employees`, `users`. `notifications` (Notification Center — tabel standar Laravel), `salary_grades` (Struktur Gaji Internal), `employees.potential_rating`/`potential_notes`/`potential_assessed_at`/`potential_assessed_by_user_id` (Grid 9-Kotak), `kudos` (Recognition) |
+| 31 | `gap4-extras-manual.sql` **(baru)** | setelah `employees`/`companies`/`users`, `candidates` (#25), `surveys` (TAHAP 29). `salary_increase_requests` (Merit Increase, lewat Approval Engine), `candidates.referred_by_employee_id` dkk (Employee Referral), `probation_reviews`, `employee_potential_history` + `salary_grade_history` (riwayat), `surveys.recurrence` + `parent_survey_id` (Pulse auto-recurring). **Setelah kode live, jalankan ulang `php artisan db:seed --class=ApprovalWorkflowSeeder`** (idempoten — nambah workflow `salary_increase_request` 3 PT). |
 
 ---
 
@@ -164,7 +165,8 @@ Pastikan ada 1 baris cron di server:
 Menjalankan (lihat `routes/console.php`):
 `contract:remind` 08:00 · `approval:remind-overdue` 08:30 · `documents:remind` 08:15 ·
 `backup:database` 01:00 (**butuh `mysqldump` di PATH**) · `leave:expire-carry` 02:30 ·
-`leave:year-end` 1 Jan 02:00.
+`leave:year-end` 1 Jan 02:00 · `hr:remind-birthdays` 07:00 (ulang tahun & hari jadi
+kerja) · `survey:auto-recur` 06:00 (buka otomatis putaran pulse/eNPS berkala).
 
 ---
 
@@ -173,13 +175,15 @@ Menjalankan (lihat `routes/console.php`):
 1. `php artisan about` — no error; `php artisan migrate:status` (kalau migration
    didaftarkan manual ke tabel `migrations`, semua "Ran").
 2. Kosongkan `storage/logs/laravel.log`, login sebagai admin HRD, buka:
-   Dashboard (tab SDM + semua chart), Data Karyawan, Struktur Organisasi (Cabang/
-   Divisi/Section), Approvals, Rekrutmen → Onboarding → Kalender Interview, Payroll,
-   Laporan (6 halaman termasuk Report Builder + PDF), Kasbon, Bonus, THR, Offboarding,
-   Pengumuman, Survey (+ Tren eNPS), Competency, Career → Succession Planning (+ Grid
-   9-Kotak), Kompensasi & Benchmark (4 sub-halaman: Benchmark Eksternal/Perbandingan
-   Pasar/Struktur Gaji Internal/Posisi dalam Band), Kudos (Apresiasi), bel notifikasi
-   header (harus tampil tanpa error di semua role) + halaman Notifikasi Saya.
+   Dashboard (tab SDM + semua chart), Data Karyawan (+ Probation Review), Struktur
+   Organisasi (Cabang/Divisi/Section), Approvals (+ Kenaikan Gaji), Rekrutmen →
+   Onboarding → Kalender Interview → Referensikan Kandidat, Payroll, Cuti → Kalender
+   Cuti, Laporan (6 halaman termasuk Report Builder + PDF), Kasbon, Bonus, THR,
+   Offboarding, Pengumuman, Survey (+ Tren eNPS), Competency, Career → Succession
+   Planning (+ Grid 9-Kotak + Riwayat Potensi), Kompensasi & Benchmark (4 sub-halaman
+   + Riwayat Struktur Gaji), Kudos (Apresiasi), bel notifikasi header (harus tampil
+   tanpa error di SEMUA role — admin/hr_manager/evaluator/cfo/ceo/user_ii/karyawan)
+   + halaman Notifikasi Saya.
 3. Cek `laravel.log` bersih.
 4. Spot-check data: `SELECT COUNT(*) FROM permissions;` naik; `approval_workflows`
    terisi per PT; NIK 1 karyawan tampil benar di UI (bukti enkripsi + APP_KEY oke).
@@ -221,3 +225,4 @@ Menjalankan (lihat `routes/console.php`):
 | `performance-management-extras-manual.sql` | `2026_08_31_170000` |
 | `compensation-succession-survey-extras-manual.sql` | `2026_08_31_180000` |
 | `notification-talent-extras-manual.sql` | `2026_09_01_100000` |
+| `gap4-extras-manual.sql` | `2026_09_01_110000` |

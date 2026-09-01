@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 94 tabel baru + 20 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 98 tabel baru + 20 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -1301,3 +1301,17 @@ Total Rewards Statement (Compensation) & Report Builder/export Excel (Analytics)
 🆕 `kudos` — from_employee_id, to_employee_id (FK `employees`), company_id (FK `companies`, SET NULL), category varchar(30) (teamwork/innovation/leadership/customer_focus/integrity/excellence), message text.
 
 `employees` (tabel lama): ➕ `potential_rating` varchar(10) nullable (low/medium/high), ➕ `potential_notes` text nullable, ➕ `potential_assessed_at` date nullable, ➕ `potential_assessed_by_user_id` (FK `users`, SET NULL) — sumbu Potensi Grid 9-Kotak; sumbu Performa dari `total_score` Appraisal terakhir berstatus approved, TIDAK butuh kolom baru.
+
+---
+
+## 7 gap lanjutan (review kematangan HR lebih dalam) — `gap4-extras-manual.sql`
+
+🆕 `salary_increase_requests` — employee_id, company_id, requested_by_user_id, current_salary bigint unsigned nullable (auto-terisi dari komponen "Gaji Pokok" kalau kosong), proposed_salary bigint unsigned, effective_date, reason text, status varchar(20) default 'draft', notes text. Merit Increase — kind ke-5 di `HrRequestController` generik (Approval Engine), `onApprovalApproved()` update `employee_salary_components` "Gaji Pokok" langsung.
+🆕 `probation_reviews` — employee_id, review_date, decision varchar(20) (passed/extended/failed), performance_notes text, extended_until date, reviewed_by_user_id.
+🆕 `employee_potential_history` — employee_id, potential_rating varchar(10), notes text, assessed_by_user_id, assessed_at date — log insert-only tiap kali Grid 9-Kotak dinilai ulang.
+🆕 `salary_grade_history` — company_id nullable, level_id, grade_min/mid/max bigint unsigned, changed_by_user_id — log insert-only tiap kali Struktur Gaji Internal diubah.
+
+`candidates` (tabel lama): ➕ `referred_by_employee_id` (FK `employees`, SET NULL), ➕ `referral_bonus_amount` bigint unsigned nullable, ➕ `referral_bonus_paid_at` date nullable — Employee Referral Program (ESS `recruitment.referrals.*`, kandidat referral tetap Candidate biasa lewat pipeline normal, `source`='Referral Karyawan').
+`surveys` (tabel lama): ➕ `recurrence` varchar(20) default 'none' (none/monthly/quarterly), ➕ `parent_survey_id` (self-FK `surveys`, SET NULL) — Pulse Survey auto-recurring, command `survey:auto-recur` clone+buka otomatis putaran berikutnya begitu survey lama closed & lewat interval.
+
+Notification Center (perluasan cakupan) & Kalender Cuti Tim **tidak butuh tabel baru** — keduanya pakai tabel `notifications` (dari batch sebelumnya) dan `leave_requests` yang sudah ada.
