@@ -119,6 +119,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 27 | `employee-document-management-manual.sql` | setelah `employee_documents` (baseline) & `termination_requests` (#5). Folder Employee Digital File (`employee_documents.group`) + Exit Interview/Final Settlement (`termination_requests`) |
 | 28 | `performance-management-extras-manual.sql` | setelah #16 (`appraisal_objectives`) & #2 (`departments`). `performance_checkins` (1-on-1), `company_objectives` (OKR) + `appraisal_objectives.company_objective_id`, `feedback_360_cycles`/`_reviews`/`_answers` |
 | 29 | `compensation-succession-survey-extras-manual.sql` **(baru)** | setelah #1 (`levels`, `positions`) & #23 (`surveys`). `salary_benchmarks` (Compensation), `positions.is_critical_position`/`succession_risk`/`succession_notes` + `talent_pool_members` (Succession Planning), `surveys.type` (Survey pulse/eNPS) |
+| 30 | `notification-talent-extras-manual.sql` **(baru)** | setelah #1 (`levels`), `companies`, `employees`, `users`. `notifications` (Notification Center — tabel standar Laravel), `salary_grades` (Struktur Gaji Internal), `employees.potential_rating`/`potential_notes`/`potential_assessed_at`/`potential_assessed_by_user_id` (Grid 9-Kotak), `kudos` (Recognition) |
 
 ---
 
@@ -175,8 +176,10 @@ Menjalankan (lihat `routes/console.php`):
    Dashboard (tab SDM + semua chart), Data Karyawan, Struktur Organisasi (Cabang/
    Divisi/Section), Approvals, Rekrutmen → Onboarding → Kalender Interview, Payroll,
    Laporan (6 halaman termasuk Report Builder + PDF), Kasbon, Bonus, THR, Offboarding,
-   Pengumuman, Survey (+ Tren eNPS), Competency, Career → Succession Planning,
-   Kompensasi & Benchmark.
+   Pengumuman, Survey (+ Tren eNPS), Competency, Career → Succession Planning (+ Grid
+   9-Kotak), Kompensasi & Benchmark (4 sub-halaman: Benchmark Eksternal/Perbandingan
+   Pasar/Struktur Gaji Internal/Posisi dalam Band), Kudos (Apresiasi), bel notifikasi
+   header (harus tampil tanpa error di semua role) + halaman Notifikasi Saya.
 3. Cek `laravel.log` bersih.
 4. Spot-check data: `SELECT COUNT(*) FROM permissions;` naik; `approval_workflows`
    terisi per PT; NIK 1 karyawan tampil benar di UI (bukti enkripsi + APP_KEY oke).
@@ -217,3 +220,4 @@ Menjalankan (lihat `routes/console.php`):
 | `pph21-ter-rate-correction-manual.sql` | (koreksi data, bukan migration — lihat catatan di TAHAP 7) |
 | `performance-management-extras-manual.sql` | `2026_08_31_170000` |
 | `compensation-succession-survey-extras-manual.sql` | `2026_08_31_180000` |
+| `notification-talent-extras-manual.sql` | `2026_09_01_100000` |

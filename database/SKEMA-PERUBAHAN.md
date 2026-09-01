@@ -4,7 +4,7 @@ Daftar tabel BARU dan kolom yang DITAMBAHKAN/DIUBAH/DIHAPUS ke tabel lama.
 
 Legend: 🆕 tabel baru · ➕ kolom ditambah · ✏️ kolom diubah tipe · 🔤 kolom di-rename · ❌ kolom dihapus
 
-**Ringkasan: 91 tabel baru + 20 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
+**Ringkasan: 94 tabel baru + 20 tabel lama di-ALTER.** Semua tabel baru punya `id` bigint unsigned PK auto-increment
 dan `created_at`/`updated_at` timestamp (kecuali disebut lain). FK & index tidak
 dirinci di sini — lihat file `.sql` masing-masing untuk `CONSTRAINT`/`KEY` lengkap.
 
@@ -1291,3 +1291,13 @@ Pertanyaan 360° (communication/teamwork/quality/reliability/leadership/problem_
 `surveys` (tabel lama): ➕ `type` varchar(20) default 'standard' (standard/pulse/enps) — skor eNPS (%Promoter 9-10 − %Detraktor 0-6) dihitung on-the-fly dari jawaban pertanyaan skala 0-10, bukan kolom tersimpan.
 
 Total Rewards Statement (Compensation) & Report Builder/export Excel (Analytics) **tidak butuh tabel baru** — keduanya query read-only dari data payroll/THR/bonus/absensi/cuti/training yang sudah ada.
+
+---
+
+## Notification Center + Struktur Gaji Internal + Grid 9-Kotak + Kudos — `notification-talent-extras-manual.sql`
+
+🆕 `notifications` — tabel STANDAR Laravel (`id` char(36) UUID, bukan bigint auto-increment), `type`, `notifiable_type`+`notifiable_id` (polymorphic ke `users`), `data` text (JSON: title/message/url/icon), `read_at`. `User` sudah pakai trait `Notifiable` sejak awal, tidak perlu perubahan model.
+🆕 `salary_grades` — company_id (FK `companies`, NULLABLE = berlaku semua PT/fallback global), level_id (FK `levels`), grade_min/grade_mid/grade_max bigint unsigned, notes, updated_by_user_id. Beda dari `salary_benchmarks` (acuan pasar EKSTERNAL) — ini band gaji INTERNAL utk kontrol merit increase.
+🆕 `kudos` — from_employee_id, to_employee_id (FK `employees`), company_id (FK `companies`, SET NULL), category varchar(30) (teamwork/innovation/leadership/customer_focus/integrity/excellence), message text.
+
+`employees` (tabel lama): ➕ `potential_rating` varchar(10) nullable (low/medium/high), ➕ `potential_notes` text nullable, ➕ `potential_assessed_at` date nullable, ➕ `potential_assessed_by_user_id` (FK `users`, SET NULL) — sumbu Potensi Grid 9-Kotak; sumbu Performa dari `total_score` Appraisal terakhir berstatus approved, TIDAK butuh kolom baru.
