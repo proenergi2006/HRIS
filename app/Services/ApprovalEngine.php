@@ -12,6 +12,7 @@ use App\Models\Approval\ApprovalWorkflow;
 use App\Models\Approval\ApprovalWorkflowStep;
 use App\Models\Employee;
 use App\Models\User;
+use App\Notifications\GenericNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -305,6 +306,17 @@ class ApprovalEngine
         $recipients = $this->resolveStepRecipients($step);
 
         foreach ($recipients as $user) {
+            try {
+                $user->notify(new GenericNotification(
+                    'Menunggu Persetujuan Anda',
+                    $approvable->approvalSummary(),
+                    route('approval.inbox.index'),
+                    'gd-time'
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Gagal kirim notifikasi in-app step approval: ' . $e->getMessage());
+            }
+
             if (! $user->email) {
                 continue;
             }
@@ -321,7 +333,22 @@ class ApprovalEngine
     protected function notifyRequester(Approvable $approvable, bool $approved, ?string $reason): void
     {
         $requester = $approvable->approvalRequester();
-        if (! $requester?->email) {
+        if (! $requester) {
+            return;
+        }
+
+        try {
+            $requester->notify(new GenericNotification(
+                $approved ? 'Pengajuan Disetujui' : 'Pengajuan Ditolak',
+                $approvable->approvalSummary() . ($reason ? ' — ' . $reason : ''),
+                route('approval.inbox.history'),
+                $approved ? 'gd-check' : 'gd-close'
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Gagal kirim notifikasi in-app hasil approval: ' . $e->getMessage());
+        }
+
+        if (! $requester->email) {
             return;
         }
 

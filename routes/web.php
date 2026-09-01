@@ -5,6 +5,7 @@ use App\Http\Controllers\Whistleblower\PublicWhistleblowerController;
 use App\Http\Controllers\Whistleblower\WhistleblowerController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Appraisal\LevelController;
 use App\Http\Controllers\Appraisal\EmployeeController;
@@ -141,6 +142,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Notification Center — bel notifikasi in-app, semua user login.
+    Route::get('/notifications',            [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{id}/read',  [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all',  [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
     // Slip Gaji — self-service ESS (PRD Bab 4: "lihat slip gaji"), cuma periode closed.
     Route::prefix('my-payslips')->name('payroll.my.')->group(function () {

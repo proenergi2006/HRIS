@@ -252,12 +252,27 @@ if ($authUser) {
             ]);
         $viewAllUrl = route('reimbursement.index');
     }
+
+    // Notifikasi tersimpan (bel in-app) — dari command pengingat (kontrak/dokumen)
+    // + Approval Engine (step pending/overdue/hasil) + Kudos, TIDAK gantikan item
+    // "actionable" di atas, cuma ditambahkan di depan supaya kelihatan yang baru.
+    $persistedNotifs = $authUser->unreadNotifications->take(5)->map(fn ($n) => [
+        'icon'  => $n->data['icon'] ?? 'gd-bell',
+        'color' => 'text-primary',
+        'title' => $n->data['title'] ?? 'Notifikasi',
+        'body'  => $n->data['message'] ?? '',
+        'url'   => route('notifications.read', $n->id),
+        'time'  => $n->created_at->diffForHumans(),
+    ]);
+    $notifItems = collect()->merge($persistedNotifs)->merge($notifItems)->take(8);
+    $persistedUnreadCount = $authUser->unreadNotifications()->count();
 } // end if ($authUser)
 } catch (\Throwable $e) {
     // Jika loading notifikasi gagal (data truncated, relasi rusak, dll),
     // halaman tetap tampil normal tanpa notifikasi.
     $notifItems = collect();
     $viewAllUrl = route('dashboard');
+    $persistedUnreadCount = 0;
 }
 $notifCount = $notifItems->count();
 @endphp
@@ -401,10 +416,19 @@ $notifCount = $notifItems->count();
                   @endif
                 </div>
 
-                <div class="card-footer py-2 text-center" style="font-size:0.8rem;">
+                <div class="card-footer py-2 d-flex justify-content-between align-items-center" style="font-size:0.78rem;">
                   <a href="{{ $viewAllUrl }}" class="text-primary font-weight-bold">
                     {{ __('notifications.view_all') }} &rarr;
                   </a>
+                  <span>
+                    <a href="{{ route('notifications.index') }}" class="text-muted mr-2">Riwayat</a>
+                    @if(($persistedUnreadCount ?? 0) > 0)
+                      <form method="POST" action="{{ route('notifications.read-all') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-link p-0 text-muted" style="font-size:0.78rem;vertical-align:baseline;">Tandai dibaca</button>
+                      </form>
+                    @endif
+                  </span>
                 </div>
               </div>
             </div>

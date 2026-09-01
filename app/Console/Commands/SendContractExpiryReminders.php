@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Mail\ContractExpiryReminderMail;
 use App\Models\Employee;
+use App\Models\User;
+use App\Notifications\GenericNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Role;
@@ -38,20 +40,25 @@ class SendContractExpiryReminders extends Command
         }
 
         $adminRoles  = Role::whereIn('name', ['admin', 'hr_manager'])->pluck('id');
-        $recipients  = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('id', $adminRoles))
+        $recipientUsers = User::whereHas('roles', fn($q) => $q->whereIn('id', $adminRoles))
             ->whereNotNull('email')
-            ->pluck('email')
-            ->unique();
+            ->get();
 
-        if ($recipients->isEmpty()) {
+        if ($recipientUsers->isEmpty()) {
             $this->warn('Tidak ada penerima email (admin/hr_manager) ditemukan.');
             return;
         }
 
-        foreach ($recipients as $email) {
-            Mail::to($email)->send(new ContractExpiryReminderMail($expiring, $expired));
+        foreach ($recipientUsers as $user) {
+            Mail::to($user->email)->send(new ContractExpiryReminderMail($expiring, $expired));
+            $user->notify(new GenericNotification(
+                'Pengingat Kontrak Karyawan',
+                $expiring->count() . ' kontrak akan berakhir, ' . $expired->count() . ' sudah berakhir.',
+                route('laporan.headcount'),
+                'gd-calendar'
+            ));
         }
 
-        $this->info("Email dikirim ke {$recipients->count()} penerima. Expiring: {$expiring->count()}, Expired: {$expired->count()}.");
+        $this->info("Email + notifikasi dikirim ke {$recipientUsers->count()} penerima. Expiring: {$expiring->count()}, Expired: {$expired->count()}.");
     }
 }
