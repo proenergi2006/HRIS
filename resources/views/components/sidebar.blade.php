@@ -320,6 +320,14 @@
     </a>
   </li>
 
+  {{-- Kudos — apresiasi antar karyawan, semua user login --}}
+  <li class="side-nav-menu-item {{ Request::is('kudos*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('kudos.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-heart"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Apresiasi / Kudos</span>
+    </a>
+  </li>
+
   {{-- ══════════ PERSETUJUAN ══════════ --}}
   <li class="sidebar-heading h6 mt-3">Persetujuan</li>
 

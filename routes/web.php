@@ -77,6 +77,7 @@ use App\Http\Controllers\HR\BuktiPotongController;
 use App\Http\Controllers\HR\RosterController;
 use App\Http\Controllers\HR\OffboardingController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\KudosController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\Appraisal\LetterRequestController;
 use App\Http\Controllers\Recruitment\RecruitmentCostController;
@@ -236,6 +237,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengumuman/{announcement}/toggle-publish', [AnnouncementController::class, 'togglePublish'])->name('announcements.toggle-publish')->middleware('permission:announcement.edit');
     Route::get('/pengumuman/{announcement}/attachment', [AnnouncementController::class, 'attachment'])->name('announcements.attachment');
     Route::get('/pengumuman/{announcement}',      [AnnouncementController::class, 'show'])->name('announcements.show');
+});
+
+// ── Recognition / Kudos — semua user login, tanpa permission khusus ──────
+Route::middleware('auth')->prefix('kudos')->name('kudos.')->group(function () {
+    Route::get('/',  [KudosController::class, 'index'])->name('index');
+    Route::post('/', [KudosController::class, 'store'])->name('store');
 });
 
 // ── Survey Engagement — semua user login isi; kelola pakai permission survey.edit ──
