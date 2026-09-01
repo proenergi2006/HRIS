@@ -51,6 +51,11 @@ class ApprovalWorkflowSeeder extends Seeder
                 ['approver_type' => 'specific_role', 'approver_role' => 'hr_manager'],
                 ['approver_type' => 'specific_role', 'approver_role' => 'ceo'],
             ],
+            'salary_increase_request' => [
+                ['approver_type' => 'direct_manager'],
+                ['approver_type' => 'specific_role', 'approver_role' => 'hr_manager'],
+                ['approver_type' => 'specific_role', 'approver_role' => 'ceo'],
+            ],
             'manpower_plan_request' => [
                 ['approver_type' => 'specific_role', 'approver_role' => 'hr_manager'],
                 ['approver_type' => 'specific_role', 'approver_role' => 'ceo'],

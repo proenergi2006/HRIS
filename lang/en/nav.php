@@ -41,6 +41,7 @@ return [
     'punishment'             => 'Punishment',
     'promotion_rotation'     => 'Promotion & Rotation',
     'termination'            => 'Termination',
+    'salary_increase'        => 'Salary Increase',
 
     // Master data
     'm_religion'             => 'Religion',

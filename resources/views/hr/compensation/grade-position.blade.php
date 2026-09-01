@@ -53,7 +53,7 @@
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-sm mb-0">
-        <thead class="thead-light"><tr><th>Nama</th><th>Level</th><th>Departemen</th><th class="text-right">Gaji Aktual</th><th>Band (Min–Maks)</th><th style="width:180px">Posisi dalam Band</th></tr></thead>
+        <thead class="thead-light"><tr><th>Nama</th><th>Level</th><th>Departemen</th><th class="text-right">Gaji Aktual</th><th>Band (Min–Maks)</th><th style="width:180px">Posisi dalam Band</th><th></th></tr></thead>
         <tbody>
         @foreach($rows->sortBy(fn($r)=>$r['employee']->name) as $r)
           <tr>
@@ -70,6 +70,11 @@
                 </div>
                 <div class="small text-muted">{{ $r['position'] }}%</div>
               @else <span class="text-muted small">—</span> @endif
+            </td>
+            <td class="text-right">
+              @can('hr-request.view')
+                <a href="{{ route('approval.hr-request.create', ['salary-increase', 'employee_id' => $r['employee']->id]) }}" class="btn btn-xs btn-outline-primary">Ajukan Kenaikan</a>
+              @endcan
             </td>
           </tr>
         @endforeach

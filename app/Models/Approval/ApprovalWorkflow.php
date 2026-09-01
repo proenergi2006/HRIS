@@ -24,6 +24,7 @@ class ApprovalWorkflow extends Model
         'punishment_request'         => 'Punishment',
         'promotion_rotation_request' => 'Promosi & Rotasi',
         'termination_request'        => 'Pemutusan Hubungan Kerja',
+        'salary_increase_request'    => 'Kenaikan Gaji',
         'manpower_plan_request'      => 'Manpower Planning',
         'job_requisition'            => 'Job Requisition',
         'employee_data_change_request' => 'Perubahan Data Karyawan',

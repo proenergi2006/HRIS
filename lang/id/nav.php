@@ -41,6 +41,7 @@ return [
     'punishment'             => 'Punishment',
     'promotion_rotation'     => 'Promosi & Rotasi',
     'termination'            => 'Pemutusan Kerja',
+    'salary_increase'        => 'Kenaikan Gaji',
 
     // Master Data
     'm_religion'             => 'Agama',

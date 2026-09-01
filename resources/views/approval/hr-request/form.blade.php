@@ -75,6 +75,14 @@
           <div class="form-group col-md-4"><label>Tanggal Efektif</label><input type="date" name="effective_date" class="form-control" value="{{ optional($row->effective_date)->format('Y-m-d') ?? old('effective_date') }}"></div>
         </div>
         <div class="form-group"><label>Alasan</label><textarea name="reason" class="form-control" rows="3">{{ $val('reason') }}</textarea></div>
+
+      @elseif($kind === 'salary-increase')
+        <div class="form-row">
+          <div class="form-group col-md-4"><label>Gaji Saat Ini (Rp)</label><input type="number" data-rupiah name="current_salary" class="form-control" min="0" value="{{ $val('current_salary') }}" placeholder="Kosongkan = otomatis dari data payroll"></div>
+          <div class="form-group col-md-4"><label>Gaji Diusulkan (Rp) <span class="text-danger">*</span></label><input type="number" data-rupiah name="proposed_salary" class="form-control" min="0" value="{{ $val('proposed_salary') }}" required></div>
+          <div class="form-group col-md-4"><label>Tanggal Efektif</label><input type="date" name="effective_date" class="form-control" value="{{ optional($row->effective_date)->format('Y-m-d') ?? old('effective_date') }}"></div>
+        </div>
+        <div class="form-group"><label>Alasan</label><textarea name="reason" class="form-control" rows="3" placeholder="Merit increase tahunan, penyesuaian pasar, dll.">{{ $val('reason') }}</textarea></div>
       @endif
 
       <button type="submit" class="btn btn-primary">{{ $isNew ? 'Simpan Draft' : 'Perbarui' }}</button>

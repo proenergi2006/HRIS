@@ -9,6 +9,7 @@ use App\Models\Position;
 use App\Models\PromotionRotationRequest;
 use App\Models\PunishmentRequest;
 use App\Models\RewardRequest;
+use App\Models\SalaryIncreaseRequest;
 use App\Models\TerminationRequest;
 use App\Services\ApprovalEngine;
 use Illuminate\Http\Request;
@@ -69,6 +70,17 @@ class HrRequestController extends Controller
                 'effective_date'    => 'nullable|date',
             ],
         ],
+        'salary-increase' => [
+            'model'  => SalaryIncreaseRequest::class,
+            'label'  => 'Kenaikan Gaji',
+            'fields' => ['current_salary', 'proposed_salary', 'effective_date', 'reason'],
+            'rules'  => [
+                'current_salary'  => 'nullable|integer|min:0',
+                'proposed_salary' => 'required|integer|min:0',
+                'effective_date'  => 'nullable|date',
+                'reason'          => 'nullable|string',
+            ],
+        ],
     ];
 
     private function cfg(string $kind): array
@@ -88,9 +100,14 @@ class HrRequestController extends Controller
         return view('approval.hr-request.index', compact('requests', 'cfg', 'kind'));
     }
 
-    public function create(string $kind)
+    public function create(Request $request, string $kind)
     {
-        return view('approval.hr-request.form', $this->formData($kind, new (self::REGISTRY[$kind]['model'])()));
+        $row = new (self::REGISTRY[$kind]['model'])();
+        if ($request->filled('employee_id')) {
+            $row->employee_id = (int) $request->employee_id;
+        }
+
+        return view('approval.hr-request.form', $this->formData($kind, $row));
     }
 
     public function store(Request $request, string $kind)
@@ -100,6 +117,16 @@ class HrRequestController extends Controller
 
         $employee = Employee::findOrFail($data['employee_id']);
         $model    = $cfg['model'];
+
+        // Kenaikan Gaji: kalau current_salary tidak diisi, ambil otomatis dari komponen
+        // "Gaji Pokok" karyawan saat ini (data riil, bukan tebakan).
+        if ($kind === 'salary-increase' && empty($data['current_salary'])) {
+            $gajiPokok = \App\Models\HR\SalaryComponent::where('name', 'Gaji Pokok')->first();
+            $data['current_salary'] = $gajiPokok
+                ? (int) \App\Models\HR\EmployeeSalaryComponent::where('employee_id', $employee->id)
+                    ->where('salary_component_id', $gajiPokok->id)->value('amount')
+                : 0;
+        }
 
         $row = $model::create($data + [
             'company_id'           => $employee->company_id,
@@ -113,7 +140,12 @@ class HrRequestController extends Controller
             \App\Http\Controllers\HR\OffboardingController::materialize($employee);
         }
 
-        return redirect()->route('approval.hr-request.edit', [$kind, $row])
+        // PENTING: pakai $row->id (int mentah), BUKAN $row — model-model kind ini pakai
+        // HasHashid, jadi route() akan otomatis encode $row jadi hashid kalau dikirim
+        // sebagai objek, padahal edit()/update()/show()/destroy() di controller ini
+        // terima $id sebagai int polos ($model::findOrFail($id), bukan route-model-binding).
+        // Bug pre-existing yang sudah lama ada (dicatat di memori sesi) — diperbaiki di sini.
+        return redirect()->route('approval.hr-request.edit', [$kind, $row->id])
             ->with('success', $cfg['label'] . ' disimpan sebagai draft. Klik "Ajukan" untuk memulai persetujuan.');
     }
 

@@ -358,6 +358,7 @@
         <li class="side-nav-menu-item {{ Request::is('approval/requests/punishment*') ? 'active' : '' }}"><a class="side-nav-menu-link" href="{{ route('approval.hr-request.index', 'punishment') }}"><i class="gd-alert mr-2"></i>{{ __('nav.punishment') }}</a></li>
         <li class="side-nav-menu-item {{ Request::is('approval/requests/promotion-rotation*') ? 'active' : '' }}"><a class="side-nav-menu-link" href="{{ route('approval.hr-request.index', 'promotion-rotation') }}"><i class="gd-stats-up mr-2"></i>{{ __('nav.promotion_rotation') }}</a></li>
         <li class="side-nav-menu-item {{ Request::is('approval/requests/termination*') ? 'active' : '' }}"><a class="side-nav-menu-link" href="{{ route('approval.hr-request.index', 'termination') }}"><i class="gd-power-off mr-2"></i>{{ __('nav.termination') }}</a></li>
+        <li class="side-nav-menu-item {{ Request::is('approval/requests/salary-increase*') ? 'active' : '' }}"><a class="side-nav-menu-link" href="{{ route('approval.hr-request.index', 'salary-increase') }}"><i class="gd-arrow-circle-up mr-2"></i>{{ __('nav.salary_increase') }}</a></li>
       @endif
     </ul>
   </li>
