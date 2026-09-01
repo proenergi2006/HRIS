@@ -219,7 +219,6 @@
     <div class="bg-blob b3"></div>
 
     <div class="hero-brand">
-        <div class="hero-title">ProPeople</div>
         <p class="hero-tagline">{{ __('common.login_tagline') }}</p>
     </div>
 
