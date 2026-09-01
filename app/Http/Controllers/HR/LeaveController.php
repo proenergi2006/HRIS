@@ -216,6 +216,122 @@ class LeaveController extends Controller
         return Storage::disk('local')->response($leave->attachment_path);
     }
 
+    // ── ESS — karyawan ajukan cuti/izin sendiri (bukan absensi — itu tetap
+    // diimpor/dikelola admin, tidak ada check-in mandiri) ──────────────────
+
+    public function myIndex(Request $request)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
+
+        $year = (int) $request->get('year', now()->year);
+        $requests = LeaveRequest::where('employee_id', $employee->id)
+            ->with('leaveType')->whereYear('start_date', $year)
+            ->latest()->paginate(15)->withQueryString();
+
+        $leaveTypes = LeaveType::where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $employee->company_id))
+            ->get();
+        $balances = $leaveTypes->mapWithKeys(fn ($t) => [$t->id => LeaveBalance::forEmployee($employee->id, $t->id, $year)]);
+
+        return view('leave-ess.index', compact('requests', 'year', 'leaveTypes', 'balances'));
+    }
+
+    public function myCreate(Request $request)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
+
+        $leaveTypes = LeaveType::where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $employee->company_id))
+            ->get();
+        $year = now()->year;
+        $balances = $leaveTypes->mapWithKeys(fn ($t) => [$t->id => LeaveBalance::forEmployee($employee->id, $t->id, $year)]);
+
+        return view('leave-ess.create', compact('leaveTypes', 'balances'));
+    }
+
+    public function myStore(Request $request)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
+
+        $data = $request->validate([
+            'leave_type_id' => 'required|exists:leave_types,id',
+            'start_date'    => 'required|date',
+            'end_date'      => 'required|date|after_or_equal:start_date',
+            'reason'        => 'nullable|string|max:1000',
+            'attachment'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $start = \Carbon\Carbon::parse($data['start_date']);
+        $end   = \Carbon\Carbon::parse($data['end_date']);
+        $totalDays = 0;
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            if (! $d->isWeekend()) $totalDays++;
+        }
+
+        $attachPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachPath = $request->file('attachment')->store('leave-attachments', 'local');
+        }
+
+        $leave = LeaveRequest::create([
+            'employee_id'      => $employee->id,
+            'leave_type_id'    => $data['leave_type_id'],
+            'start_date'       => $data['start_date'],
+            'end_date'         => $data['end_date'],
+            'total_days'       => $totalDays,
+            'reason'           => $data['reason'] ?? null,
+            'attachment_path'  => $attachPath,
+            'status'           => 'pending',
+        ]);
+
+        $this->engine->start($leave->load('employee', 'leaveType'));
+        $leave->refresh();
+        if ($leave->approvalRequest?->status === 'approved' && ! $leave->isApproved()) {
+            $leave->forceFill(['status' => 'approved'])->save();
+        }
+
+        return redirect()->route('leave.mine.show', $leave)->with('success', 'Pengajuan cuti/izin dikirim. Menunggu persetujuan.');
+    }
+
+    public function myShow(Request $request, LeaveRequest $leave)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee && $leave->employee_id === $employee->id, 403);
+
+        $leave->load(['leaveType', 'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy']);
+        $balance = LeaveBalance::where('employee_id', $leave->employee_id)
+            ->where('leave_type_id', $leave->leave_type_id)
+            ->where('year', $leave->start_date->year)->first();
+
+        return view('leave-ess.show', compact('leave', 'balance'));
+    }
+
+    public function myCancel(Request $request, LeaveRequest $leave)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee && $leave->employee_id === $employee->id, 403);
+        abort_unless($leave->isPending(), 422);
+
+        if ($leave->approvalRequest) {
+            $this->engine->cancel($leave->approvalRequest);
+        }
+        $leave->forceFill(['status' => 'cancelled'])->save();
+
+        return back()->with('success', 'Pengajuan dibatalkan.');
+    }
+
+    public function myAttachment(Request $request, LeaveRequest $leave)
+    {
+        $employee = $request->user()->employee;
+        abort_unless($employee && $leave->employee_id === $employee->id, 403);
+        abort_unless($leave->attachment_path && Storage::disk('local')->exists($leave->attachment_path), 404);
+
+        return Storage::disk('local')->response($leave->attachment_path);
+    }
+
     // ── Kebijakan cuti: carry-forward / kuota per golongan ─────────────────
 
     public function policies(Request $request)

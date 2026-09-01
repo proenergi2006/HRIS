@@ -151,6 +151,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/{id}/read',  [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/read-all',  [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
+    // Cuti & Izin — self-service ESS. Absensi TIDAK termasuk (tetap dikelola admin/impor,
+    // tidak ada check-in mandiri karyawan).
+    Route::prefix('my-leave')->name('leave.mine.')->group(function () {
+        Route::get('/',            [LeaveController::class, 'myIndex'])->name('index');
+        Route::get('/create',      [LeaveController::class, 'myCreate'])->name('create');
+        Route::post('/',           [LeaveController::class, 'myStore'])->name('store');
+        Route::get('/{leave}',     [LeaveController::class, 'myShow'])->name('show');
+        Route::post('/{leave}/cancel', [LeaveController::class, 'myCancel'])->name('cancel');
+        Route::get('/{leave}/attachment', [LeaveController::class, 'myAttachment'])->name('attachment');
+    });
+
     // Slip Gaji — self-service ESS (PRD Bab 4: "lihat slip gaji"), cuma periode closed.
     Route::prefix('my-payslips')->name('payroll.my.')->group(function () {
         Route::get('/',                       [PayrollController::class, 'mySlips'])->name('index');

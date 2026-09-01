@@ -176,6 +176,12 @@
       <span class="side-nav-fadeout-on-closed media-body">Total Rewards Saya</span>
     </a>
   </li>
+  <li class="side-nav-menu-item {{ Request::is('my-leave*') ? 'active' : '' }}">
+    <a class="side-nav-menu-link" href="{{ route('leave.mine.index') }}">
+      <span class="side-nav-menu-icon mr-3"><i class="gd-check"></i></span>
+      <span class="side-nav-fadeout-on-closed media-body">Cuti / Izin Saya</span>
+    </a>
+  </li>
   <li class="side-nav-menu-item {{ Request::is('hr/overtime-requests*') ? 'active' : '' }}">
     <a class="side-nav-menu-link" href="{{ route('hr.overtime-requests.index') }}">
       <span class="side-nav-menu-icon mr-3"><i class="gd-alarm-clock"></i></span>
