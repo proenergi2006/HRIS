@@ -123,6 +123,7 @@ Setelah semua SQL langkah 1–3 sukses:
 | 31 | `gap4-extras-manual.sql` **(baru)** | setelah `employees`/`companies`/`users`, `candidates` (#25), `surveys` (TAHAP 29). `salary_increase_requests` (Merit Increase, lewat Approval Engine), `candidates.referred_by_employee_id` dkk (Employee Referral), `probation_reviews`, `employee_potential_history` + `salary_grade_history` (riwayat), `surveys.recurrence` + `parent_survey_id` (Pulse auto-recurring). **Setelah kode live, jalankan ulang `php artisan db:seed --class=ApprovalWorkflowSeeder`** (idempoten — nambah workflow `salary_increase_request` 3 PT). |
 | 32 | `mitra-employee-type-manual.sql` **(baru)** | setelah `master-data-manual.sql` (butuh `employee_types`). Tambah 1 baris tipe karyawan "Mitra" — data saja, tidak ada perubahan skema/kode. |
 | 33 | `fix-level-rank-manual.sql` **(baru)** | setelah `master-organization-manual.sql` (butuh `levels`). Perbaikan hierarki `levels.rank` (Direksi/Manager/SPV/Admin sebelumnya semua 99, seri — bagan organisasi tidak bisa urutkan CEO di atas Manager/SPV). Data saja, idempoten. |
+| 34 | `tds-bod-commercial-logistik-positions-manual.sql` **(baru)** | setelah #33 (butuh `levels`), `companies`, `departments`. Isi 9 Jabatan dasar (Direktur Utama, Manager/SPV/Senior Staff/Staff × Commercial & Logistik) utk Divisi BOD/Commercial/Logistik PT. Tridaya Selaras yg sebelumnya kosong. Data saja, idempoten (skip kalau code sudah ada). **Perlu kode live juga** — lihat catatan bagan organisasi di bawah (cross-division Direksi nesting). |
 
 ---
 
@@ -230,3 +231,4 @@ kerja) · `survey:auto-recur` 06:00 (buka otomatis putaran pulse/eNPS berkala).
 | `gap4-extras-manual.sql` | `2026_09_01_110000` |
 | `mitra-employee-type-manual.sql` | `2026_09_01_120000` |
 | `fix-level-rank-manual.sql` | `2026_09_08_100000` |
+| `tds-bod-commercial-logistik-positions-manual.sql` | `2026_09_08_110000` |

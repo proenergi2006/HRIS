@@ -5,7 +5,8 @@
 @php
     $employee = $node['employee'];
     $popupId  = 'org-pop-direksi-' . $employee->id;
-    $hasChildren = $node['departments']->isNotEmpty() || $node['children']->isNotEmpty();
+    $childDivisions = $node['childDivisions'] ?? collect();
+    $hasChildren = $node['departments']->isNotEmpty() || $node['children']->isNotEmpty() || $childDivisions->isNotEmpty();
 @endphp
 <li>
   <div class="org-node org-direksi org-emp-click" role="button" tabindex="0"
@@ -20,6 +21,9 @@
     <ul>
       @foreach($node['children'] as $child)
         @include('appraisal.org-chart._direksi-node', ['node' => $child, 'reportsByManager' => $reportsByManager, 'canEditOrg' => $canEditOrg ?? false])
+      @endforeach
+      @foreach($childDivisions as $div)
+        @include('appraisal.org-chart._division-node', ['div' => $div, 'reportsByManager' => $reportsByManager, 'canEditOrg' => $canEditOrg ?? false])
       @endforeach
       @foreach($node['departments'] as $dept)
         @include('appraisal.org-chart._department-node', ['dept' => $dept, 'reportsByManager' => $reportsByManager, 'canEditOrg' => $canEditOrg ?? false])
