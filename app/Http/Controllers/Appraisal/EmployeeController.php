@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Appraisal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Department;
 use App\Models\Division;
@@ -103,6 +104,7 @@ class EmployeeController extends Controller implements HasMiddleware
     {
         return [
             'companies'   => Company::where('is_active', true)->orderBy('name')->get(),
+            'branches'    => Branch::where('is_active', true)->orderBy('name')->get(['id', 'name', 'company_id']),
             'divisions'   => Division::where('is_active', true)->orderBy('name')->get(['id', 'name', 'company_id']),
             'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'company_id', 'division_id']),
             'sections'    => Section::where('is_active', true)->orderBy('name')->get(['id', 'name', 'department_id']),
@@ -136,7 +138,7 @@ class EmployeeController extends Controller implements HasMiddleware
         $data = $request->validate([
             // Employee Information
             'company_id'                 => 'nullable|exists:companies,id',
-            'branch'                     => 'nullable|string|max:50',
+            'branch_id'                  => 'nullable|exists:branches,id',
             'name'                       => 'required|string|max:255',
             'nip'                        => 'nullable|string|max:50|unique:employees,nip,' . ($ignoreId ?? 'NULL'),
             'level_id'                   => 'nullable|exists:levels,id',
@@ -200,6 +202,15 @@ class EmployeeController extends Controller implements HasMiddleware
         // yang baca string tetap benar, dan sebaliknya (isian manual dicoba di-match).
         $this->syncRegionText($data, 'domicile');
         $this->syncRegionText($data, 'ktp');
+
+        // employees.branch (string) masih dibaca slip gaji/THR/bonus (lihat
+        // resources/views/hr/*/slip-pdf.blade.php) — sinkronkan dari branch_id
+        // (dropdown master, sumber kebenaran baru) supaya slip tetap tampil benar.
+        if (array_key_exists('branch_id', $data)) {
+            $data['branch'] = $data['branch_id']
+                ? \App\Models\Branch::find($data['branch_id'])?->name
+                : null;
+        }
 
         return $data;
     }

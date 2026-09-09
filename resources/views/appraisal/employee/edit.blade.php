@@ -363,10 +363,14 @@
 
                     <div class="form-row">
                         <div class="form-group col-12 col-md-6">
-                            <label for="branch">Cabang</label>
-                            <input type="text" id="branch" name="branch" class="form-control{{ $errors->has('branch') ? ' is-invalid' : '' }}"
-                                   value="{{ old('branch', $employee->branch ?? 'HO') }}" placeholder="HO">
-                            @error('branch')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <label for="branch_id">Cabang</label>
+                            <select id="branch_id" name="branch_id" class="form-control{{ $errors->has('branch_id') ? ' is-invalid' : '' }}">
+                                <option value="">-- Pilih Cabang --</option>
+                                @foreach($branches as $br)
+                                    <option value="{{ $br->id }}" data-company="{{ $br->company_id }}" {{ (int) old('branch_id', $employee->branch_id) === $br->id ? 'selected' : '' }}>{{ $br->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('branch_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -535,6 +539,29 @@
     }
 
     statusEl.addEventListener('change', toggle);
+})();
+
+// Cabang (branch_id) beda nama per Perusahaan (mis. "HO" ada di 3 PT) — filter
+// opsinya sesuai Perusahaan terpilih, biar tidak nampilin nama dobel dari PT lain.
+(function () {
+    var companyEl = document.getElementById('company_id');
+    var branchEl  = document.getElementById('branch_id');
+    if (!companyEl || !branchEl) return;
+
+    function filterBranches() {
+        var companyId = companyEl.value;
+        var stillValid = false;
+        Array.prototype.forEach.call(branchEl.options, function (opt) {
+            if (!opt.value) { opt.hidden = false; return; }
+            var match = !companyId || opt.dataset.company === companyId;
+            opt.hidden = !match;
+            if (match && opt.selected) stillValid = true;
+        });
+        if (!stillValid) branchEl.value = '';
+    }
+
+    companyEl.addEventListener('change', filterBranches);
+    filterBranches();
 })();
 
 function previewEmployeePhoto(input) {

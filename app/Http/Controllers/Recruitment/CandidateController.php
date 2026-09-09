@@ -302,7 +302,7 @@ class CandidateController extends Controller
 
     private function createUserAccount(Employee $employee): array
     {
-        $password = \Illuminate\Support\Str::password(12, symbols: false);
+        $password = 'Pr0diesel!';
 
         $user = \App\Models\User::create([
             'name'     => $employee->name,
