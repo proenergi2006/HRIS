@@ -20,6 +20,28 @@ vault_document_transactions 0.
 
 `whistleblower_reports` **0 baris** — ikut di-reset (bukan GA).
 
+## QR code yang sudah dicetak — TETAP VALID
+
+QR GA (kendaraan / ruang meeting / berangkas) isinya URL
+`https://DOMAIN/ga/kendaraan/{hashid}` — `{hashid}` = enkode dari **`id` baris**
+(bukan kolom `barcode`, bukan angka acak). Lihat `app/Traits/HasHashid.php`:
+`Hashids::encode($id)` dengan `salt` = `HASHIDS_SALT` + `length` 10.
+
+Restore GA memakai `INSERT INTO vehicles (id, ...) VALUES (4, ...)` — **`id` asli
+dipertahankan persis**. Jadi hashid dihitung ulang sama → **QR lama tetap kebaca.**
+
+**Syarat mutlak supaya QR cetakan lama tidak mati:**
+
+| Harus TIDAK berubah | Cek |
+|---|---|
+| `HASHIDS_SALT` di `.env` prod | `grep HASHIDS_SALT .env` di server SEBELUM reset, catat, pastikan sama sesudahnya. Kalau prod belum set → default `sipro-proenergi-secret` (jangan tiba-tiba diisi). **Jangan** pakai `.env` contoh/lokal (nilainya beda). |
+| `APP_KEY` | jangan `key:generate` |
+| `APP_URL` / domain | QR isinya full URL berikut host |
+| `id` baris GA | otomatis terjaga oleh mysqldump / `ga-preserve.sql` |
+
+Kalau `HASHIDS_SALT` sampai berubah → SEMUA hashid berubah → semua QR GA yang sudah
+ditempel (kendaraan, ruangan, berangkas) harus dicetak ulang.
+
 ## PERINGATAN
 
 Prosedur ini **menghapus SEMUA data HR di prod**: 13 user, 12 karyawan, payroll,
