@@ -1,1 +1,8 @@
 *.sqlite*
+
+# dump data produksi / backup — JANGAN commit (berisi data karyawan/user)
+/hris.sql
+/ga-preserve.sql
+/*-backup*.sql
+/backup-*.sql
+/hris_*.sql

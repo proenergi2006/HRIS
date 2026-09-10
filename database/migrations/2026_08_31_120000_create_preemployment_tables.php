@@ -71,7 +71,12 @@ return new class extends Migration
         Schema::create('candidate_preemployment_tasks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('candidate_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('preemployment_checklist_item_id')->constrained()->cascadeOnDelete();
+            // FK name dibuat eksplisit & pendek — nama auto Laravel
+            // (candidate_preemployment_tasks_preemployment_checklist_item_id_foreign)
+            // > 64 char, ditolak MySQL/MariaDB. Sejajar database/preemployment-manual.sql.
+            $table->unsignedBigInteger('preemployment_checklist_item_id');
+            $table->foreign('preemployment_checklist_item_id', 'candidate_preemployment_tasks_item_foreign')
+                ->references('id')->on('preemployment_checklist_items')->cascadeOnDelete();
             $table->boolean('is_done')->default(false);
             $table->dateTime('done_at')->nullable();
             $table->foreignId('done_by_user_id')->nullable()->constrained('users')->nullOnDelete();
