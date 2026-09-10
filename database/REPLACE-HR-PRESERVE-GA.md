@@ -84,15 +84,28 @@ php artisan up
 Tidak perlu `php artisan migrate`, tidak perlu seeder, tidak perlu restore GA
 terpisah — semua sudah di dalam file.
 
+**Login bawaan** (semua password `password` — **WAJIB ganti setelah login pertama**):
+
+| email | role |
+|---|---|
+| `admin@proenergi.co.id` | `admin` — admin penuh (menu Sistem, Manajemen User, Role & Hak Akses) |
+| `hrmanager@proenergi.co.id` | `hr_manager` |
+| `ga@proenergi.co.id` | `admin_ga` |
+| `evaluator@proenergi.co.id` / `user2@proenergi.co.id` / `cfo@proenergi.co.id` | evaluator / user_ii / cfo |
+
 **Isi file (per 2026-09-10):** GA lengkap (vehicles 8 · vehicle_usages 61 ·
-meeting_rooms 12 · room_cleaning_* 224 · vaults 1 · vault_documents 125), user bawaan
-`ga@proenergi.co.id` & `hrmanager@proenergi.co.id` (password `password` — **ganti
-setelah login**). **Belum ada:** karyawan, `departments`, `positions`, user lain,
-transaksi HR — diisi HR lewat aplikasi / file data pengganti.
+meeting_rooms 12 · room_cleaning_* 224 · vaults 1 · vault_documents 125).
+**Belum ada:** karyawan, `departments`, `positions`, user riil lain, transaksi HR —
+diisi HR lewat aplikasi / file data pengganti.
+
+> Admin prod lama `radieta@proenergi.com` **tidak** ikut (password-nya di-hash, tak bisa
+> dipindah). Kalau HR mau akun itu tetap ada: login sebagai `admin@proenergi.co.id`
+> lalu buat ulang user radieta di menu Manajemen User, atau restore baris `users` dari
+> backup lama.
 
 **File ini di-gitignore** (berisi data GA + hash password). Ada di lokal; regenerasi:
-`php artisan migrate` fresh + 11 seeder produksi + `mysql < ga-preserve.sql`, lalu
-`mysqldump`.
+`php artisan migrate` fresh + RoleSeeder/LevelSeeder/UserSeeder + 9 seeder produksi +
+`mysql < ga-preserve.sql`, lalu `mysqldump`.
 
 Kalau GA prod sudah berubah sejak 2026-09-10, ganti bagian data GA di file ini dengan
 `mysqldump` GA terbaru dari server (11 tabel, lihat langkah 1 prosedur manual di bawah).
