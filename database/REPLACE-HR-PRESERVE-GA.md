@@ -50,7 +50,56 @@ appraisal, cuti, perdin, reimbursement, dst. Pastikan HR memang mau fresh start
 
 ---
 
-## Prosedur (jalankan di server prod)
+## CARA TERCEPAT — 1 file (disarankan)
+
+`database/deploy-produksi-FRESH-lengkap.sql` = **skema 152 tabel v1.2 + semua data
+referensi (master data, wilayah, 91 permission, 13 role, 39 approval workflow,
+kompetensi, kebijakan cuti, checklist) + DATA GA produksi + tabel `migrations`
+terisi penuh**. Sudah diuji: import ke DB kosong → `php artisan migrate:status` 0 pending.
+
+Di server prod:
+
+```bash
+cd /path/aplikasi
+
+# 1. Backup + catat .env (WAJIB)
+mysqldump -u USER -p hris > ~/backup-hris-FULL-$(date +%F-%H%M).sql
+grep -E "APP_KEY|APP_URL|HASHIDS_SALT" .env   # catat, jangan sampai berubah
+
+# 2. Deploy kode
+php artisan down
+git pull origin main
+composer install --no-dev --optimize-autoloader
+
+# 3. Reset + import 1 file
+mysql -u USER -p -e "DROP DATABASE hris; CREATE DATABASE hris CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u USER -p hris < database/deploy-produksi-FRESH-lengkap.sql
+
+# 4. Selesai
+php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan storage:link
+php artisan up
+```
+
+Tidak perlu `php artisan migrate`, tidak perlu seeder, tidak perlu restore GA
+terpisah — semua sudah di dalam file.
+
+**Isi file (per 2026-09-10):** GA lengkap (vehicles 8 · vehicle_usages 61 ·
+meeting_rooms 12 · room_cleaning_* 224 · vaults 1 · vault_documents 125), user bawaan
+`ga@proenergi.co.id` & `hrmanager@proenergi.co.id` (password `password` — **ganti
+setelah login**). **Belum ada:** karyawan, `departments`, `positions`, user lain,
+transaksi HR — diisi HR lewat aplikasi / file data pengganti.
+
+**File ini di-gitignore** (berisi data GA + hash password). Ada di lokal; regenerasi:
+`php artisan migrate` fresh + 11 seeder produksi + `mysql < ga-preserve.sql`, lalu
+`mysqldump`.
+
+Kalau GA prod sudah berubah sejak 2026-09-10, ganti bagian data GA di file ini dengan
+`mysqldump` GA terbaru dari server (11 tabel, lihat langkah 1 prosedur manual di bawah).
+
+---
+
+## Prosedur manual (langkah terpisah) — kalau tidak pakai file gabungan
 
 ### 1. Backup — WAJIB
 
