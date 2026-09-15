@@ -27,7 +27,7 @@
     {{-- ═══ KELUARGA ═══ --}}
     <div class="tab-pane fade show active" id="tab-family" role="tabpanel">
         <div class="alert alert-info py-2 px-3 mb-3" style="font-size:.85rem">
-            <i class="gd-info mr-1"></i> Maksimal <strong>1 istri/suami</strong> dan <strong>2 anak</strong> ditanggung medical reimbursement. Dipakai sebagai pilihan "Nama Pasien".
+            <i class="gd-info mr-1"></i> Maksimal <strong>1 istri/suami</strong> dan <strong>3 anak</strong> per karyawan. Dipakai sebagai pilihan "Nama Pasien" di medical reimbursement.
         </div>
         <div class="table-responsive mb-3">
             <table class="table table-sm table-bordered mb-0">
