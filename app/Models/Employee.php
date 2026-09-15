@@ -339,6 +339,7 @@ class Employee extends Model
             'permanent'  => 'Tetap',
             'contract'   => 'Kontrak',
             'probation'  => 'Probation',
+            'mitra'      => 'Mitra',
             default      => $this->employment_status,
         };
     }

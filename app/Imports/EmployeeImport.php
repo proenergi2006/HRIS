@@ -213,6 +213,7 @@ class EmployeeImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         return match (true) {
             str_contains($v, 'kontrak')   => 'contract',
             str_contains($v, 'probation') => 'probation',
+            str_contains($v, 'mitra')     => 'mitra',
             default                       => 'permanent',
         };
     }

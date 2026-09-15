@@ -150,7 +150,7 @@ class EmployeeController extends Controller implements HasMiddleware
             'lob'                        => 'nullable|string|max:100',
             'start_date'                 => 'nullable|date',
             'contract_end_date'          => 'nullable|date|required_if:employment_status,contract',
-            'employment_status'          => 'required|in:permanent,contract,probation',
+            'employment_status'          => 'required|in:permanent,contract,probation,mitra',
             'is_active'                  => 'boolean',
             'photo'                      => 'nullable|image|max:4096',
 

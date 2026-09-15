@@ -45,7 +45,7 @@ class HrReportBuilder
 
         $groupBy = fn ($keyFn) => $employees->groupBy($keyFn)->map->count()->sortDesc();
 
-        $empStatusLabels = ['permanent' => 'Tetap', 'contract' => 'Kontrak', 'probation' => 'Probation'];
+        $empStatusLabels = ['permanent' => 'Tetap', 'contract' => 'Kontrak', 'probation' => 'Probation', 'mitra' => 'Mitra'];
 
         $byStatus = collect($empStatusLabels)->mapWithKeys(fn ($label, $key) => [
             $label => $employees->where('employment_status', $key)->count(),

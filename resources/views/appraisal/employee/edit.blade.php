@@ -475,6 +475,7 @@
                                 <option value="permanent"  {{ old('employment_status', $employee->employment_status) == 'permanent'  ? 'selected' : '' }}>Tetap</option>
                                 <option value="contract"   {{ old('employment_status', $employee->employment_status) == 'contract'   ? 'selected' : '' }}>Kontrak</option>
                                 <option value="probation"  {{ old('employment_status', $employee->employment_status) == 'probation'  ? 'selected' : '' }}>Probation</option>
+                                <option value="mitra"      {{ old('employment_status', $employee->employment_status) == 'mitra'      ? 'selected' : '' }}>Mitra</option>
                             </select>
                             @error('employment_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
