@@ -26,6 +26,7 @@ return [
 
     // Organization structure
     'organization'           => 'Organization',
+    'branches'               => 'Branches',
     'divisions'              => 'Divisions',
     'departments'            => 'Departments',
     'sections'               => 'Sections',

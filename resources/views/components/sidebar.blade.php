@@ -444,6 +444,9 @@
       <span class="side-nav__indicator side-nav-fadeout-on-closed"></span>
     </a>
     <ul id="subOrg" class="side-nav-menu side-nav-menu-second-level mb-0">
+      <li class="side-nav-menu-item {{ Request::is('appraisal/branches*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('appraisal.branches.index') }}"><i class="gd-map mr-2"></i>{{ __('nav.branches') }}</a>
+      </li>
       <li class="side-nav-menu-item {{ Request::is('appraisal/divisions*') ? 'active' : '' }}">
         <a class="side-nav-menu-link" href="{{ route('appraisal.divisions.index') }}"><i class="gd-layout mr-2"></i>{{ __('nav.divisions') }}</a>
       </li>

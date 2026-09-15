@@ -21,7 +21,7 @@
         <label class="small text-muted mb-1">Jenis Unit</label>
         <select name="unit_type" class="form-control">
           <option value="">Semua</option>
-          @foreach(['division' => 'Divisi', 'department' => 'Departemen', 'section' => 'Section', 'position' => 'Jabatan'] as $k => $v)
+          @foreach(['branch' => 'Cabang', 'division' => 'Divisi', 'department' => 'Departemen', 'section' => 'Section', 'position' => 'Jabatan'] as $k => $v)
             <option value="{{ $k }}" @selected(request('unit_type') === $k)>{{ $v }}</option>
           @endforeach
         </select>

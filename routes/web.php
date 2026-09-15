@@ -34,6 +34,7 @@ use App\Http\Controllers\Appraisal\DepartmentController;
 use App\Http\Controllers\Appraisal\PositionController;
 use App\Http\Controllers\Appraisal\OrgChartController;
 use App\Http\Controllers\Appraisal\DivisionController;
+use App\Http\Controllers\Appraisal\BranchController;
 use App\Http\Controllers\Appraisal\SectionController;
 use App\Http\Controllers\Appraisal\OrgChangeLogController;
 use App\Http\Controllers\Master\ReligionController;
@@ -717,6 +718,7 @@ Route::middleware(['auth', 'permission:org-structure.view'])->prefix('appraisal'
     Route::get('org-chart', [OrgChartController::class, 'index'])->name('org-chart.index');
     Route::get('org-chart/pdf', [OrgChartController::class, 'pdf'])->name('org-chart.pdf');
 
+    Route::resource('branches',    BranchController::class)->except(['show', 'create', 'edit']);
     Route::resource('divisions',   DivisionController::class)->except(['show', 'create', 'edit']);
     Route::resource('departments', DepartmentController::class)->except(['show', 'create', 'edit']);
     Route::resource('sections',    SectionController::class)->except(['show', 'create', 'edit']);

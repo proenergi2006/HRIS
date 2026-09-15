@@ -25,6 +25,7 @@ class OrgChangeLog extends Model
     public function getUnitTypeLabelAttribute(): string
     {
         return match ($this->unit_type) {
+            'branch'     => 'Cabang',
             'division'   => 'Divisi',
             'department' => 'Departemen',
             'section'    => 'Section',

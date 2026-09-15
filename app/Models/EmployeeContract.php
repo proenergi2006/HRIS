@@ -24,6 +24,7 @@ class EmployeeContract extends Model
         'probation' => 'Probation',
         'magang'    => 'Magang',
         'harian'    => 'Harian Lepas',
+        'mitra'     => 'Mitra',
         'other'     => 'Lainnya',
     ];
 

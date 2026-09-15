@@ -26,6 +26,7 @@ return [
 
     // Struktur Organisasi
     'organization'           => 'Struktur Organisasi',
+    'branches'               => 'Cabang',
     'divisions'              => 'Divisi',
     'departments'            => 'Departemen',
     'sections'               => 'Section',

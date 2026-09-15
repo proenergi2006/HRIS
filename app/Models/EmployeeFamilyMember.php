@@ -16,6 +16,12 @@ class EmployeeFamilyMember extends Model
         'child'  => 'Anak',
     ];
 
+    /** Batas maksimal jumlah anggota keluarga per jenis hubungan, per karyawan. */
+    public static array $maxCounts = [
+        'spouse' => 1,
+        'child'  => 3,
+    ];
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
