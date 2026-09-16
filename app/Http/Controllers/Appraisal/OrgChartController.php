@@ -138,10 +138,17 @@ class OrgChartController extends Controller
             // pandangan lintas-divisi penuh), dipakai berulang oleh buildDivisions().
             $divisionParentDireksi = $this->mapDivisionsToParentDireksi($employees);
 
+            // Cabang lintas-Direksi: pola SAMA PERSIS dengan Divisi lintas-Direksi
+            // di atas, tapi per Cabang — mis. "Kepala Cabang Jakarta" & "Kepala
+            // Cabang Palembang" yang Atasan Langsung-nya seorang Direksi di HO
+            // digambar bercabang di bawah kotak Direksi itu, bukan sejajar sbg
+            // Cabang sendiri.
+            $branchParentDireksi = $this->mapBranchesToParentDireksi($employees);
+
             $tree = $showBranchTier
-                ? $this->buildBranches($groupedEmployees, $employees, $positions, $departments)
+                ? $this->buildBranches($groupedEmployees, $employees, $positions, $departments, $divisionParentDireksi, $branchParentDireksi, $groupedEmployees)
                 : ($showDivisionTier
-                    ? $this->buildDivisions($groupedEmployees, $employees, $positions, $departments, $divisionParentDireksi, $groupedEmployees)
+                    ? $this->buildDivisions($groupedEmployees, $employees, $positions, $departments, $divisionParentDireksi, $groupedEmployees, $branchParentDireksi)
                     : $this->buildDepartmentsOrDireksi($groupedEmployees, $employees, $positions));
         }
 
@@ -181,21 +188,70 @@ class OrgChartController extends Controller
     }
 
     /**
+     * Petakan branch_id -> employee Direksi "induk"-nya — pola SAMA PERSIS
+     * dengan mapDivisionsToParentDireksi(), cuma per Cabang. Dipakai
+     * buildBranches()/buildDireksiNode() supaya Cabang seperti itu digambar
+     * bercabang di bawah kotak Direksi tsb (mis. "Kepala Cabang Jakarta" &
+     * "Kepala Cabang Palembang" yang Atasan Langsung-nya seorang Direksi di
+     * HO), bukan sejajar sbg Cabang sendiri.
+     */
+    private function mapBranchesToParentDireksi(Collection $employees): Collection
+    {
+        $direksiById = $employees->filter(fn ($e) => $e->level?->name === 'Direksi')->keyBy('id');
+
+        $map = collect();
+        foreach ($employees as $e) {
+            if (! $e->manager_id || $map->has($e->branch_id ?? 0)) {
+                continue;
+            }
+            $manager = $direksiById->get($e->manager_id);
+            if ($manager && (int) $manager->branch_id !== (int) $e->branch_id) {
+                $map->put($e->branch_id ?? 0, $manager);
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * Tier Cabang (lokasi) — di ATAS Divisi/Departemen (Company -> Cabang ->
      * [Divisi ->] Departemen -> ...). Tiap cabang menyusun ulang tier di
      * bawahnya sendiri (Divisi kalau ada, atau langsung Departemen/Direksi)
      * supaya cabang HO (yang biasanya menyimpan struktur Direksi lengkap PT.
      * Pro Energi) tidak tercampur dengan tim kecil di cabang lain.
+     *
+     * $divisionParentDireksi/$branchParentDireksi diteruskan APA ADANYA ke
+     * tier di bawahnya (bukan dihitung ulang per-Cabang) — peta ini butuh
+     * pandangan lintas-Cabang penuh (dihitung sekali di build()), supaya
+     * Divisi/Cabang lain yang "ditarik" ke seorang Direksi tetap kebaca
+     * walau Direksi & bawahannya beda Cabang.
      */
-    private function buildBranches(Collection $scopeEmployees, Collection $allEmployees, Collection $positions, Collection $allDepartments): Collection
-    {
-        return $scopeEmployees->groupBy('branch_id')
-            ->map(function (Collection $branchEmployees, $branchKey) use ($allEmployees, $positions, $allDepartments) {
+    private function buildBranches(
+        Collection $scopeEmployees, Collection $allEmployees, Collection $positions, Collection $allDepartments,
+        ?Collection $divisionParentDireksi = null, ?Collection $branchParentDireksi = null,
+        ?Collection $fullRootEmployees = null, ?Collection $companyEmployees = null
+    ): Collection {
+        $branchParentDireksi ??= collect();
+        // $allEmployees bisa sudah DIPERSEMPIT ke 1 Cabang/Divisi lain (dipanggil
+        // dari buildDireksiNode() childBranches, lewat buildDivisions() di
+        // tengah) — utk hitung 'total' Cabang yang DITARIK ke sini (mis. Jakarta/
+        // Palembang) butuh pool company PENUH, bukan yg sudah dipersempit itu.
+        $companyEmployees ??= $allEmployees;
+
+        // Cabang yang "ditarik" jadi anak Direksi di Cabang lain TIDAK dirender
+        // sbg sibling top-level di sini — nanti muncul bercabang lewat
+        // buildDireksiNode() (lihat childBranches di sana).
+        $topLevelEmployees = $scopeEmployees->reject(
+            fn ($e) => $branchParentDireksi->has($e->branch_id ?? 0)
+        );
+
+        return $topLevelEmployees->groupBy('branch_id')
+            ->map(function (Collection $branchEmployees, $branchKey) use ($allEmployees, $positions, $allDepartments, $divisionParentDireksi, $branchParentDireksi, $fullRootEmployees, $companyEmployees) {
                 $branchId = $branchKey !== '' ? (int) $branchKey : null;
                 $branch   = $branchEmployees->first()->branchLocation;
 
                 $branchAllEmployees = $branchId
-                    ? $allEmployees->where('branch_id', $branchId)
+                    ? $companyEmployees->where('branch_id', $branchId)
                     : $allEmployees->whereNull('branch_id');
 
                 $showDivisionTier = $branchEmployees->pluck('division_id')->filter()->unique()->count() > 1;
@@ -215,17 +271,21 @@ class OrgChartController extends Controller
                     'total'            => $branchAllEmployees->count(),
                     'showDivisionTier' => $showDivisionTier,
                     'departments'      => $showDivisionTier
-                        ? $this->buildDivisions($branchEmployees, $branchAllEmployees, $branchPositions, $allDepartments)
-                        : $this->buildDepartmentsOrDireksi($branchEmployees, $branchAllEmployees, $branchPositions),
+                        ? $this->buildDivisions($branchEmployees, $branchAllEmployees, $branchPositions, $allDepartments, $divisionParentDireksi, $fullRootEmployees, $branchParentDireksi, $companyEmployees)
+                        : $this->buildDepartmentsOrDireksi(
+                            $branchEmployees, $branchAllEmployees, $branchPositions,
+                            $allEmployees, $positions, $allDepartments, $divisionParentDireksi, $fullRootEmployees, $branchParentDireksi, $companyEmployees
+                        ),
                 ];
             })
             ->sortBy(fn ($b) => ($b['branch']->name ?? 'zzz') === 'HO' ? '' : ($b['branch']->name ?? 'zzz'))
             ->values();
     }
 
-    private function buildDivisions(Collection $scopeEmployees, Collection $allEmployees, Collection $positions, Collection $allDepartments, ?Collection $divisionParentDireksi = null, ?Collection $fullRootEmployees = null): Collection
+    private function buildDivisions(Collection $scopeEmployees, Collection $allEmployees, Collection $positions, Collection $allDepartments, ?Collection $divisionParentDireksi = null, ?Collection $fullRootEmployees = null, ?Collection $branchParentDireksi = null, ?Collection $companyEmployees = null): Collection
     {
         $divisionParentDireksi ??= collect();
+        $companyEmployees ??= $allEmployees;
 
         // Divisi yang "ditarik" jadi anak Direksi di divisi lain TIDAK dirender
         // sbg sibling top-level di sini — nanti muncul bercabang lewat
@@ -235,7 +295,7 @@ class OrgChartController extends Controller
         );
 
         return $topLevelEmployees->groupBy('division_id')
-            ->map(function (Collection $divEmployees, $divKey) use ($allEmployees, $positions, $allDepartments, $divisionParentDireksi, $fullRootEmployees) {
+            ->map(function (Collection $divEmployees, $divKey) use ($allEmployees, $positions, $allDepartments, $divisionParentDireksi, $fullRootEmployees, $branchParentDireksi, $companyEmployees) {
                 $divId    = $divKey !== '' ? (int) $divKey : null;
                 $division = $divEmployees->first()->division;
 
@@ -253,7 +313,7 @@ class OrgChartController extends Controller
                     'total'       => $divAllEmployees->count(),
                     'departments' => $this->buildDepartmentsOrDireksi(
                         $divEmployees, $divAllEmployees, $divPositions,
-                        $allEmployees, $positions, $allDepartments, $divisionParentDireksi, $fullRootEmployees
+                        $allEmployees, $positions, $allDepartments, $divisionParentDireksi, $fullRootEmployees, $branchParentDireksi, $companyEmployees
                     ),
                 ];
             })
@@ -274,7 +334,8 @@ class OrgChartController extends Controller
         Collection $scopeEmployees, Collection $allEmployees, Collection $positions,
         ?Collection $fullEmployees = null, ?Collection $fullPositions = null,
         ?Collection $fullDepartments = null, ?Collection $divisionParentDireksi = null,
-        ?Collection $fullRootEmployees = null
+        ?Collection $fullRootEmployees = null, ?Collection $branchParentDireksi = null,
+        ?Collection $companyEmployees = null
     ): Collection {
         $direksiIds = $scopeEmployees->filter(fn ($e) => $e->level?->name === 'Direksi')->pluck('id')->flip();
 
@@ -297,7 +358,8 @@ class OrgChartController extends Controller
         $direksiNodes = $direksiRoots
             ->map(fn ($d) => ['type' => 'direksi'] + $this->buildDireksiNode(
                 $d, $scopeEmployees, $direksiLinkedRoots, $allEmployees, $positions, $direksiIds,
-                $fullEmployees, $fullPositions, $fullDepartments, $divisionParentDireksi, $fullRootEmployees
+                $fullEmployees, $fullPositions, $fullDepartments, $divisionParentDireksi, $fullRootEmployees,
+                $branchParentDireksi, $companyEmployees
             ))
             ->values();
 
@@ -312,13 +374,16 @@ class OrgChartController extends Controller
      * lewat buildDepartments() biasa, tak berubah), + Direksi lain yg lapor ke
      * dia (mis. CFO -> CEO), dibangun rekursif dgn pola sama, + Divisi LAIN yang
      * "ditarik" ke sini (lihat mapDivisionsToParentDireksi()) — mis. Divisi
-     * Commercial/Logistik bercabang di bawah Direktur Utama (Divisi BOD).
+     * Commercial/Logistik bercabang di bawah Direktur Utama (Divisi BOD) — +
+     * Cabang LAIN yang "ditarik" ke sini (mapBranchesToParentDireksi()) — mis.
+     * Kepala Cabang Jakarta/Palembang bercabang di bawah Direksi di HO.
      */
     private function buildDireksiNode(
         Employee $direksi, Collection $scopeEmployees, Collection $direksiLinkedRoots, Collection $allEmployees, Collection $positions, Collection $direksiIds,
         ?Collection $fullEmployees = null, ?Collection $fullPositions = null,
         ?Collection $fullDepartments = null, ?Collection $divisionParentDireksi = null,
-        ?Collection $fullRootEmployees = null
+        ?Collection $fullRootEmployees = null, ?Collection $branchParentDireksi = null,
+        ?Collection $companyEmployees = null
     ): array {
         $deptRoots    = $direksiLinkedRoots->where('manager_id', $direksi->id);
         $childDireksi = $scopeEmployees->filter(fn ($e) => $direksiIds->has($e->id) && $e->manager_id === $direksi->id);
@@ -346,7 +411,30 @@ class OrgChartController extends Controller
             // masih perlu ditarik lagi (groupBy-nya jadi kosong kalau tidak dihapus).
             $remainingMap = ($divisionParentDireksi ?? collect())->except($childDivisionIds->all());
             $childDivisions = $this->buildDivisions(
-                $childScopeEmployees, $fullEmployees, $fullPositions, $fullDepartments, $remainingMap, $fullRootEmployees
+                $childScopeEmployees, $fullEmployees, $fullPositions, $fullDepartments, $remainingMap, $fullRootEmployees, $branchParentDireksi, $companyEmployees
+            );
+        }
+
+        // Cabang lain yang "ditarik" ke Direksi ini (mapBranchesToParentDireksi) —
+        // pola sama persis childDivisions di atas.
+        $childBranchIds = ($branchParentDireksi ?? collect())
+            ->filter(fn ($d) => $d->id === $direksi->id)
+            ->keys();
+        $childBranches = collect();
+        if ($childBranchIds->isNotEmpty() && $fullEmployees && $fullPositions && $fullDepartments) {
+            $rootPool = $fullRootEmployees ?? $fullEmployees;
+            $childBranchScopeEmployees = $rootPool->filter(
+                fn ($e) => $childBranchIds->contains((int) ($e->branch_id ?? 0))
+            );
+            $remainingBranchMap = ($branchParentDireksi ?? collect())->except($childBranchIds->all());
+            // PENTING: $companyEmployees (pool company PENUH, tak pernah
+            // dipersempit) dipakai sbg $allEmployees di sini — BUKAN
+            // $fullEmployees, yg di titik ini bisa sudah dipersempit ke 1
+            // Cabang/Divisi lain oleh pemanggil (lihat catatan di buildBranches())
+            // — supaya hitungan 'total' Cabang yg ditarik ke sini tidak nol.
+            $childBranches = $this->buildBranches(
+                $childBranchScopeEmployees, $companyEmployees ?? $fullEmployees, $fullPositions, $fullDepartments,
+                $divisionParentDireksi, $remainingBranchMap, $fullRootEmployees, $companyEmployees
             );
         }
 
@@ -354,10 +442,12 @@ class OrgChartController extends Controller
             'employee'       => $direksi,
             'departments'    => $this->buildDepartments($deptRoots, $allEmployees, $positions),
             'childDivisions' => $childDivisions,
+            'childBranches'  => $childBranches,
             'children'       => $childDireksi
                 ->map(fn ($cd) => ['type' => 'direksi'] + $this->buildDireksiNode(
                     $cd, $scopeEmployees, $direksiLinkedRoots, $allEmployees, $positions, $direksiIds,
-                    $fullEmployees, $fullPositions, $fullDepartments, $divisionParentDireksi, $fullRootEmployees
+                    $fullEmployees, $fullPositions, $fullDepartments, $divisionParentDireksi, $fullRootEmployees,
+                    $branchParentDireksi, $companyEmployees
                 ))
                 ->values(),
         ];
