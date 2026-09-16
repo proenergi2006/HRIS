@@ -168,6 +168,15 @@ class OrgChartController extends Controller
      * sendiri. Kalau lebih dari satu Direksi "menarik" divisi yang sama, yang
      * pertama ketemu yang dipakai (kasus jarang, org chart tetap harus punya
      * satu induk saja per divisi).
+     *
+     * SENGAJA skip kalau Cabang bawahan itu JUGA beda dari Cabang Direksi-nya
+     * — itu tandanya seluruh Cabang (bukan cuma 1 Divisi di dalamnya) yang
+     * lapor ke Direksi ini, jadi biar mapBranchesToParentDireksi() saja yang
+     * menangani (Cabang otomatis membawa semua Divisi di dalamnya lewat
+     * buildDivisions() bersarang). Tanpa ini, Divisi seperti itu ditarik LEPAS
+     * langsung ke Direksi (skip kotak Cabang-nya) SEKALIGUS Cabang-nya ditarik
+     * terpisah juga — dobel & salah susun (mis. "Commercial" di Cabang CRS
+     * nempel langsung ke BOD, padahal harusnya bersarang di dalam kotak CRS).
      */
     private function mapDivisionsToParentDireksi(Collection $employees): Collection
     {
@@ -179,9 +188,13 @@ class OrgChartController extends Controller
                 continue;
             }
             $manager = $direksiById->get($e->manager_id);
-            if ($manager && (int) $manager->division_id !== (int) $e->division_id) {
-                $map->put($e->division_id ?? 0, $manager);
+            if (! $manager || (int) $manager->division_id === (int) $e->division_id) {
+                continue;
             }
+            if ((int) $manager->branch_id !== (int) $e->branch_id) {
+                continue;
+            }
+            $map->put($e->division_id ?? 0, $manager);
         }
 
         return $map;
