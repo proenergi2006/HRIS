@@ -32,7 +32,7 @@ class DashboardController extends Controller implements HasMiddleware
             return $this->gaDashboard();
         }
 
-        if ($user->hasAnyRole(['admin', 'hr_manager'])) {
+        if ($user->hasAnyRole(['admin', 'hr_manager', 'hr_admin'])) {
             return $this->adminDashboard($request);
         }
 
