@@ -26,7 +26,8 @@ class AttendanceController extends Controller
             ->get();
 
         // Build rekap: employee -> array of days in month
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        // Carbon, bukan cal_days_in_month(): ekstensi PHP `calendar` tidak terpasang di Docker produksi.
+        $daysInMonth = \Carbon\Carbon::create($year, $month, 1)->daysInMonth;
         $records = AttendanceRecord::where('company_id', $companyId)
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
