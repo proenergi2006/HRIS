@@ -53,6 +53,7 @@ class Employee extends Model
         'birth_place',
         'birth_date',
         'ktp_number',
+        'sim_number',
         'npwp_number',
         'npwp_city',
         'npwp_date',
@@ -66,7 +67,14 @@ class Employee extends Model
         // Email & Phone
         'email',
         'phone',
+        'office_phone',
         'home_phone',
+
+        // Jaminan
+        'guarantee1_type',
+        'guarantee1_file',
+        'guarantee2_type',
+        'guarantee2_file',
 
         // Alamat Domisili
         'domicile_address',
@@ -92,6 +100,9 @@ class Employee extends Model
         'emergency_contact_name',
         'emergency_contact_relation',
         'emergency_contact_phone',
+        'emergency_contact2_name',
+        'emergency_contact2_relation',
+        'emergency_contact2_phone',
     ];
 
     protected $casts = [

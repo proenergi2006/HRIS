@@ -13,6 +13,7 @@
 
     <!-- Styles -->
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/propeople-blue.css') }}?v={{ @filemtime(public_path('css/propeople-blue.css')) }}" rel="stylesheet">
     <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

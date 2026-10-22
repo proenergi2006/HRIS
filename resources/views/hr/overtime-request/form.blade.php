@@ -13,6 +13,19 @@
     <form method="POST" action="{{ route('hr.overtime-requests.store') }}">
       @csrf
 
+      @if($onBehalfOptions->isNotEmpty())
+        <div class="form-group">
+          <label>Atas nama karyawan</label>
+          <select name="on_behalf_employee_id" class="form-control"
+                  onchange="window.location='{{ route('hr.overtime-requests.create') }}?on_behalf_employee_id=' + this.value">
+            @foreach($onBehalfOptions as $opt)
+              <option value="{{ $opt->id }}" @selected($opt->id === $employee->id)>{{ $opt->name }}{{ $opt->nip ? ' — ' . $opt->nip : '' }}</option>
+            @endforeach
+          </select>
+          <small class="text-muted">Admin HR dapat mengajukan lembur untuk karyawan lain.</small>
+        </div>
+      @endif
+
       <div class="form-row">
         <div class="form-group col-md-4">
           <label>Tanggal <span class="text-danger">*</span></label>

@@ -39,6 +39,38 @@ class AttendanceController extends Controller
         ));
     }
 
+    /** Kalender kotak-kotak per karyawan: status tiap tanggal + input langsung dari kotak tanggal. */
+    public function calendar(Request $request)
+    {
+        $companies  = Company::where('is_active', true)->get();
+        $companyId  = (int) $request->get('company_id', $companies->first()?->id);
+        $month      = max(1, min(12, (int) $request->get('month', now()->month)));
+        $year       = (int) $request->get('year', now()->year);
+
+        $employees  = Employee::where('company_id', $companyId)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'nip']);
+        $employee   = $employees->firstWhere('id', (int) $request->get('employee_id')) ?? $employees->first();
+
+        $start = \Carbon\Carbon::create($year, $month, 1)->startOfDay();
+        $end   = $start->copy()->endOfMonth();
+
+        $records = $employee
+            ? AttendanceRecord::where('employee_id', $employee->id)->whereBetween('date', [$start, $end])->get()->keyBy(fn ($r) => $r->date->toDateString())
+            : collect();
+
+        // Cuti/izin yang sudah disetujui, untuk tanggal yang belum punya catatan absensi.
+        $leaves = $employee
+            ? \App\Models\HR\LeaveRequest::with('leaveType')->where('employee_id', $employee->id)
+                ->whereIn('status', ['approved', 'approved_hr'])
+                ->whereDate('start_date', '<=', $end)->whereDate('end_date', '>=', $start)->get()
+            : collect();
+
+        $summary = $records->groupBy('status')->map->count();
+
+        return view('hr.attendance.calendar', compact(
+            'companies', 'companyId', 'month', 'year', 'employees', 'employee', 'start', 'end', 'records', 'leaves', 'summary'
+        ));
+    }
+
     public function create(Request $request)
     {
         $companies = Company::where('is_active', true)->get();
@@ -68,11 +100,18 @@ class AttendanceController extends Controller
             array_merge($data, ['source' => 'manual'])
         );
 
-        return redirect()->route('hr.attendance.index', [
+        $params = [
             'company_id' => $data['company_id'],
             'month' => date('n', strtotime($data['date'])),
             'year'  => date('Y', strtotime($data['date'])),
-        ])->with('success', 'Data absensi berhasil disimpan.');
+        ];
+
+        if ($request->boolean('from_calendar')) {
+            return redirect()->route('hr.attendance.calendar', $params + ['employee_id' => $data['employee_id']])
+                ->with('success', 'Absensi ' . date('d/m/Y', strtotime($data['date'])) . ' berhasil disimpan.');
+        }
+
+        return redirect()->route('hr.attendance.index', $params)->with('success', 'Data absensi berhasil disimpan.');
     }
 
     public function bulkStore(Request $request)

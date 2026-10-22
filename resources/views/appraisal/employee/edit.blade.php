@@ -178,16 +178,25 @@
                             @error('npwp_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-3">
-                            <label for="npwp_city">Kota NPWP</label>
+                            <label for="npwp_city">Kota NPWP <small class="text-muted">(opsional)</small></label>
                             <input type="text" id="npwp_city" name="npwp_city" class="form-control{{ $errors->has('npwp_city') ? ' is-invalid' : '' }}"
                                    value="{{ old('npwp_city', $employee->npwp_city) }}">
                             @error('npwp_city')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-3">
-                            <label for="npwp_date">Tanggal NPWP</label>
+                            <label for="npwp_date">Tanggal NPWP <small class="text-muted">(opsional)</small></label>
                             <input type="date" id="npwp_date" name="npwp_date" class="form-control{{ $errors->has('npwp_date') ? ' is-invalid' : '' }}"
                                    value="{{ old('npwp_date', $employee->npwp_date?->format('Y-m-d')) }}">
                             @error('npwp_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-12 col-md-3">
+                            <label for="sim_number">No. SIM</label>
+                            <input type="text" id="sim_number" name="sim_number" class="form-control{{ $errors->has('sim_number') ? ' is-invalid' : '' }}"
+                                   value="{{ old('sim_number', $employee->sim_number) }}">
+                            @error('sim_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -201,10 +210,16 @@
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-4">
-                            <label for="phone">No. HP</label>
+                            <label for="phone">No. HP Pribadi</label>
                             <input type="text" id="phone" name="phone" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }}"
                                    value="{{ old('phone', $employee->phone) }}">
                             @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-6 col-md-4">
+                            <label for="office_phone">No. HP Kantor</label>
+                            <input type="text" id="office_phone" name="office_phone" class="form-control{{ $errors->has('office_phone') ? ' is-invalid' : '' }}"
+                                   value="{{ old('office_phone', $employee->office_phone) }}">
+                            @error('office_phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group col-6 col-md-4">
                             <label for="home_phone">No. Telp Rumah</label>
@@ -314,7 +329,7 @@
                     </div>
 
                     <hr>
-                    <h6 class="font-weight-bold text-uppercase text-muted mb-3" style="font-size:.75rem;letter-spacing:.05em">Kontak Darurat</h6>
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3" style="font-size:.75rem;letter-spacing:.05em">Kontak Darurat 1 <span class="text-danger">*</span></h6>
                     <div class="form-row">
                         <div class="form-group col-12 col-md-4">
                             <label for="emergency_contact_name">Nama</label>
@@ -335,10 +350,63 @@
                             @error('emergency_contact_phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
+
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3" style="font-size:.75rem;letter-spacing:.05em">Kontak Darurat 2 <span class="text-danger">*</span></h6>
+                    <div class="form-row">
+                        <div class="form-group col-12 col-md-4">
+                            <label for="emergency_contact2_name">Nama</label>
+                            <input type="text" id="emergency_contact2_name" name="emergency_contact2_name" class="form-control{{ $errors->has('emergency_contact2_name') ? ' is-invalid' : '' }}"
+                                   value="{{ old('emergency_contact2_name', $employee->emergency_contact2_name) }}">
+                            @error('emergency_contact2_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-6 col-md-4">
+                            <label for="emergency_contact2_relation">Hubungan</label>
+                            <input type="text" id="emergency_contact2_relation" name="emergency_contact2_relation" class="form-control{{ $errors->has('emergency_contact2_relation') ? ' is-invalid' : '' }}"
+                                   value="{{ old('emergency_contact2_relation', $employee->emergency_contact2_relation) }}" placeholder="Suami/Istri, Orang Tua, ...">
+                            @error('emergency_contact2_relation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-6 col-md-4">
+                            <label for="emergency_contact2_phone">No. Telp</label>
+                            <input type="text" id="emergency_contact2_phone" name="emergency_contact2_phone" class="form-control{{ $errors->has('emergency_contact2_phone') ? ' is-invalid' : '' }}"
+                                   value="{{ old('emergency_contact2_phone', $employee->emergency_contact2_phone) }}">
+                            @error('emergency_contact2_phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3" style="font-size:.75rem;letter-spacing:.05em">Jaminan</h6>
+                    @foreach([1, 2] as $slot)
+                    <div class="form-row">
+                        <div class="form-group col-12 col-md-4">
+                            <label for="guarantee{{ $slot }}_type">Jenis Jaminan {{ $slot }}</label>
+                            <input type="text" id="guarantee{{ $slot }}_type" name="guarantee{{ $slot }}_type" class="form-control{{ $errors->has("guarantee{$slot}_type") ? ' is-invalid' : '' }}"
+                                   value="{{ old("guarantee{$slot}_type", $employee->{"guarantee{$slot}_type"}) }}" placeholder="Ijazah asli, BPKB, ...">
+                            @error("guarantee{$slot}_type")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group col-12 col-md-8">
+                            <label for="guarantee{{ $slot }}_file">File Jaminan {{ $slot }} <small class="text-muted">(PDF/JPG/PNG, maks 5 MB)</small></label>
+                            <input type="file" id="guarantee{{ $slot }}_file" name="guarantee{{ $slot }}_file" accept=".pdf,.jpg,.jpeg,.png"
+                                   class="form-control-file{{ $errors->has("guarantee{$slot}_file") ? ' is-invalid' : '' }}">
+                            @if($employee->{"guarantee{$slot}_file"})
+                                <small class="d-block mt-1"><a href="{{ route('appraisal.employees.guarantee', [$employee, $slot]) }}" target="_blank">Lihat file saat ini</a> — unggah lagi untuk mengganti.</small>
+                            @endif
+                            @error("guarantee{$slot}_file")<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
 
                 {{-- ══ TAB 2: EMPLOYEE INFORMATION ══ --}}
                 <div class="tab-pane fade" id="tab-employment" role="tabpanel">
+
+                    @if($employee->id)
+                    <div class="alert alert-info py-2 small d-flex align-items-center flex-wrap" style="gap:.75rem">
+                        <span>Perubahan <strong>Title, Grade, Cost Center (departemen), dan Status Karyawan</strong> otomatis dicatat ke riwayat.</span>
+                        <label class="mb-0 ml-auto">Tanggal berlaku
+                            <input type="date" name="history_effective_date" value="{{ old('history_effective_date', now()->format('Y-m-d')) }}" class="form-control form-control-sm d-inline-block" style="width:auto">
+                        </label>
+                    </div>
+                    @endif
 
                     <div class="form-row">
                         <div class="form-group col-12 col-md-6">

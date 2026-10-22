@@ -65,6 +65,11 @@ class SalaryIncreaseRequest extends Model implements Approvable
 
         $gajiPokok = SalaryComponent::where('name', 'Gaji Pokok')->first();
         if ($gajiPokok && $this->employee_id) {
+            $fmt = fn ($v) => $v === null ? null : 'Rp ' . number_format((int) $v, 0, ',', '.');
+            \App\Services\EmployeeHistoryLogger::record(
+                $this->employee_id, 'basic_salary', $fmt($this->current_salary), $fmt($this->proposed_salary),
+                null, 'Persetujuan kenaikan gaji'
+            );
             EmployeeSalaryComponent::updateOrCreate(
                 ['employee_id' => $this->employee_id, 'salary_component_id' => $gajiPokok->id],
                 ['amount' => $this->proposed_salary]

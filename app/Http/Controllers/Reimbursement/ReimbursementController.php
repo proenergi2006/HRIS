@@ -10,6 +10,7 @@ use App\Models\Reimbursement\ReimbursementItem;
 use App\Models\Reimbursement\ReimbursementRequest;
 use App\Models\User;
 use App\Services\ApprovalEngine;
+use App\Support\ActingEmployee;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -69,15 +70,40 @@ class ReimbursementController extends Controller
         return view('reimbursement.index', compact('balance', 'requests'));
     }
 
-    public function create()
+    private const ACT_PERMISSION = 'reimbursement-admin.edit';
+
+    /** Pemilik pengajuan, atau admin HR yang boleh mengajukan atas nama karyawan. */
+    private function mayManage(ReimbursementRequest $reimbursement): bool
     {
-        $balance = ReimbursementBalance::forUser(auth()->id());
-        $patientOptions = $this->patientOptions();
-        return view('reimbursement.create', compact('balance', 'patientOptions'));
+        return $reimbursement->user_id === auth()->id()
+            || ActingEmployee::canActForOthers(auth()->user(), self::ACT_PERMISSION);
+    }
+
+    /** Karyawan target pengajuan (diri sendiri, atau karyawan lain bila admin HR memilih). */
+    private function targetEmployee(Request $request)
+    {
+        $employee = ActingEmployee::resolve($request, self::ACT_PERMISSION);
+        abort_if($request->filled('on_behalf_employee_id') && $employee && ! $employee->user_id, 422,
+            'Karyawan ini belum punya akun pengguna, sehingga tidak bisa dibuatkan reimbursement.');
+
+        return $employee;
+    }
+
+    public function create(Request $request)
+    {
+        $employee       = $this->targetEmployee($request);
+        $targetUserId   = $employee?->user_id ?? auth()->id();
+        $balance        = ReimbursementBalance::forUser($targetUserId);
+        $patientOptions = $this->patientOptions($employee);
+        $onBehalfOptions = ActingEmployee::options(auth()->user(), self::ACT_PERMISSION);
+        $onBehalfId     = $request->filled('on_behalf_employee_id') ? $employee?->id : null;
+
+        return view('reimbursement.create', compact('balance', 'patientOptions', 'onBehalfOptions', 'onBehalfId'));
     }
 
     public function store(Request $request)
     {
+        $employee  = $this->targetEmployee($request);
         $validated = $request->validate($this->baseRules());
 
         if ($errors = $this->checkDateRule($validated)) {
@@ -85,7 +111,7 @@ class ReimbursementController extends Controller
         }
 
         $reimb = ReimbursementRequest::create([
-            'user_id'        => auth()->id(),
+            'user_id'        => $request->filled('on_behalf_employee_id') ? $employee?->user_id : auth()->id(),
             'request_number' => ReimbursementRequest::generateNumber(),
             'request_date'   => $validated['request_date'],
             'medical_for'    => $validated['medical_for'],
@@ -104,7 +130,7 @@ class ReimbursementController extends Controller
 
     public function show(ReimbursementRequest $reimbursement)
     {
-        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($this->mayManage($reimbursement), 403);
         $reimbursement->load(['items', 'attachments', 'approver', 'approvalRequest.steps.approver', 'approvalRequest.steps.actedBy']);
         $balance = ReimbursementBalance::forUser($reimbursement->user_id, $reimbursement->request_date->year);
         return view('reimbursement.show', compact('reimbursement', 'balance'));
@@ -112,11 +138,11 @@ class ReimbursementController extends Controller
 
     public function edit(ReimbursementRequest $reimbursement)
     {
-        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($this->mayManage($reimbursement), 403);
         abort_unless($reimbursement->isDraft(), 403);
         $reimbursement->load(['items', 'attachments']);
         $balance = ReimbursementBalance::forUser($reimbursement->user_id);
-        $patientOptions = $this->patientOptions();
+        $patientOptions = $this->patientOptions(\App\Models\User::find($reimbursement->user_id)?->employee);
         return view('reimbursement.edit', compact('reimbursement', 'balance', 'patientOptions'));
     }
 
@@ -125,9 +151,9 @@ class ReimbursementController extends Controller
      * keluarga (istri/anak) yang terdaftar di Data Karyawan — bukan isian bebas,
      * supaya nama selalu konsisten dengan data yang dikelola HR.
      */
-    private function patientOptions(): array
+    private function patientOptions($employee = null): array
     {
-        $employee = auth()->user()->employee;
+        $employee ??= auth()->user()->employee;
         if (! $employee) {
             return [['name' => auth()->user()->name, 'label' => auth()->user()->name . ' (Diri Sendiri)']];
         }
@@ -144,7 +170,7 @@ class ReimbursementController extends Controller
 
     public function update(Request $request, ReimbursementRequest $reimbursement)
     {
-        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($this->mayManage($reimbursement), 403);
         abort_unless($reimbursement->isDraft(), 403);
 
         $validated = $request->validate($this->baseRules());
@@ -171,7 +197,7 @@ class ReimbursementController extends Controller
 
     public function submit(ReimbursementRequest $reimbursement)
     {
-        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($this->mayManage($reimbursement), 403);
         abort_unless($reimbursement->isDraft(), 403);
         abort_if($reimbursement->items()->count() === 0, 422, 'Tambahkan minimal 1 item sebelum submit.');
 
@@ -228,7 +254,7 @@ class ReimbursementController extends Controller
 
     public function destroyAttachment(ReimbursementRequest $reimbursement, ReimbursementAttachment $attachment)
     {
-        abort_unless($reimbursement->user_id === auth()->id(), 403);
+        abort_unless($this->mayManage($reimbursement), 403);
         abort_unless($reimbursement->isDraft(), 403);
         abort_unless($attachment->reimbursement_request_id === $reimbursement->id, 404);
 

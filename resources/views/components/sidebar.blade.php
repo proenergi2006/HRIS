@@ -485,6 +485,11 @@
           <i class="gd-calendar mr-2"></i>Absensi
         </a>
       </li>
+      <li class="side-nav-menu-item {{ Request::is('hr/attendance/kalender*') ? 'active' : '' }}">
+        <a class="side-nav-menu-link" href="{{ route('hr.attendance.calendar') }}">
+          <i class="gd-view-grid mr-2"></i>Kalender Absensi
+        </a>
+      </li>
       @endcan
       @can('overtime.view')
       <li class="side-nav-menu-item {{ Request::is('hr/overtime') || Request::is('hr/overtime/*') ? 'active' : '' }}">

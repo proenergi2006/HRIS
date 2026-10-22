@@ -368,6 +368,11 @@ class PayrollController extends Controller
             'components.*' => 'nullable|integer|min:0',
         ]);
 
+        $gajiPokokId  = SalaryComponent::where('name', 'Gaji Pokok')->value('id');
+        $oldBasic     = $gajiPokokId
+            ? EmployeeSalaryComponent::where('employee_id', $employee->id)->where('salary_component_id', $gajiPokokId)->value('amount')
+            : null;
+
         DB::transaction(function () use ($request, $employee) {
             foreach ($request->input('components', []) as $componentId => $amount) {
                 if ($amount === null || $amount === '') {
@@ -381,6 +386,12 @@ class PayrollController extends Controller
                 );
             }
         });
+
+        if ($gajiPokokId && $request->has("components.{$gajiPokokId}")) {
+            $newBasic = $request->input("components.{$gajiPokokId}");
+            $fmt = fn ($v) => ($v === null || $v === '') ? null : 'Rp ' . number_format((int) $v, 0, ',', '.');
+            \App\Services\EmployeeHistoryLogger::record($employee, 'basic_salary', $fmt($oldBasic), $fmt($newBasic));
+        }
 
         return redirect()->route('hr.payroll.salary.index', ['company_id' => $employee->company_id])
             ->with('success', 'Komponen gaji ' . $employee->name . ' berhasil diperbarui.');

@@ -130,6 +130,9 @@
                 @endif
                 </td>
                 <td class="py-3">
+                <a href="{{ route('appraisal.employees.show', $employee) }}" class="link-dark d-inline-block mr-2" title="Profil">
+                <i class="gd-eye icon-text"></i>
+                </a>
                 <a href="{{ route('appraisal.employees.edit', $employee) }}" class="link-dark d-inline-block mr-2" title="Edit">
                 <i class="gd-pencil icon-text"></i>
                 </a>

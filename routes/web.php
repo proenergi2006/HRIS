@@ -402,6 +402,7 @@ Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
     // Absensi
     Route::middleware('permission:attendance.view')->prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/',                [AttendanceController::class, 'index'])->name('index');
+        Route::get('/kalender',        [AttendanceController::class, 'calendar'])->name('calendar');
         Route::get('/input',           [AttendanceController::class, 'create'])->name('create');
         Route::post('/input',          [AttendanceController::class, 'store'])->name('store');
         Route::post('/bulk',           [AttendanceController::class, 'bulkStore'])->name('bulk');
@@ -656,6 +657,12 @@ Route::middleware(['auth', 'permission:user-management.view'])->group(function (
 Route::middleware(['auth', 'permission:employee-master.view'])->prefix('appraisal')->name('appraisal.')->group(function () {
     Route::resource('employees',    EmployeeController::class);
     Route::get('employees/{employee}/photo', [EmployeeController::class, 'photo'])->name('employees.photo');
+    Route::get('employees/{employee}/pdf', [EmployeeController::class, 'pdf'])->name('employees.pdf');
+    Route::middleware('permission:employee-master.edit')->group(function () {
+        Route::post('employees/{employee}/histories', [EmployeeController::class, 'storeHistory'])->name('employees.histories.store');
+        Route::delete('employees/{employee}/histories/{history}', [EmployeeController::class, 'destroyHistory'])->name('employees.histories.destroy');
+    });
+    Route::get('employees/{employee}/guarantee/{slot}', [EmployeeController::class, 'guarantee'])->whereNumber('slot')->name('employees.guarantee');
 
     // Anggota Keluarga (istri/anak) — dipakai sbg pilihan Nama Pasien di Reimbursement
     Route::post('employees/{employee}/family-members', [EmployeeFamilyMemberController::class, 'store'])->name('employees.family-members.store');
