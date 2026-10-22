@@ -5,6 +5,7 @@ namespace App\Http\Controllers\HR;
 use App\Http\Controllers\Controller;
 use App\Models\OvertimeRequest;
 use App\Services\ApprovalEngine;
+use App\Support\ActingEmployee;
 use Illuminate\Http\Request;
 
 /**
@@ -34,15 +35,17 @@ class OvertimeRequestController extends Controller
 
     public function create(Request $request)
     {
-        $employee = $request->user()->employee;
+        $onBehalfOptions = ActingEmployee::options($request->user(), 'overtime.create');
+        // Admin tanpa data karyawan sendiri tetap bisa membuka form: pilihan pertama jadi default.
+        $employee = ActingEmployee::resolve($request, 'overtime.create') ?? $onBehalfOptions->first();
         abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
 
-        return view('hr.overtime-request.form', compact('employee'));
+        return view('hr.overtime-request.form', compact('employee', 'onBehalfOptions'));
     }
 
     public function store(Request $request)
     {
-        $employee = $request->user()->employee;
+        $employee = ActingEmployee::resolve($request, 'overtime.create');
         abort_unless($employee, 403, 'Akun Anda belum terhubung ke data karyawan.');
 
         $data = $request->validate([

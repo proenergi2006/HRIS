@@ -1,0 +1,132 @@
+/* ProPeople — tema aksen biru (dimuat setelah graindashboard.css di semua layout).
+   Hanya memakai warna/border/shadow; tidak menyentuh font-family (icon font gd-icons). */
+:root {
+  --pp-navy: #0F2A4A;
+  --pp-blue: #2563eb;
+  --pp-blue-dark: #1e4fa3;
+  --pp-blue-soft: #e8f0fe;
+  --pp-blue-tint: #f1f6fd;
+  --pp-line: #d6e2f5;
+}
+
+/* ── Latar halaman: tidak polos putih ── */
+body { background: var(--pp-blue-tint); }
+.main, .content { background: var(--pp-blue-tint); }
+
+/* ── Header atas ── */
+/* Navbar atas biru penuh kiri–kanan (termasuk area logo di atas sidebar) */
+header.header, .header.bg-body {
+  background: linear-gradient(90deg, var(--pp-navy) 0%, var(--pp-blue-dark) 45%, var(--pp-blue) 100%) !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 2px 12px rgba(15, 42, 74, .35);
+}
+header.header .navbar,
+header.header .navbar-brand-wrapper,
+header.header .header-content { background: transparent !important; border: 0 !important; }
+header.header .header-invoker,
+header.header .header-complex-invoker,
+header.header .header-invoker i,
+header.header .header-complex-invoker span,
+header.header .header-complex-invoker i { color: #fff !important; }
+header.header .header-invoker:hover,
+header.header .header-complex-invoker:hover { background: rgba(255, 255, 255, .14); border-radius: 8px; }
+header.header .avatar-placeholder { background: #fff !important; color: var(--pp-blue-dark) !important; }
+/* logo berwarna gelap → jadikan putih agar terbaca di latar biru */
+header.header .navbar-brand img { filter: brightness(0) invert(1); }
+
+/* ── Sidebar ── */
+aside#sidebar.side-nav, .side-nav, .sidebar {
+  background: #0b0f17 !important;   /* hitam */
+  border-right: 1px solid #1c2433;
+  box-shadow: none;
+}
+#sidebar .side-nav-menu, #sidebar .side-nav-menu-top-level,
+#sidebar .side-nav-menu-second-level, #sidebar .side-nav-menu-item { background: transparent; }
+#sidebar .side-nav-menu-second-level { border-left: 1px solid #263248; }
+
+/* Teks & ikon terang di atas hitam; aksen biru hanya untuk judul bagian & menu aktif */
+#sidebar .sidebar-heading {
+  color: #6ea0ff !important;
+  background: none;
+  border: 0;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: .68rem !important;
+}
+#sidebar .side-nav-menu-link,
+#sidebar .side-nav-menu-link .side-nav-menu-icon,
+#sidebar .side-nav-menu-link i { color: #d5dbe6 !important; }
+#sidebar .side-nav-menu-link:hover,
+#sidebar .side-nav-menu-link:hover .side-nav-menu-icon,
+#sidebar .side-nav-menu-link:hover i { color: #fff !important; background: #151c2a; }
+#sidebar .side-nav-menu-item.active > .side-nav-menu-link,
+#sidebar .side-nav-opened > .side-nav-menu-link {
+  color: #fff !important;
+  font-weight: 600;
+  background: #1a2540;
+  box-shadow: inset 3px 0 0 var(--pp-blue);
+}
+#sidebar .side-nav-menu-item.active > .side-nav-menu-link i,
+#sidebar .side-nav-menu-item.active > .side-nav-menu-link .side-nav-menu-icon,
+#sidebar .side-nav-opened > .side-nav-menu-link i { color: #6ea0ff !important; }
+#sidebar .side-nav-menu-link::before { border-color: #6b7488; }
+
+/* ── Kartu: tiap blok jelas terpisah, aksen biru di atas ── */
+.card {
+  background: #fff;
+  border: 1px solid var(--pp-line);
+  border-top: 3px solid var(--pp-blue);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 42, 74, .06);
+}
+.card-header {
+  background: var(--pp-blue-soft);
+  border-bottom: 1px solid var(--pp-line);
+  color: var(--pp-navy);
+  font-weight: 600;
+}
+.card .card { border-top-width: 1px; box-shadow: none; }
+
+/* ── Judul & breadcrumb ── */
+.h3, h3.h3, .page-title { color: var(--pp-navy); }
+.breadcrumb { background: transparent; }
+.breadcrumb-item a, a { color: var(--pp-blue); }
+a:hover { color: var(--pp-blue-dark); }
+.breadcrumb-item.active { color: var(--pp-blue-dark); font-weight: 600; }
+
+/* ── Tabel ── */
+.table thead th {
+  background: var(--pp-blue-soft);
+  color: var(--pp-navy);
+  border-bottom: 2px solid var(--pp-blue) !important;
+  font-weight: 600;
+}
+.table-hover tbody tr:hover { background: var(--pp-blue-tint); }
+.table td, .table th { border-color: var(--pp-line); }
+.thead-primary-soft th { background: var(--pp-blue-soft); }
+
+/* ── Form ── */
+.form-control:focus, .custom-select:focus {
+  border-color: var(--pp-blue);
+  box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .18);
+}
+label { color: var(--pp-navy); }
+
+/* ── Tombol & tab ── */
+.btn-primary { background: var(--pp-blue); border-color: var(--pp-blue); }
+.btn-primary:hover, .btn-primary:focus { background: var(--pp-blue-dark); border-color: var(--pp-blue-dark); }
+.btn-outline-primary { color: var(--pp-blue); border-color: var(--pp-blue); }
+.btn-outline-primary:hover { background: var(--pp-blue); border-color: var(--pp-blue); color: #fff; }
+.badge-primary { background: var(--pp-blue); }
+.nav-tabs { border-bottom: 2px solid var(--pp-line); }
+.nav-tabs .nav-link { color: var(--pp-blue-dark); border: 0; border-bottom: 3px solid transparent; }
+.nav-tabs .nav-link:hover { background: var(--pp-blue-soft); }
+.nav-tabs .nav-link.active {
+  color: var(--pp-blue); background: #fff; font-weight: 600;
+  border-bottom: 3px solid var(--pp-blue);
+}
+.modal-header { background: var(--pp-blue-soft); border-bottom: 1px solid var(--pp-line); }
+.modal-content { border-top: 3px solid var(--pp-blue); }
+.page-item.active .page-link { background: var(--pp-blue); border-color: var(--pp-blue); }
+hr { border-top-color: var(--pp-line); }

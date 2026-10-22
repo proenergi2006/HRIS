@@ -19,6 +19,19 @@
 
 <form method="POST" action="{{ route('reimbursement.store') }}" enctype="multipart/form-data" id="reimb-form">
 @csrf
+@if($onBehalfOptions->isNotEmpty())
+<div class="card mb-3"><div class="card-body py-3">
+  <label class="mb-1">Atas nama karyawan</label>
+  <select name="on_behalf_employee_id" class="form-control"
+          onchange="window.location='{{ route('reimbursement.create') }}?on_behalf_employee_id=' + this.value">
+    <option value="">— Diri sendiri —</option>
+    @foreach($onBehalfOptions as $opt)
+      <option value="{{ $opt->id }}" @selected($opt->id === $onBehalfId)>{{ $opt->name }}{{ $opt->nip ? ' — ' . $opt->nip : '' }}</option>
+    @endforeach
+  </select>
+  <small class="text-muted">Admin HR dapat membuat pengajuan untuk karyawan lain (karyawan harus punya akun pengguna). Saldo dan daftar pasien mengikuti karyawan terpilih.</small>
+</div></div>
+@endif
 @include('reimbursement._form')
 </form>
 @endsection

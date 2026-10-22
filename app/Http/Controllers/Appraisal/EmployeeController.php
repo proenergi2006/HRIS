@@ -11,6 +11,7 @@ use App\Models\Division;
 use App\Models\Level;
 use App\Models\Position;
 use App\Models\Section;
+use App\Services\EmployeeHistoryLogger;
 use App\Models\Master\BloodType;
 use App\Models\Master\EmployeeType;
 use App\Models\Master\MaritalStatus;
@@ -53,6 +54,7 @@ class EmployeeController extends Controller implements HasMiddleware
         $data = $this->validated($request);
         unset($data['photo']);
         $data['photo'] = $this->handlePhoto($request);
+        $data = $this->withGuaranteeFiles($request, $data);
 
         Employee::create($data);
         return redirect()->route('appraisal.employees.index')->with('status', 'Karyawan berhasil ditambahkan.');
@@ -76,7 +78,16 @@ class EmployeeController extends Controller implements HasMiddleware
             $data['photo'] = $newPhoto;
         }
 
+        $data = $this->withGuaranteeFiles($request, $data, $employee);
+
+        $before = EmployeeHistoryLogger::snapshot($employee);
         $employee->update($data);
+        EmployeeHistoryLogger::recordChanges(
+            $employee,
+            $before,
+            EmployeeHistoryLogger::snapshot(Employee::find($employee->id)),
+            $request->input('history_effective_date')
+        );
         return redirect()->route('appraisal.employees.index')->with('status', 'Data karyawan berhasil diperbarui.');
     }
 
@@ -92,6 +103,155 @@ class EmployeeController extends Controller implements HasMiddleware
 
         $employee->delete();
         return redirect()->route('appraisal.employees.index')->with('status', 'Karyawan berhasil dihapus.');
+    }
+
+    /** Halaman ringkasan profil (label + nilai), dasar untuk PDF. */
+    public function show(Employee $employee)
+    {
+        $histories = \App\Models\EmployeeHistory::where('employee_id', $employee->id)
+            ->orderByDesc('effective_date')->orderByDesc('id')->get()->groupBy('category');
+
+        return view('appraisal.employee.show', $this->profileData($employee) + ['histories' => $histories]);
+    }
+
+    public function storeHistory(Request $request, Employee $employee)
+    {
+        $data = $request->validate([
+            'category'       => 'required|in:' . implode(',', array_keys(\App\Models\EmployeeHistory::CATEGORIES)),
+            'effective_date' => 'required|date',
+            'old_value'      => 'nullable|string|max:255',
+            'new_value'      => 'required|string|max:255',
+            'note'           => 'nullable|string|max:255',
+        ]);
+
+        \App\Models\EmployeeHistory::create($data + ['employee_id' => $employee->id, 'changed_by_user_id' => auth()->id()]);
+
+        return redirect()->to(route('appraisal.employees.show', $employee) . '#riwayat')
+            ->with('status', 'Riwayat berhasil ditambahkan.');
+    }
+
+    public function destroyHistory(Employee $employee, \App\Models\EmployeeHistory $history)
+    {
+        abort_unless($history->employee_id === $employee->id, 404);
+        $history->delete();
+
+        return redirect()->to(route('appraisal.employees.show', $employee) . '#riwayat')
+            ->with('status', 'Riwayat dihapus.');
+    }
+
+    public function pdf(Employee $employee)
+    {
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('appraisal.employee.profile-pdf', $this->profileData($employee))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('profil-karyawan-' . \Illuminate\Support\Str::slug($employee->name) . '.pdf');
+    }
+
+    public function guarantee(Employee $employee, int $slot)
+    {
+        abort_unless(in_array($slot, [1, 2], true), 404);
+        $path = $employee->{"guarantee{$slot}_file"};
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    private function profileData(Employee $employee): array
+    {
+        $employee->load([
+            'company', 'branchLocation', 'division', 'department', 'section', 'position', 'level', 'manager',
+            'domicileProvince', 'domicileCity', 'ktpProvince', 'ktpCity',
+            'religion', 'maritalStatus', 'bloodType',
+        ]);
+
+        $e    = $employee;
+        $date = fn ($d) => $d?->format('d/m/Y');
+
+        $sections = [
+            'Informasi Kepegawaian' => [
+                'NIP'              => $e->nip,
+                'Perusahaan'       => $e->company?->name,
+                'Cabang'           => $e->branchLocation?->name,
+                'Divisi'           => $e->division?->name,
+                'Departemen'       => $e->department?->name,
+                'Seksi'            => $e->section?->name,
+                'Jabatan'          => $e->position?->name,
+                'Level'            => $e->level?->name,
+                'Atasan'           => $e->manager?->name,
+                'Status Karyawan'  => $e->employment_status_label,
+                'Tipe Karyawan'    => $e->employee_type_label,
+                'Tanggal Masuk'    => $date($e->start_date),
+                'Akhir Kontrak'    => $date($e->contract_end_date),
+                'Finger ID'        => $e->finger_id,
+            ],
+            'Data Pribadi' => [
+                'Jenis Kelamin'    => $e->gender_label,
+                'Tempat Lahir'     => $e->birth_place,
+                'Tanggal Lahir'    => $date($e->birth_date),
+                'Agama'            => $e->religion?->name,
+                'Status Pernikahan'=> $e->maritalStatus?->name,
+                'Golongan Darah'   => $e->bloodType?->name,
+                'No. KTP'          => $e->ktp_number,
+                'No. SIM'          => $e->sim_number,
+                'NPWP'             => $e->npwp_number,
+                'Kota NPWP'        => $e->npwp_city,
+                'Tanggal NPWP'     => $date($e->npwp_date),
+            ],
+            'Email & Telepon' => [
+                'Email'            => $e->email,
+                'No. HP Pribadi'   => $e->phone,
+                'No. HP Kantor'    => $e->office_phone,
+                'No. Telp Rumah'   => $e->home_phone,
+            ],
+            'Alamat Domisili' => [
+                'Alamat'           => $e->domicile_address,
+                'Kelurahan'        => $e->domicile_subdistrict,
+                'Kecamatan'        => $e->domicile_district,
+                'Kota/Kabupaten'   => $e->domicileCity?->name ?? $e->domicile_city,
+                'Provinsi'         => $e->domicileProvince?->name,
+            ],
+            'Alamat KTP' => [
+                'Alamat'           => $e->ktp_address,
+                'Kelurahan'        => $e->ktp_subdistrict,
+                'Kecamatan'        => $e->ktp_district,
+                'Kota/Kabupaten'   => $e->ktpCity?->name ?? $e->ktp_city,
+                'Provinsi'         => $e->ktpProvince?->name,
+            ],
+            'Kontak Darurat 1' => [
+                'Nama'             => $e->emergency_contact_name,
+                'Hubungan'         => $e->emergency_contact_relation,
+                'No. Telp'         => $e->emergency_contact_phone,
+            ],
+            'Kontak Darurat 2' => [
+                'Nama'             => $e->emergency_contact2_name,
+                'Hubungan'         => $e->emergency_contact2_relation,
+                'No. Telp'         => $e->emergency_contact2_phone,
+            ],
+            'Jaminan' => [
+                'Jaminan 1'        => $e->guarantee1_type ? $e->guarantee1_type . ($e->guarantee1_file ? ' (file terlampir)' : ' (tanpa file)') : null,
+                'Jaminan 2'        => $e->guarantee2_type ? $e->guarantee2_type . ($e->guarantee2_file ? ' (file terlampir)' : ' (tanpa file)') : null,
+            ],
+        ];
+
+        return ['employee' => $e, 'company' => $e->company, 'sections' => $sections];
+    }
+
+    /** Simpan file jaminan ke disk lokal; ganti (dan hapus) file lama bila diunggah ulang. */
+    private function withGuaranteeFiles(Request $request, array $data, ?Employee $employee = null): array
+    {
+        foreach ([1, 2] as $slot) {
+            $key = "guarantee{$slot}_file";
+            unset($data[$key]);
+
+            if ($request->hasFile($key)) {
+                if ($employee?->{$key}) {
+                    Storage::disk('local')->delete($employee->{$key});
+                }
+                $data[$key] = $request->file($key)->store('employee-guarantees', 'local');
+            }
+        }
+
+        return $data;
     }
 
     public function photo(Employee $employee)
@@ -152,6 +312,7 @@ class EmployeeController extends Controller implements HasMiddleware
             'contract_end_date'          => 'nullable|date|required_if:employment_status,contract',
             'employment_status'          => 'required|in:permanent,contract,probation,mitra',
             'is_active'                  => 'boolean',
+            'history_effective_date'     => 'nullable|date',
             'photo'                      => 'nullable|image|max:4096',
 
             // Personal
@@ -159,6 +320,7 @@ class EmployeeController extends Controller implements HasMiddleware
             'birth_place'                => 'nullable|string|max:100',
             'birth_date'                 => 'nullable|date',
             'ktp_number'                 => 'nullable|string|max:30',
+            'sim_number'                 => 'nullable|string|max:30',
             'npwp_number'                => 'nullable|string|max:30',
             'npwp_city'                  => 'nullable|string|max:100',
             'npwp_date'                  => 'nullable|date',
@@ -172,6 +334,7 @@ class EmployeeController extends Controller implements HasMiddleware
             // Email & Phone
             'email'                      => 'nullable|email|max:150',
             'phone'                      => 'nullable|string|max:30',
+            'office_phone'               => 'nullable|string|max:30',
             'home_phone'                 => 'nullable|string|max:30',
 
             // Alamat Domisili
@@ -193,10 +356,21 @@ class EmployeeController extends Controller implements HasMiddleware
             'ktp_subdistrict'            => 'nullable|string|max:100',
 
             // Kontak Darurat
-            'emergency_contact_name'     => 'nullable|string|max:150',
-            'emergency_contact_relation' => 'nullable|string|max:100',
-            'emergency_contact_phone'    => 'nullable|string|max:30',
+            'emergency_contact_name'     => 'required|string|max:150',
+            'emergency_contact_relation' => 'required|string|max:100',
+            'emergency_contact_phone'    => 'required|string|max:30',
+            'emergency_contact2_name'    => 'required|string|max:150',
+            'emergency_contact2_relation'=> 'required|string|max:100',
+            'emergency_contact2_phone'   => 'required|string|max:30',
+
+            // Jaminan (jenis + file, 2 slot)
+            'guarantee1_type'            => 'nullable|string|max:100',
+            'guarantee1_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'guarantee2_type'            => 'nullable|string|max:100',
+            'guarantee2_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
+
+        unset($data['history_effective_date']); // bukan kolom employees — dibaca terpisah utk riwayat
 
         // Sinkronkan kolom teks &lt;-&gt; FK master kecamatan/kelurahan supaya laporan/PDF
         // yang baca string tetap benar, dan sebaliknya (isian manual dicoba di-match).
