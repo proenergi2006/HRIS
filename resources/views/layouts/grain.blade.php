@@ -15,6 +15,7 @@
     <link href="{{ asset('graindashboard/css/graindashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('css/propeople-blue.css') }}?v={{ @filemtime(public_path('css/propeople-blue.css')) }}" rel="stylesheet">
     <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -146,6 +147,9 @@
         emptyTable: 'Tidak ada data tersedia'
     };
     </script>
+    <script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}"></script>
+    <script src="{{ asset('vendor/flatpickr/l10n-id.js') }}"></script>
+    <script src="{{ asset('js/date-inputs.js') }}?v={{ @filemtime(public_path('js/date-inputs.js')) }}"></script>
     @yield('scripts')
 
     {{-- Indikator loading saat pindah halaman (bar atas + spinner pojok) --}}
