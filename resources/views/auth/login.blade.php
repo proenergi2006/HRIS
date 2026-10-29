@@ -21,25 +21,63 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 28px;
-        padding: 48px 20px;
+        gap: 24px;
+        padding: 32px 20px;
         position: relative;
         overflow: hidden;
-        background: radial-gradient(1100px 700px at 12% 8%, rgba(232,160,32,0.16), transparent 55%),
-                    radial-gradient(900px 700px at 90% 90%, rgba(78,168,222,0.18), transparent 55%),
-                    linear-gradient(150deg, var(--pe-dark) 0%, #14315a 48%, var(--pe-blue) 100%);
+        background: var(--pe-dark);
     }
-
-    .bg-blob {
+    /* Latar: foto yang sama di-blur memenuhi layar, jadi tidak ada sisi kosong
+       walau foto utuh (tidak di-crop) ditampilkan di .login-visual. */
+    .login-page::before {
+        content: '';
         position: absolute;
-        border-radius: 50%;
-        filter: blur(2px);
-        opacity: .5;
+        inset: -40px;
+        background: url('{{ asset('img/login-bg.jpg') }}') center / cover no-repeat;
+        filter: blur(28px) brightness(.5) saturate(1.1);
         pointer-events: none;
     }
-    .bg-blob.b1 { width: 460px; height: 460px; background: rgba(255,255,255,0.035); top: -160px; left: -140px; }
-    .bg-blob.b2 { width: 340px; height: 340px; background: rgba(232,160,32,0.08); bottom: -120px; right: -100px; }
-    .bg-blob.b3 { width: 220px; height: 220px; background: rgba(78,168,222,0.10); bottom: 30%; right: 12%; }
+
+    /* ── Foto perusahaan: tampil utuh, rasio asli dijaga ── */
+    .login-visual {
+        position: relative;
+        z-index: 1;
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeUp .55s ease-out both;
+    }
+    .login-visual img {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: calc(100vh - 64px);
+        border-radius: 18px;
+        box-shadow: 0 30px 70px rgba(4,12,26,0.5);
+    }
+    /* Desktop: foto penuh layar. Fokus ke kiri supaya panel teks perusahaan
+       tidak terpotong di layar yang bukan 16:9; sisi kanan (di belakang kartu)
+       yang dikorbankan. */
+    @media (min-width: 992px) {
+        .login-page { flex-direction: row; justify-content: flex-end; padding: 32px 7vw; }
+        .login-page::before { inset: 0; filter: none; background-position: left center; }
+        .login-page::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 50%, rgba(8,14,26,.5) 100%);
+            pointer-events: none;
+        }
+        .login-visual { display: none; }
+        .login-card { flex: none; }
+    }
+    /* Layar HP: foto kecil jadi teksnya tak terbaca — cukup latar blur + kartu. */
+    @media (max-width: 575.98px) {
+        .login-visual { display: none; }
+    }
 
     /* ── Hero / brand ── */
     .hero-brand {
@@ -209,14 +247,14 @@
         to   { opacity: 1; transform: translateY(0); }
     }
     @media (prefers-reduced-motion: reduce) {
-        .hero-brand, .login-card, .company-group { animation: none; }
+        .hero-brand, .login-visual, .login-card, .company-group { animation: none; }
     }
 </style>
 
 <div class="login-page">
-    <div class="bg-blob b1"></div>
-    <div class="bg-blob b2"></div>
-    <div class="bg-blob b3"></div>
+    <div class="login-visual">
+        <img src="{{ asset('img/login-bg.jpg') }}" alt="PT Pro Trans Internasional dan anak perusahaan">
+    </div>
 
     <div class="login-card">
         <img src="{{ asset('img/logo-pe.png') }}" class="card-logo" alt="ProPeople">
