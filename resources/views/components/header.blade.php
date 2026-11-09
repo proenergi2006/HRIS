@@ -315,10 +315,10 @@ $notifCount = $notifItems->count();
         <div class="d-flex align-items-center ml-auto" style="gap:4px;">
 
           {{-- ── Jam & tanggal WIB (jalan per detik, zona waktu dipaksa Asia/Jakarta) ── --}}
-          <div class="d-flex align-items-center px-2 text-nowrap" style="font-size:0.8rem;line-height:1.2;" title="Waktu Indonesia Barat">
-            <i class="gd-time mr-2 d-none d-md-inline" style="font-size:0.95rem;opacity:.6;"></i>
-            <div class="text-right">
-              <div id="wibDate" class="text-muted d-none d-md-block" style="font-size:0.72rem;">&nbsp;</div>
+          <div class="d-flex align-items-center px-2 text-nowrap" style="font-size:0.8rem;line-height:1.2;color:#fff;" title="Waktu Indonesia Barat">
+            <i class="gd-time mr-2 d-none d-md-inline" style="font-size:0.95rem;color:#fff;"></i>
+            <div class="text-right" style="color:#fff;">
+              <div id="wibDate" class="d-none d-md-block" style="font-size:0.72rem;color:#fff;">&nbsp;</div>
               <div class="font-weight-bold"><span id="wibTime">--:--:--</span> WIB</div>
             </div>
           </div>
