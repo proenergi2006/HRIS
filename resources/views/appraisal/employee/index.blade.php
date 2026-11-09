@@ -44,7 +44,18 @@
                       @endforeach
                     </select>
                   </div>
-                  @if(request('company_id'))
+                  <div class="form-group col-auto mb-0 ml-2">
+                    <label class="small font-weight-bold">Filter Branch</label>
+                    <select name="branch_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <option value="">Semua Branch</option>
+                      @foreach($branches as $b)
+                        <option value="{{ $b->id }}" {{ request('branch_id') == $b->id ? 'selected' : '' }}>
+                          {{ $b->name }}
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+                  @if(request('company_id') || request('branch_id'))
                   <div class="form-group col-auto mb-0 ml-2">
                     <a href="{{ route('appraisal.employees.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
                   </div>
@@ -59,7 +70,7 @@
                 <th class="font-weight-semi-bold border-top-0 py-2">#</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Nama</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Perusahaan</th>
-                <th class="font-weight-semi-bold border-top-0 py-2">NIP</th>
+                <th class="font-weight-semi-bold border-top-0 py-2">Branch</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Dept / LOB</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Jabatan</th>
                 <th class="font-weight-semi-bold border-top-0 py-2">Level</th>
@@ -90,7 +101,7 @@
                     <span class="text-muted">-</span>
                   @endif
                 </td>
-                <td class="py-3">{{ $employee->nip ?? '-' }}</td>
+                <td class="py-3">{{ $employee->branchLocation->name ?? ($employee->branch ?: '-') }}</td>
                 <td class="py-3">
                 {{ $employee->department->name ?? '-' }}
                 @if($employee->lob) <small class="text-muted">/ {{ $employee->lob }}</small>@endif

@@ -32,14 +32,22 @@ class EmployeeController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $companies = Company::where('is_active', true)->orderBy('name')->get();
-        $query     = Employee::with(['level', 'company', 'department', 'position'])->orderBy('name');
+        $query     = Employee::with(['level', 'company', 'department', 'position', 'branchLocation'])->orderBy('name');
 
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
         }
 
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        $branches  = Branch::where('is_active', true)
+            ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->company_id))
+            ->orderBy('name')->get();
+
         $employees = $query->get();
-        return view('appraisal.employee.index', compact('employees', 'companies'));
+        return view('appraisal.employee.index', compact('employees', 'companies', 'branches'));
     }
 
     public function create()
