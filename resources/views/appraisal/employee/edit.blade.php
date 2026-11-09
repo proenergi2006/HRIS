@@ -162,6 +162,15 @@
 
                     <div class="form-row">
                         <div class="form-group col-6 col-md-3">
+                            <label for="privy_id">PrivyID <small class="text-muted">(opsional)</small></label>
+                            <input type="text" id="privy_id" name="privy_id" maxlength="50" class="form-control{{ $errors->has('privy_id') ? ' is-invalid' : '' }}"
+                                   value="{{ old('privy_id', $employee->privy_id) }}">
+                            @error('privy_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6 col-md-3">
                             <label for="blood_type_id">Golongan Darah</label>
                             <select id="blood_type_id" name="blood_type_id" class="form-control{{ $errors->has('blood_type_id') ? ' is-invalid' : '' }}">
                                 <option value="">-- Pilih --</option>

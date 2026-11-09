@@ -54,6 +54,7 @@ class Employee extends Model
         'birth_date',
         'ktp_number',
         'sim_number',
+        'privy_id',
         'npwp_number',
         'npwp_city',
         'npwp_date',
