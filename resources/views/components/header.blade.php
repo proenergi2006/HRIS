@@ -314,6 +314,31 @@ $notifCount = $notifItems->count();
 
         <div class="d-flex align-items-center ml-auto" style="gap:4px;">
 
+          {{-- ── Jam & tanggal WIB (jalan per detik, zona waktu dipaksa Asia/Jakarta) ── --}}
+          <div class="d-flex align-items-center px-2 text-nowrap" style="font-size:0.8rem;line-height:1.2;" title="Waktu Indonesia Barat">
+            <i class="gd-time mr-2 d-none d-md-inline" style="font-size:0.95rem;opacity:.6;"></i>
+            <div class="text-right">
+              <div id="wibDate" class="text-muted d-none d-md-block" style="font-size:0.72rem;">&nbsp;</div>
+              <div class="font-weight-bold"><span id="wibTime">--:--:--</span> WIB</div>
+            </div>
+          </div>
+          <script>
+            (function () {
+              var d = document.getElementById('wibDate'), t = document.getElementById('wibTime');
+              if (!d || !t) return;
+              var tz = 'Asia/Jakarta';
+              var fd = new Intl.DateTimeFormat('id-ID', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+              var ft = new Intl.DateTimeFormat('id-ID', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+              function tick() {
+                var n = new Date();
+                d.textContent = fd.format(n);
+                t.textContent = ft.format(n).replace(/\./g, ':');
+              }
+              tick();
+              setInterval(tick, 1000);
+            })();
+          </script>
+
           {{-- ── Language Switcher ── --}}
           <div class="dropdown">
             <a class="header-invoker d-flex align-items-center px-2" href="#"
