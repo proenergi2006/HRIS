@@ -37,7 +37,7 @@
         <dl class="row mb-3">
           <dt class="col-sm-4 text-muted">Email</dt><dd class="col-sm-8">{{ $candidate->email ?? '—' }}</dd>
           <dt class="col-sm-4 text-muted">Telepon</dt><dd class="col-sm-8">{{ $candidate->phone ?? '—' }}</dd>
-          <dt class="col-sm-4 text-muted">Requisition</dt><dd class="col-sm-8">{{ $candidate->jobRequisition?->title ?? 'Walk-in' }}</dd>
+          <dt class="col-sm-4 text-muted">Requisition</dt><dd class="col-sm-8">{{ $candidate->jobRequisition?->title ?? ($candidate->applied_position ? $candidate->applied_position . ' (lamaran online)' : 'Walk-in') }}</dd>
           <dt class="col-sm-4 text-muted">Sumber</dt><dd class="col-sm-8">{{ $candidate->source ?? '—' }}</dd>
           @if($candidate->referred_by_employee_id)
             <dt class="col-sm-4 text-muted">Dirujuk Oleh</dt><dd class="col-sm-8">{{ $candidate->referredBy?->name ?? '-' }} (Employee Referral)</dd>

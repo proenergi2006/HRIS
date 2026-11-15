@@ -50,7 +50,7 @@
           @foreach($candidates as $c)
             <tr>
               <td>{{ $c->name }}<div class="small text-muted">{{ $c->email }} {{ $c->phone ? '· '.$c->phone : '' }}</div></td>
-              <td>{{ $c->jobRequisition?->title ?? '—' }}</td>
+              <td>{{ $c->jobRequisition?->title ?? ($c->applied_position ?: '—') }}</td>
               <td>{{ $c->source ?? '—' }}</td>
               <td class="text-right">{{ $c->expected_salary ? number_format($c->expected_salary, 0, ',', '.') : '—' }}</td>
               <td class="text-center">

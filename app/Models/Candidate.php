@@ -13,7 +13,7 @@ class Candidate extends Model
     use HasHashid;
 
     protected $fillable = [
-        'job_requisition_id', 'name', 'email', 'phone', 'source', 'expected_salary',
+        'job_requisition_id', 'applied_position', 'name', 'email', 'phone', 'source', 'expected_salary',
         'status', 'mcu_result', 'assessment_result', 'assessment_score', 'assessment_notes',
         'converted_employee_id', 'notes',
         'referred_by_employee_id', 'referral_bonus_amount', 'referral_bonus_paid_at',

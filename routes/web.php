@@ -89,6 +89,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Manpower\ManpowerPlanController;
 use App\Http\Controllers\Recruitment\JobRequisitionController;
 use App\Http\Controllers\Recruitment\CandidateController;
+use App\Http\Controllers\Recruitment\PublicApplicationController;
 use App\Http\Controllers\Recruitment\CandidateImportController;
 use App\Http\Controllers\Recruitment\CandidateInterviewController;
 use App\Http\Controllers\Recruitment\ReferralController;
@@ -135,7 +136,12 @@ Route::get('/whistleblower',                  [PublicWhistleblowerController::cl
 Route::post('/whistleblower',                 [PublicWhistleblowerController::class, 'store'])->name('whistleblower.store')->middleware('throttle:20,60');
 Route::get('/whistleblower/success/{ticket}', [PublicWhistleblowerController::class, 'success'])->name('whistleblower.success');
 
-Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+// ── Formulir Lamaran Kerja ProEnergi — public (no auth) ───────────────
+Route::get('/lamaran',         [PublicApplicationController::class, 'show'])->name('lamaran.form');
+Route::post('/lamaran',        [PublicApplicationController::class, 'store'])->name('lamaran.store')->middleware('throttle:10,60');
+Route::get('/lamaran/sukses',  [PublicApplicationController::class, 'success'])->name('lamaran.success');
+
+Route::get('/locale/{locale}',[LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('/home', fn() => redirect()->route('dashboard'));
 
