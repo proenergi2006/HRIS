@@ -35,7 +35,7 @@
                 <form method="GET" class="form-row align-items-end mb-3">
                   <div class="form-group col-auto mb-0">
                     <label class="small font-weight-bold">Filter Perusahaan</label>
-                    <select name="company_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <select name="company_id" class="form-control form-control-sm" onchange="siproClearEmpState(); this.form.submit()">
                       <option value="">Semua Perusahaan</option>
                       @foreach($companies as $c)
                         <option value="{{ $c->id }}" {{ request('company_id') == $c->id ? 'selected' : '' }}>
@@ -46,7 +46,7 @@
                   </div>
                   <div class="form-group col-auto mb-0 ml-2">
                     <label class="small font-weight-bold">Filter Branch</label>
-                    <select name="branch_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <select name="branch_id" class="form-control form-control-sm" onchange="siproClearEmpState(); this.form.submit()">
                       <option value="">Semua Branch</option>
                       @foreach($branches as $b)
                         <option value="{{ $b->id }}" {{ request('branch_id') == $b->id ? 'selected' : '' }}>
@@ -57,7 +57,7 @@
                   </div>
                   @if(request('company_id') || request('branch_id'))
                   <div class="form-group col-auto mb-0 ml-2">
-                    <a href="{{ route('appraisal.employees.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                    <a href="{{ route('appraisal.employees.index') }}" class="btn btn-sm btn-outline-secondary" onclick="siproClearEmpState()">Reset</a>
                   </div>
                   @endif
                 </form>
@@ -170,6 +170,20 @@
                 @endsection
                 
                 @section('scripts')
-                <script>$(function(){ $('#dt-employees').DataTable({ language: window.siproDtLang, order:[[2,'asc']], columnDefs:[{orderable:false,targets:[0,3,-1]}] }); });</script>
+                <script>
+                  // Ingat halaman/urutan/pencarian tabel (stateSave) supaya setelah buka detail/edit
+                  // lalu kembali, posisi tetap di halaman yang sama. Direset saat ganti filter.
+                  var empDt;
+                  function siproClearEmpState() { if (empDt) { empDt.state.clear(); } }
+                  $(function(){
+                    empDt = $('#dt-employees').DataTable({
+                      language: window.siproDtLang,
+                      order: [[2,'asc']],
+                      columnDefs: [{orderable:false,targets:[0,3,-1]}],
+                      stateSave: true,
+                      stateDuration: 60 * 60 * 8
+                    });
+                  });
+                </script>
                 @endsection
                 
